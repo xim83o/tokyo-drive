@@ -4,8 +4,8 @@
     {
       "name": "tokyo-drive",
       "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "http.server", "8001"],
-      "port": 8001
+      "runtimeArgs": ["-I", "tools/serve.py", "8002"],
+      "port": 8002
     }
   ]
 }

@@ -8,7 +8,7 @@ name = sys.argv[1]
 d = json.loads(pathlib.Path(f"data/raw/{name}.json").read_text(encoding="utf-8"))
 m = d["meta"]; LAT, LON, H = m["lat"], m["lon"], m["half"]; W = 2 * H
 KX, KY = 111320 * math.cos(math.radians(LAT)), 110540
-TOWER_ID = 4247312  # relación del Tokio Tower en OSM: se sustituye por un modelo propio
+TOWER_ID = 4247312  # relación "Tokyo Tower" de OSM: en realidad es la planta de FootTown, el edificio bajo la torre (k=2)
 
 def xy(g): return ((g["lon"] - LON) * KX + H, -(g["lat"] - LAT) * KY + H)
 def inside(p, mg=0): return -mg <= p[0] <= W + mg and -mg <= p[1] <= W + mg
@@ -77,8 +77,8 @@ def runs(pts, ids):
 
 def length(pts): return sum(math.dist(pts[i], pts[i - 1]) for i in range(1, len(pts)))
 
-RT = {"trunk": 0, "primary": 1, "secondary": 2, "tertiary": 3}
-RW = [20, 14, 11, 8]  # ancho por defecto (m) de cada tipo
+RT = {"trunk": 0, "primary": 1, "secondary": 2, "tertiary": 3, "unclassified": 4, "residential": 4}
+RW = [20, 14, 11, 8, 6]  # ancho por defecto (m) de cada tipo (4 = calles pequeñas)
 COLS = {"red": 0xb5463a, "white": 0xe8e6e0, "grey": 0x8a8d93, "gray": 0x8a8d93, "brown": 0x7a5a44, "black": 0x2a2a2e, "beige": 0xd8c9a8, "yellow": 0xd9c26a, "blue": 0x5a7aa8, "green": 0x5d8a5a}
 def col(s):
     if not s: return None
@@ -113,13 +113,15 @@ for e in d["elements"]:
         lanes = num(t.get("lanes")); w = num(t.get("width"))
         if not w: w = lanes * 3.3 + (0 if ow else 1) if lanes else RW[RT[base]] * (.6 if ow else 1)
         if hw.endswith("_link"): w = min(w, 8)
+        if RT[base] == 4: w = min(w, 7.5)
         for rp, ri in runs(pts, ids):
             out["roads"].append({"t": RT[base], "w": round(max(5.5, min(w, 30)), 1), "o": ow, "s": int(num(t.get("maxspeed")) or 0),
                                  "p": dm(rp), "n": [node_ix(i) for i in ri]})
         continue
     if "building" in t:
-        if e["id"] == TOWER_ID or t["building"] in ("roof", "construction"): continue
+        if t["building"] in ("roof", "construction"): continue
         temple = t["building"] in ("temple", "shrine") or t.get("amenity") == "place_of_worship"
+        gate = t.get("historic") == "city_gate" or t["building"] == "gate"
         for r in polys(e):
             r = ring_clean(r)
             if not r or area(r) < 12 or not any(inside(p) for p in r): continue
@@ -129,6 +131,8 @@ for e in d["elements"]:
                 h = (10 + 4 * s) if temple else (5 + s * 6) if a < 80 else (9 + s * 18) if a < 400 else (14 + s * 30) if a < 1500 else (20 + s * 45)
             b = {"h": round(max(3, h), 1), "p": dm(r)}
             if temple: b["k"] = 1
+            if gate: b["k"] = 3
+            if e["id"] == TOWER_ID: b["k"] = 2; b["h"] = 18
             c = col(t.get("building:colour")); rc = col(t.get("roof:colour"))
             if c is not None: b["c"] = c
             if rc is not None: b["r"] = rc

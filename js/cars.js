@@ -27,5 +27,6 @@ function buildCar(k){cur=CARS[k];const o=LOOK[k];cur.ey=o.ey;if(car)sc.remove(ca
   const g2=new THREE.CylinderGeometry(o.rr*.62,o.rr*.62,.34,10);g2.rotateZ(PI/2);const r=new THREE.Mesh(g2,new THREE.MeshLambertMaterial({color:o.rc}));r.position.copy(t.position);car.add(r)}
  const dm=new THREE.MeshLambertMaterial({color:0x15171d});intG=new THREE.Group();car.add(intG);
  const db=new THREE.Mesh(new THREE.BoxGeometry(w*.8,.2,.4),dm);db.position.set(0,o.ey-.25,.85);intG.add(db);
- const wgp=new THREE.Group();wgp.position.set(-w*.2,o.ey-.2,.6);wgp.rotation.x=-.9;whl=new THREE.Mesh(new THREE.TorusGeometry(.17,.02,6,16),dm);wgp.add(whl);intG.add(wgp);intG.visible=false;sc.add(car)}
+ const wgp=new THREE.Group();wgp.position.set(-w*.2,o.ey-.2,.6);wgp.rotation.x=-.9;whl=new THREE.Mesh(new THREE.TorusGeometry(.17,.02,6,16),dm);wgp.add(whl);intG.add(wgp);intG.visible=false;
+ car.traverse(m=>{if(m.isMesh)m.castShadow=true});sc.add(car)}
 buildCar(0);

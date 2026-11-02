@@ -15,8 +15,12 @@ function hud(kmh,gl,rpm){const mx=Math.ceil(cur.vm*3.6*1.05/20)*20,a0=.75*PI,sw=
  hc.fillStyle="#fff";hc.font="italic 800 30px system-ui";hc.fillText(kmh,cx,cy+42);hc.font="10px system-ui";hc.fillText("km/h",cx,cy+62);
  hc.fillStyle="#ff2d2d";hc.font="800 22px system-ui";hc.fillText(gl,cx,cy+84)}
 const mc=$("mini").getContext("2d");
-function mini(){const s=.9,c=95;mc.setTransform(1,0,0,1,0,0);mc.clearRect(0,0,190,190);mc.save();mc.beginPath();mc.arc(c,c,c,0,7);mc.clip();mc.fillStyle="#1c1f26";mc.fillRect(0,0,190,190);
+// Minimapa: fondo con edificios y parques, calles dibujadas encima en claro con borde, tráfico y torre
+function mini(){const s=1.15,c=95;mc.setTransform(1,0,0,1,0,0);mc.clearRect(0,0,190,190);mc.save();mc.beginPath();mc.arc(c,c,c,0,7);mc.clip();mc.fillStyle="#1c1f26";mc.fillRect(0,0,190,190);
  const a=-s*Math.cos(h),b=-s*Math.sin(h),cc=s*Math.sin(h),d=a;
  mc.setTransform(a,b,cc,d,c-(a*px+cc*pz),c-(b*px+d*pz));
- if(mapImg)mc.drawImage(mapImg,0,0);
+ if(mapImg){mc.globalAlpha=.85;mc.drawImage(mapImg,0,0);mc.globalAlpha=1}
+ if(ready){const seen=new Set();mc.lineCap="round";for(let i=-5;i<=5;i++)for(let j=-5;j<=5;j++)for(const k of gq(px+i*HC,pz+j*HC).r)seen.add(k);
+  for(const pass of[0,1]){mc.strokeStyle=pass?"#e4e8ef":"#0b0c10";for(const k of seen){const o=k*6;mc.lineWidth=RSG[o+4]*2+(pass?0:2.5);mc.beginPath();mc.moveTo(RSG[o],RSG[o+1]);mc.lineTo(RSG[o+2],RSG[o+3]);mc.stroke()}}
+  mc.fillStyle="#ffb000";for(const n of NPC)if(n.g.visible&&Math.abs(n.x-px)<110&&Math.abs(n.z-pz)<110){mc.beginPath();mc.arc(n.x,n.z,2.2,0,7);mc.fill()}}
  mc.restore();mc.setTransform(1,0,0,1,0,0);mc.fillStyle="#e5173f";mc.strokeStyle="#fff";mc.lineWidth=2;mc.beginPath();mc.moveTo(c,c-11);mc.lineTo(c+8,c+9);mc.lineTo(c-8,c+9);mc.closePath();mc.fill();mc.stroke()}

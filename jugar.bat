@@ -13,7 +13,7 @@ echo.
 echo  Para cerrar el juego, cierra esta ventana.
 echo.
 start "" "http://localhost:8765"
-python -m http.server 8765
+python -I tools\serve.py 8765
 echo.
 echo  El servidor se ha cerrado o no ha podido arrancar. Lee el mensaje de arriba.
 pause
