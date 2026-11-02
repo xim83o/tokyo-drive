@@ -31,7 +31,7 @@ Pedido por el usuario (todo con permiso ya dado; descargas permitidas: partes de
 - [x] 2. Iluminación: quitar los círculos de las farolas; luz real (PointLights de las farolas más cercanas + mapa de luz suave en el suelo), faros del coche que iluminen la carretera sin manchas en árboles/coches, cristales que no reflejen el cielo de día por la noche, bloom + FXAA + corrección de color (postproceso de three r128 desde jsdelivr).
 - [x] 3. Ventanas: interior mapping (habitaciones con profundidad), cristal con reflejo, marcos, cortinas; de noche solo algunas encendidas.
 - [x] 4. Tiendas: escaparates en 3D, toldos salientes, interiores iluminados, konbinis inventados y más letreros (el usuario no vio ninguna tienda).
-- [ ] 5. Árboles: varias especies con copas de varios volúmenes (que no parezcan "un png pegado").
+- [x] 5. Árboles: varias especies con copas de varios volúmenes (que no parezcan "un png pegado").
 - [ ] 6. Edificios con volumen: escalonados (base + torre), cornisas, balcones en 3D (solo cerca), casetas en tejados; partes de edificio reales de OSM (building:part).
 - [ ] 7. Lluvia: aleatoria ~1 de cada 5 días de juego, calles mojadas con reflejos y charcos, salpicaduras, menos agarre, sonido (CC0), tormentas con rayos a veces, gotas en pantalla SOLO en la cámara interior.
 - [ ] 8. Cinemáticas y cámaras: no atravesar ningún objeto (árboles, postes, coches, torre, edificios).

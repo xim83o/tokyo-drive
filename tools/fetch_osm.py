@@ -5,6 +5,7 @@ Ejemplo: python -I tools/fetch_osm.py tokyo-tower 35.65858 139.74543 1200
 import json, math, sys, urllib.parse, urllib.request, pathlib
 
 name, lat, lon, half = sys.argv[1], float(sys.argv[2]), float(sys.argv[3]), float(sys.argv[4])
+parts = "--parts" in sys.argv  # solo las partes de edificio (forma 3D real de los rascacielos), en data/raw/<nombre>-parts.json
 dlat = half / 110540
 dlon = half / (111320 * math.cos(math.radians(lat)))
 bb = f"{lat-dlat:.6f},{lon-dlon:.6f},{lat+dlat:.6f},{lon+dlon:.6f}"
@@ -19,6 +20,9 @@ q = f"""[out:json][timeout:240];
  node["natural"="tree"]({bb}); node["highway"="traffic_signals"]({bb});
 );
 out geom;"""
+if parts:
+    q = f'[out:json][timeout:240];(way["building:part"]({bb});relation["building:part"]({bb}););out geom;'
+    name += "-parts"
 out = pathlib.Path("data/raw"); out.mkdir(parents=True, exist_ok=True)
 # Servidores públicos de Overpass; si uno falla se prueba el siguiente
 for url in ["https://overpass-api.de/api/interpreter", "https://overpass.private.coffee/api/interpreter",

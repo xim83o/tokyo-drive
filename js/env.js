@@ -76,8 +76,8 @@ function envUpdate(dt){HOUR=hourNow();const e=Math.sin((HOUR-6)/12*PI),day=Math.
  if(towerMat)towerMat.emissive.copy(PAL.tw).multiplyScalar(NF*.55);for(const m of NM.ledT)m.color.setScalar(.75+NF*.25);
  if(ROADMAT){ROADMAT.specular.setScalar(.05+WEA.wet*.75);ROADMAT.shininess=30+WEA.wet*70;ROADMAT.color.setScalar(1-WEA.wet*.35)}
  HL.intensity=NF>.2?NF*7:0;if(car){const fx=Math.sin(h),fz=Math.cos(h),f=cur.l/2+.3;HL.position.set(px+fx*f,.8+bodyY,pz+fz*f);HL.target.position.set(px+fx*26,0,pz+fz*26);HL.target.updateMatrixWorld()}
- // Farolas más cercanas al jugador con luz de verdad (se reparten cada 0,3 s)
- lampT+=dt;if(lampT>.3&&LPL.length&&LAMPS.length){lampT=0;const tx=px,tz=pz,best=[];for(let i=0;i<LAMPS.length;i+=3){const d=(LAMPS[i]-tx)**2+(LAMPS[i+2]-tz)**2;if(best.length<LPL.length||d<best[best.length-1][0]){best.push([d,i]);best.sort((a,b)=>a[0]-b[0]);if(best.length>LPL.length)best.pop()}}
+ // Farolas más cercanas al jugador con luz de verdad (se reparten cada 0,3 s) y detalle cercano de los edificios
+ lampT+=dt;const doL=lampT>.3;if(doL){lampT=0;lodUpdate()}if(doL&&LPL.length&&LAMPS.length){const tx=px,tz=pz,best=[];for(let i=0;i<LAMPS.length;i+=3){const d=(LAMPS[i]-tx)**2+(LAMPS[i+2]-tz)**2;if(best.length<LPL.length||d<best[best.length-1][0]){best.push([d,i]);best.sort((a,b)=>a[0]-b[0]);if(best.length>LPL.length)best.pop()}}
   LPL.forEach((l,k)=>{const b=best[k];if(b)l.position.set(LAMPS[b[1]],LAMPS[b[1]+1],LAMPS[b[1]+2])})}
  for(const l of LPL)l.intensity=NF*.75;
  // Pantallas LED: se redibujan unas 10 veces por segundo

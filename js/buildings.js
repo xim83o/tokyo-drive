@@ -54,6 +54,9 @@ function drawAd(g,w,h,tm,ph){const n=ADS.length,k=Math.floor(tm/5+ph)%n,a=ADS[k]
  g.font="bold 24px system-ui";g.fillText(a.s,w*(k===1?.62:.5),h*.75);g.fillStyle=`rgba(255,255,255,${(1-Math.abs(f-.5)*2)*.0})`;
  if(f>.92){g.fillStyle=`rgba(0,0,0,${(f-.92)/.08})`;g.fillRect(0,0,w,h)}}
 
+let BALM=null,RAILM=null;const DET=[];
+// Muestra el detalle cercano (balcones) solo en los bloques de 500 m próximos a la cámara
+function lodUpdate(){const lv=qLevel();for(const d of DET){const dx=Math.max(0,Math.abs(cam.position.x-d.x)-250),dz=Math.max(0,Math.abs(cam.position.z-d.z)-250),v=lv>=1&&dx*dx+dz*dz<260*260;d.m[0].visible=d.m[1].visible=v}}
 const BCOL=[0xe6e2d8,0xd4d4d0,0xcfc6b4,0xb9b6ae,0xa9b1ba,0xe2dccd,0x9a958c,0xc4bfb2];
 // Rectángulo orientado mínimo de una planta (para templos y puerta)
 function obb(R){let best=null;for(let i=0;i<R.length;i+=2){const j=(i+2)%R.length,a=Math.atan2(R[j+1]-R[i+1],R[j]-R[i]),c=Math.cos(a),s=Math.sin(a);let u0=1e9,u1=-1e9,v0=1e9,v1=-1e9;
@@ -66,8 +69,8 @@ function buildBuildings(){const CH=500,ch=new Map(),c=new THREE.Color(),R0=rng(3
   :new THREE.MeshLambertMaterial({map:facade(t),vertexColors:true});NM.win.push(m);return interior(m,{mask:facade(t,1),rw:RM[t][0],rh:RM[t][1],depth:RM[t][2],lit:RM[t][3]})});
  const shopM=interior(new THREE.MeshLambertMaterial({map:shopTex(),vertexColors:true}),{mask:shopTex(1),rw:3.6,rh:4,depth:6,lit:1,shop:1});
  const konM=interior(new THREE.MeshLambertMaterial({map:konTex(),vertexColors:true}),{mask:konTex(1),rw:3.6,rh:4,depth:9,lit:1,shop:1});
- const get=k=>{let o=ch.get(k);if(!o){o={f:[0,1,2,3,4,5].map(()=>({p:[],n:[],u:[],c:[]})),r:{p:[],c:[]}};ch.set(k,o)}return o};
- const AW=[],KS=[];let kon=0;
+ const get=k=>{let o=ch.get(k);if(!o){o={f:[0,1,2,3,4,5].map(()=>({p:[],n:[],u:[],c:[]})),r:{p:[],c:[]},d:[],rl:[],k};ch.set(k,o)}return o};
+ const AW=[],KS=[],PH=[];let kon=0;
  const wall=(s,ax,az,bx,bz,y0,y1,u0,u1,v0,v1,nx,nz,col)=>{s.p.push(ax,y0,az,bx,y1,bz,bx,y0,bz,ax,y0,az,ax,y1,az,bx,y1,bz);s.u.push(u0,v0,u1,v1,u1,v0,u0,v0,u0,v1,u1,v1);for(let k=0;k<6;k++){s.n.push(nx,0,nz);s.c.push(col.r,col.g,col.b)}};
  const roofT=[],tank=[],ant=[],vs=SIGNS.map(()=>[]),leds=[[],[],[]];
  MAP.buildings.forEach((b,bi)=>{if(b.k===1||b.k===3){temple(b);return}
@@ -79,23 +82,36 @@ function buildBuildings(){const CH=500,ch=new Map(),c=new THREE.Color(),R0=rng(3
   c.set(ft?0xf2f2ef:type===3?0xffffff:b.c!==undefined?b.c:BCOL[bi%BCOL.length]);const sc2=new THREE.Color(1,1,1);
   // Konbini: edificio pequeño junto a la calle (como mucho 40 en el mapa)
   const isK=!ft&&A>70&&A<600&&h<25&&kon<40&&R0()<.07;let kd=false;
+  // Edificios altos y grandes: base (podio) y torre retranqueada encima
+  let Rs=null,top=h;if(!ft&&h>45&&A>400){const k=.74+R0()*.1;Rs=new Float32Array(R.length);for(let i=0;i<R.length;i+=2){Rs[i]=cx+(R[i]-cx)*k;Rs[i+1]=cz+(R[i+1]-cz)*k}
+   let ok=true;for(let i=0;i<Rs.length&&ok;i+=2)if(!inPoly(R,Rs[i],Rs[i+1]))ok=false;if(ok)top=Math.min(22,Math.max(9,h*.2));else Rs=null}
   let per=0;for(let i=0;i<R.length;i+=2){const j=(i+2)%R.length,ax=R[i],az=R[i+1],bx=R[j],bz=R[j+1],L=Math.hypot(bx-ax,bz-az);if(L<.05)continue;const nx=(bz-az)/L,nz=-(bx-ax)/L,u0=per/14.4+uo,u1=(per+L)/14.4+uo;per+=L;
    const mx=(ax+bx)/2,mz=(az+bz)/2,shop=!ft&&h<70&&L>4&&(roadAt(mx+nx*4.5,mz+nz*4.5)>=0||roadAt(mx+nx*8,mz+nz*8)>=0||roadAt(mx+nx*12,mz+nz*12)>=0);
    if(shop){const K=isK&&L>7;if(K&&!kd){kd=true;kon++}
-    wall(o.f[K?5:4],ax,az,bx,bz,0,4,u0,u1,0,1,nx,nz,sc2);wall(s,ax,az,bx,bz,4,h,u0,u1,vo+4/13.2,vo+h/13.2,nx,nz,c);
+    wall(o.f[K?5:4],ax,az,bx,bz,0,4,u0,u1,0,1,nx,nz,sc2);wall(s,ax,az,bx,bz,4,top,u0,u1,vo+4/13.2,vo+top/13.2,nx,nz,c);
     // Toldos que salen sobre la acera (uno por local, no todos) y letrero luminoso de konbini
     const ang=Math.atan2(nx,nz);if(K)KS.push([mx+nx*.2,4.15,mz+nz*.2,ang,Math.min(L*.85,14)]);
     else for(let t=1.8;t<L-1.6;t+=3.6){const q=Math.floor((u0*14.4+t)/3.6),sh=SHOPS[((q%4)+4)%4];if(sh.shut||R0()<.35)continue;AW.push([ax+(bx-ax)*t/L+nx*.62,3.45,az+(bz-az)*t/L+nz*.62,ang,sh.hue])}
     // Letrero vertical perpendicular a la fachada y, en edificios altos, alguna pantalla LED
     if(h>8&&h<60&&R0()<.45){const t=.15+R0()*.7,sh=Math.min(9,h-5);vs[Math.floor(R0()*SIGNS.length)].push([ax+(bx-ax)*t+nx*.75,4.6,az+(bz-az)*t+nz*.75,Math.atan2(nx,nz)+PI/2,1,sh])}
     if(h>25&&L>13&&R0()<.18&&leds.flat().length<40)leds[Math.floor(R0()*3)].push([mx+nx*.35,Math.min(h-4,22),mz+nz*.35,Math.atan2(nx,nz)])}
-   else wall(s,ax,az,bx,bz,0,h,u0,u1,vo,vo+h/13.2,nx,nz,c)}
-  // Tejado con pretil (los edificios bajos y medianos) y detalles: aire acondicionado, depósitos de agua, antenas
-  const rc=new THREE.Color(ft?0xd9dde2:0x8c8f94).offsetHSL(0,0,(bi%5-2)*.025),n0=o.r.p.length;polyFill(o.r.p,R,h);
-  if(h<90&&!ft)for(let i=0;i<R.length;i+=2){const j=(i+2)%R.length;o.r.p.push(R[i],h,R[i+1],R[j],h+.9,R[j+1],R[j],h,R[j+1],R[i],h,R[i+1],R[i],h+.9,R[i+1],R[j],h+.9,R[j+1])}
+   else wall(s,ax,az,bx,bz,0,top,u0,u1,vo,vo+top/13.2,nx,nz,c);
+   // Balcones en 3D (solo pisos de viviendas; se muestran al acercarse)
+   if(type===1&&L>5&&!ft){const f0=shop?2:1,nf=Math.min(14,Math.floor(top/3.3));for(let f=f0;f<nf;f++){const y=f*3.3+CURB-.05,ux=(bx-ax)/L,uz=(bz-az)/L,x0=ax+ux*.4,z0=az+uz*.4,x1=bx-ux*.4,z1=bz-uz*.4,ox=nx*.95,oz=nz*.95;
+     o.d.push(x0,y,z0,x1,y,z1,x1+ox,y,z1+oz,x0,y,z0,x1+ox,y,z1+oz,x0+ox,y,z0+oz, x0+ox,y-.14,z0+oz,x1+ox,y-.14,z1+oz,x1+ox,y,z1+oz,x0+ox,y-.14,z0+oz,x1+ox,y,z1+oz,x0+ox,y,z0+oz);
+     o.rl.push(x0+ox,y,z0+oz,x1+ox,y,z1+oz,x1+ox,y+1.05,z1+oz,x0+ox,y,z0+oz,x1+ox,y+1.05,z1+oz,x0+ox,y+1.05,z0+oz)}}}
+  // Torre retranqueada sobre el podio
+  if(Rs){let p2=0;for(let i=0;i<Rs.length;i+=2){const j=(i+2)%Rs.length,ax=Rs[i],az=Rs[i+1],bx=Rs[j],bz=Rs[j+1],L=Math.hypot(bx-ax,bz-az);if(L<.05)continue;
+   wall(s,ax,az,bx,bz,top,h,p2/14.4+uo,(p2+L)/14.4+uo,vo+top/13.2,vo+h/13.2,(bz-az)/L,-(bx-ax)/L,c);p2+=L}}
+  // Tejado (del podio y de la torre) con pretil, cornisa en los edificios bajos y medianos, y detalles en el tejado
+  const rc=new THREE.Color(ft?0xd9dde2:0x8c8f94).offsetHSL(0,0,(bi%5-2)*.025),n0=o.r.p.length,RT=Rs||R;polyFill(o.r.p,R,top);if(Rs)polyFill(o.r.p,Rs,h);
+  const ring=(Q,y,hh,off)=>{const n=Q.length/2,V=[];for(let i=0;i<n;i++){const pv=(i+n-1)%n,nx2=(i+1)%n;let ex=0,ez=0;for(const[a,b2]of[[pv,i],[i,nx2]]){const dx=Q[b2*2]-Q[a*2],dz=Q[b2*2+1]-Q[a*2+1],l=Math.hypot(dx,dz)||1;ex+=dz/l;ez+=-dx/l}const l=Math.hypot(ex,ez)||1;V.push(Q[i*2]+ex/l*off,Q[i*2+1]+ez/l*off)}
+   for(let i=0;i<n;i++){const j=(i+1)%n;o.r.p.push(V[i*2],y,V[i*2+1],V[j*2],y+hh,V[j*2+1],V[j*2],y,V[j*2+1],V[i*2],y,V[i*2+1],V[i*2],y+hh,V[i*2+1],V[j*2],y+hh,V[j*2+1])}};
+  if(h<90&&!ft){ring(RT,h,.9,0);if(Rs)ring(R,top,.9,0)}if(h<60&&!Rs&&type!==3&&!ft)ring(R,top-.55,.5,.3);
   for(let k=n0;k<o.r.p.length;k+=3)o.r.c.push(rc.r,rc.g,rc.b);
-  if(A>50&&h<120&&!ft){const bb=[1e9,1e9,-1e9,-1e9];for(let i=0;i<R.length;i+=2){bb[0]=Math.min(bb[0],R[i]);bb[1]=Math.min(bb[1],R[i+1]);bb[2]=Math.max(bb[2],R[i]);bb[3]=Math.max(bb[3],R[i+1])}
-   const n=Math.min(7,A/120|0)+1;for(let k=0;k<n*3&&k<20;k++){const x=bb[0]+R0()*(bb[2]-bb[0]),z=bb[1]+R0()*(bb[3]-bb[1]);if(!inPoly(R,x,z)||!inPoly(R,x+1.2,z)||!inPoly(R,x-1.2,z)||!inPoly(R,x,z+1.2)||!inPoly(R,x,z-1.2))continue;
+  if(A>120&&h<100&&!ft&&inPoly(RT,cx,cz)&&inPoly(RT,cx+2,cz+2)&&inPoly(RT,cx-2,cz-2))PH.push([cx,h,cz,R0()*PI,1,1,rc.getHex()]);
+  if(A>50&&h<120&&!ft){const bb=[1e9,1e9,-1e9,-1e9];for(let i=0;i<RT.length;i+=2){bb[0]=Math.min(bb[0],RT[i]);bb[1]=Math.min(bb[1],RT[i+1]);bb[2]=Math.max(bb[2],RT[i]);bb[3]=Math.max(bb[3],RT[i+1])}
+   const n=Math.min(7,A/120|0)+1;for(let k=0;k<n*3&&k<20;k++){const x=bb[0]+R0()*(bb[2]-bb[0]),z=bb[1]+R0()*(bb[3]-bb[1]);if(!inPoly(RT,x,z)||!inPoly(RT,x+1.2,z)||!inPoly(RT,x-1.2,z)||!inPoly(RT,x,z+1.2)||!inPoly(RT,x,z-1.2))continue;
     const q=R0();if(q<.7)roofT.push([x,h,z,R0()*PI]);else if(q<.85&&A>150)tank.push([x,h,z]);else ant.push([x,h,z]);if(roofT.length>9000)break}}});
  // Toldos inclinados (cada uno de su color) y letreros de konbini sobre la entrada
  if(AW.length){const m=new THREE.InstancedMesh(new THREE.BoxGeometry(3.3,.06,1.25),new THREE.MeshLambertMaterial({color:0xffffff}),AW.length),M=new THREE.Matrix4(),q=new THREE.Quaternion(),e=new THREE.Euler(0,0,0,"YXZ"),cc=new THREE.Color();
@@ -105,7 +121,11 @@ function buildBuildings(){const CH=500,ch=new Map(),c=new THREE.Color(),R0=rng(3
    g.fillStyle="#1d5fb8";g.font="bold 30px 'Yu Gothic','Meiryo',sans-serif";g.textAlign="center";g.fillText("サクラマート  24H",256,32)}),km=new THREE.MeshLambertMaterial({map:t,emissiveMap:t,emissive:0xffffff,emissiveIntensity:.3});NM.sign.push(km);
   const ks=inst(new THREE.BoxGeometry(1,.9,.25).translate(0,.45,0),km,KS,0),o3=new THREE.Object3D();KS.forEach((k,i)=>{o3.position.set(k[0],k[1],k[2]);o3.rotation.set(0,k[3],0);o3.scale.set(k[4],1,1);o3.updateMatrix();ks.setMatrixAt(i,o3.matrix)});ks.instanceMatrix.needsUpdate=true}
  for(const o of ch.values()){o.f.forEach((s,t)=>s.p.length&&mkMesh(s.p,t===5?konM:t===4?shopM:mats[t],0,{normal:s.n,uv:s.u,color:s.c},2));
-  if(o.r.p.length)mkMesh(o.r.p,new THREE.MeshLambertMaterial({vertexColors:true,side:THREE.DoubleSide}),0,{color:o.r.c},2)}
+  if(o.r.p.length)mkMesh(o.r.p,new THREE.MeshLambertMaterial({vertexColors:true,side:THREE.DoubleSide}),0,{color:o.r.c},2);
+  // Detalle cercano (balcones): solo visible a menos de 260 m (ver lodUpdate)
+  if(o.d.length){const cxk=(Math.floor(o.k/100)+.5)*CH,czk=((o.k%100)+.5)*CH,a=mkMesh(o.d,BALM||(BALM=new THREE.MeshLambertMaterial({color:0xd4d0c8,side:THREE.DoubleSide})),0,null,2),b=mkMesh(o.rl,RAILM||(RAILM=new THREE.MeshLambertMaterial({color:0x9aa1a8,transparent:true,opacity:.6,side:THREE.DoubleSide,depthWrite:false})));
+   DET.push({m:[a,b],x:cxk,z:czk})}}
+ inst(new THREE.BoxGeometry(3.4,2.8,3.4).translate(0,1.4,0),new THREE.MeshLambertMaterial({color:0xffffff}),PH,1,true);
  const gm=new THREE.MeshLambertMaterial({color:0xc9cbcc});
  inst(new THREE.BoxGeometry(1.2,.8,.8).translate(0,.4,0),gm,roofT,1);inst(new THREE.CylinderGeometry(1.1,1.1,2.4,10).translate(0,2.4,0),new THREE.MeshLambertMaterial({color:0x9db0bf}),tank,1,true);
  inst(new THREE.CylinderGeometry(.04,.06,5,4).translate(0,2.5,0),new THREE.MeshLambertMaterial({color:0x777b80}),ant,2);
