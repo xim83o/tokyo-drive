@@ -23,6 +23,15 @@ function thump(v){if(!AC||mute)return;const t=AC.currentTime,s=AC.createBufferSo
 function hornSnd(dist,p){if(!AC||mute)return;const v=.22*Math.max(0,1-dist/70);if(v<.01)return;const t=AC.currentTime,f=AC.createBiquadFilter(),g=AC.createGain();
  f.type="lowpass";f.frequency.value=1800;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+.02);g.gain.setValueAtTime(v,t+.3);g.gain.linearRampToValueAtTime(0,t+.36);
  for(const fr of[392,494]){const o=AC.createOscillator();o.type="square";o.frequency.value=fr*(p||1);o.connect(f);o.start(t);o.stop(t+.4)}f.connect(g);g.connect(aMaster)}
+// Lluvia generada por código: ruido filtrado continuo más gotas sueltas; dentro del coche suena más apagada y se oyen las gotas en el techo
+let rainG=null,rainF=null;
+function rainAudio(){if(!AC)return;if(!rainG){const s=AC.createBufferSource(),hp=AC.createBiquadFilter();s.buffer=nb;s.loop=true;s.playbackRate.value=.7;hp.type="highpass";hp.frequency.value=350;rainF=AC.createBiquadFilter();rainF.type="lowpass";rainF.frequency.value=3000;
+  rainG=AC.createGain();rainG.gain.value=0;s.connect(hp);hp.connect(rainF);rainF.connect(rainG);rainG.connect(aMaster);s.start()}
+ const t=AC.currentTime,inside=mode===3&&state==="play",v=mute?0:WEA.rain*(inside?.16:.22);rainG.gain.setTargetAtTime(v,t,.3);rainF.frequency.setTargetAtTime(inside?1100:3200,t,.3);
+ if(!mute&&WEA.rain>.1&&Math.random()<WEA.rain*(inside?.5:.25)){const b=AC.createBufferSource(),f=AC.createBiquadFilter(),g=AC.createGain();b.buffer=nb;f.type="bandpass";f.frequency.value=inside?900+Math.random()*600:2500+Math.random()*3000;f.Q.value=4;
+  g.gain.setValueAtTime(WEA.rain*(inside?.18:.06),t);g.gain.exponentialRampToValueAtTime(.001,t+.05);b.connect(f);f.connect(g);g.connect(aMaster);b.start(t,Math.random());b.stop(t+.06)}}
+function thunderSnd(v){if(!AC||mute)return;const t=AC.currentTime,s=AC.createBufferSource(),f=AC.createBiquadFilter(),g=AC.createGain();s.buffer=nb;s.loop=true;s.playbackRate.value=.35;f.type="lowpass";f.frequency.setValueAtTime(380,t);f.frequency.exponentialRampToValueAtTime(90,t+4);
+ g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v*.9,t+.15);g.gain.exponentialRampToValueAtTime(v*.3,t+1.2);g.gain.exponentialRampToValueAtTime(.001,t+5);s.connect(f);f.connect(g);g.connect(aMaster);s.start(t);s.stop(t+5.2)}
 function audio(off){if(!AC)return;const t=AC.currentTime,on=!off&&!mute,sp=Math.hypot(vx,vz),vf=vx*Math.sin(h)+vz*Math.cos(h);
  const sq=Math.max(slipV>3.5&&sp>6?Math.min(1,(slipV-3)/6):0,brkL>.6&&vf>12?.5:0),f=(900+rpmD*(cur.rl-900))/30;
  eo.frequency.setTargetAtTime(f,t,.03);eo2.frequency.setTargetAtTime(f*.5,t,.03);eo3.frequency.setTargetAtTime(f*2,t,.03);

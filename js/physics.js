@@ -11,7 +11,8 @@ function step(dt,i){thrL=i.t;brkL=i.b;stV+=(i.s-stV)*Math.min(1,dt*10);
  if(!i.t&&!i.b){const d=(.12*Math.abs(vf)+1.5)*dt;vf=Math.abs(vf)<d?0:vf-Math.sign(vf)*d}
  if(i.hb)vf*=1-.15*dt;
  const sa=Math.abs(i.s),hs=Math.min(1,sp/15);
- let tg=cur.gr*(1-hs*sa*(.4*i.t*cur.dr+.22*i.b));if(i.hb)tg=cur.gr*.25;
+ // Con el asfalto mojado hay menos agarre (hasta un 25 % menos)
+ const gw=cur.gr*(1-.25*WEA.wet);let tg=gw*(1-hs*sa*(.4*i.t*cur.dr+.22*i.b));if(i.hb)tg=gw*.25;
  rg+=(tg-rg)*Math.min(1,dt*(tg<rg?7:6));
  slipV=Math.abs(vl);const vl0=vl;vl*=Math.exp(-rg*dt);vf=(vf>=0?1:-1)*Math.sqrt(vf*vf+(vl0*vl0-vl*vl)*.9);vf=Math.max(-14,Math.min(cur.vm,vf));
  vx=fx*vf+rx*vl;vz=fz*vf+rz*vl;const sv=Math.hypot(vx,vz);if(sv>cur.vm){vx*=cur.vm/sv;vz*=cur.vm/sv}
