@@ -70,7 +70,8 @@ function envUpdate(dt){HOUR=hourNow();const e=Math.sin((HOUR-6)/12*PI),day=Math.
  // Luces nocturnas
  for(const m of NM.win)if(m.envMap)m.reflectivity=.25*(1-NF*.85);
  for(const m of NM.int){const s=m.userData.sh;if(s){s.uniforms.uNight.value=NF;s.uniforms.uSkyT.value.copy(SKYU.top.value);s.uniforms.uSkyH.value.copy(SKYU.hor.value)}}for(const m of NM.sign)m.emissiveIntensity=.12+NF*1.1;
- if(NM.lampHead)NM.lampHead.emissiveIntensity=NF*2;if(NM.vend)NM.vend.emissiveIntensity=.15+NF*.85;
+ if(NM.lampHead)NM.lampHead.emissiveIntensity=NF*2;if(NM.glow)NM.glow.opacity=NF*.9;
+ if(ROADMAT)ROADMAT.lightMapIntensity=NF*1.5;if(GROUNDMAT)GROUNDMAT.lightMapIntensity=NF*1.3;if(NM.vend)NM.vend.emissiveIntensity=.15+NF*.85;
  if(NM.head)NM.head.emissiveIntensity=.2+NF*1.8;if(NM.tail)NM.tail.emissiveIntensity=.25+NF*1.3;
  if(towerMat)towerMat.emissive.copy(PAL.tw).multiplyScalar(NF*.55);for(const m of NM.ledT)m.color.setScalar(.75+NF*.25);
  if(ROADMAT){ROADMAT.specular.setScalar(.05+WEA.wet*.75);ROADMAT.shininess=30+WEA.wet*70;ROADMAT.color.setScalar(1-WEA.wet*.35)}
@@ -78,7 +79,7 @@ function envUpdate(dt){HOUR=hourNow();const e=Math.sin((HOUR-6)/12*PI),day=Math.
  // Farolas más cercanas al jugador con luz de verdad (se reparten cada 0,3 s)
  lampT+=dt;if(lampT>.3&&LPL.length&&LAMPS.length){lampT=0;const tx=px,tz=pz,best=[];for(let i=0;i<LAMPS.length;i+=3){const d=(LAMPS[i]-tx)**2+(LAMPS[i+2]-tz)**2;if(best.length<LPL.length||d<best[best.length-1][0]){best.push([d,i]);best.sort((a,b)=>a[0]-b[0]);if(best.length>LPL.length)best.pop()}}
   LPL.forEach((l,k)=>{const b=best[k];if(b)l.position.set(LAMPS[b[1]],LAMPS[b[1]+1],LAMPS[b[1]+2])})}
- for(const l of LPL)l.intensity=NF*1.6;
+ for(const l of LPL)l.intensity=NF*.75;
  // Pantallas LED: se redibujan unas 10 veces por segundo
  ledT+=dt;if(ledT>.1&&NM.led.length){ledT=0;const tm=performance.now()/1000;for(const l of NM.led){drawAd(l.g,320,180,tm,l.ph);l.t.needsUpdate=true}}
  FOGF=FOGQ*(1-rn*.5)}

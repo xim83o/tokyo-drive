@@ -29,8 +29,8 @@
 Pedido por el usuario (todo con permiso ya dado; descargas permitidas: partes de edificio de OSM y un sonido de lluvia CC0 < 3 MB):
 - [x] 1. Carreteras: no deben verse a través de aceras/edificios (quitar el truco depthFunc Always: suelo con huecos en la calzada por marching squares), bordillos alineados con el borde real, calles que no entren en edificios (estrechar el tramo). Quitar el edificio de OSM que atraviesa la Torre de Tokio.
 - [x] 2. Iluminación: quitar los círculos de las farolas; luz real (PointLights de las farolas más cercanas + mapa de luz suave en el suelo), faros del coche que iluminen la carretera sin manchas en árboles/coches, cristales que no reflejen el cielo de día por la noche, bloom + FXAA + corrección de color (postproceso de three r128 desde jsdelivr).
-- [ ] 3. Ventanas: interior mapping (habitaciones con profundidad), cristal con reflejo, marcos, cortinas; de noche solo algunas encendidas.
-- [ ] 4. Tiendas: escaparates en 3D, toldos salientes, interiores iluminados, konbinis inventados y más letreros (el usuario no vio ninguna tienda).
+- [x] 3. Ventanas: interior mapping (habitaciones con profundidad), cristal con reflejo, marcos, cortinas; de noche solo algunas encendidas.
+- [x] 4. Tiendas: escaparates en 3D, toldos salientes, interiores iluminados, konbinis inventados y más letreros (el usuario no vio ninguna tienda).
 - [ ] 5. Árboles: varias especies con copas de varios volúmenes (que no parezcan "un png pegado").
 - [ ] 6. Edificios con volumen: escalonados (base + torre), cornisas, balcones en 3D (solo cerca), casetas en tejados; partes de edificio reales de OSM (building:part).
 - [ ] 7. Lluvia: aleatoria ~1 de cada 5 días de juego, calles mojadas con reflejos y charcos, salpicaduras, menos agarre, sonido (CC0), tormentas con rayos a veces, gotas en pantalla SOLO en la cámara interior.

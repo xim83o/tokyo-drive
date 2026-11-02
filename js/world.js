@@ -91,8 +91,8 @@ async function loadWorld(){
   for(let i=0;i<p.length;i+=2){const s=i/2,hw=Math.min(r.hw[Math.max(0,s-1)],r.hw[Math.min(r.hw.length-1,s)]);for(let k=0;k<12;k++){const a0=k/12*PI*2,a1=(k+1)/12*PI*2;flatTri(ra,0,p[i],p[i+1],p[i]+Math.cos(a0)*hw,p[i+1]+Math.sin(a0)*hw,p[i]+Math.cos(a1)*hw,p[i+1]+Math.sin(a1)*hw)}}});
  const asph=canvasTex(256,256,(g,w,h)=>{g.fillStyle="#3a3c42";g.fillRect(0,0,w,h);const r=rng(5);for(let i=0;i<9000;i++){const v=44+r()*44|0;g.fillStyle=`rgb(${v},${v},${v+3})`;g.fillRect(r()*w,r()*h,1+r()*1.6,1+r()*1.6)}
   g.globalAlpha=.08;for(let i=0;i<30;i++){g.fillStyle=r()<.5?"#000":"#888";g.beginPath();g.ellipse(r()*w,r()*h,8+r()*30,4+r()*14,r()*PI,0,7);g.fill()}g.globalAlpha=1},true);
- ROADMAT=new THREE.MeshPhongMaterial({map:asph,specularMap:puddleTex(),specular:0x000000,shininess:70});
- const rg=mkMesh(ra,ROADMAT,0,null,1);
+ ROADMAT=new THREE.MeshPhongMaterial({map:asph,specularMap:puddleTex(),specular:0x000000,shininess:70,lightMap:LIGHTMAP,lightMapIntensity:0});
+ const rg=mkMesh(ra,ROADMAT,0,null,1);worldUV2(rg);
  {const q=rg.geometry.attributes.position.array,uv=new Float32Array(q.length/3*2);for(let i=0,j=0;i<q.length;i+=3,j+=2){uv[j]=q[i]/7;uv[j+1]=q[i+2]/7}rg.geometry.setAttribute("uv",new THREE.BufferAttribute(uv,2))}
  buildGround();
  // Vías de tren: a ras de suelo bloquean el paso salvo en los pasos a nivel; las elevadas van sobre pilares
@@ -108,7 +108,10 @@ async function loadWorld(){
   inst(new THREE.CylinderGeometry(.8,.8,7.5,8).translate(0,3.75,0),new THREE.MeshLambertMaterial({color:0x8e9096}),pil,0,true);for(const q of pil)addCirc(q[0],q[2],.8)}
  buildBuildings();buildTower();decorate();drawMapImg();ready=true}
 
-let ROADMAT=null;
+let ROADMAT=null,GROUNDMAT=null;
+// Mapa de luz nocturna de todas las farolas (1 píxel ≈ 1,2 m): se dibuja en props.js y se suma al asfalto y a las aceras
+const LMC=document.createElement("canvas");LMC.width=LMC.height=2048;const LIGHTMAP=new THREE.CanvasTexture(LMC);
+function worldUV2(m){const q=m.geometry.attributes.position.array,uv=new Float32Array(q.length/3*2);for(let i=0,j=0;i<q.length;i+=3,j+=2){uv[j]=Math.min(1,Math.max(0,q[i]/W));uv[j+1]=1-Math.min(1,Math.max(0,q[i+2]/W))}m.geometry.setAttribute("uv2",new THREE.BufferAttribute(uv,2))}
 // Charcos: zonas del asfalto que brillan más cuando está mojado (mapa especular)
 function puddleTex(){return canvasTex(256,256,(g,w,h)=>{g.fillStyle="#3a3a3a";g.fillRect(0,0,w,h);const r=rng(17);for(let i=0;i<14;i++){const x=r()*w,y=r()*h,rx=10+r()*40,ry=6+r()*22,gr=g.createRadialGradient(x,y,0,x,y,rx);
  gr.addColorStop(0,"#fff");gr.addColorStop(.7,"#ddd");gr.addColorStop(1,"rgba(58,58,58,0)");g.fillStyle=gr;g.save();g.translate(x,y);g.scale(1,ry/rx);g.translate(-x,-y);g.beginPath();g.arc(x,y,rx,0,7);g.fill();g.restore()}},true)}
@@ -139,8 +142,7 @@ function buildGround(){const GS=MOBILE?4:3,N=Math.ceil(W/GS)+1,SD=new Float32Arr
   for(const q of MAP.green){g.fillStyle=["#4f7d45","#3f6c3a","#5b8f4d"][q.k];poly(q.p)}g.fillStyle="#2d5878";for(const R of MAP.water)poly(R);
   g.strokeStyle="#2d5878";g.lineCap=g.lineJoin="round";for(const q of MAP.rivers){g.lineWidth=q.w*s;g.beginPath();g.moveTo(q.p[0]*s,q.p[1]*s);for(let i=2;i<q.p.length;i+=2)g.lineTo(q.p[i]*s,q.p[i+1]*s);g.stroke()}});
  gt.wrapS=gt.wrapT=THREE.ClampToEdgeWrapping;
- const m=mkMesh(pos,new THREE.MeshLambertMaterial({map:gt}),0,null,1),q=m.geometry.attributes.position.array,uv=new Float32Array(q.length/3*2);
- for(let i=0,j=0;i<q.length;i+=3,j+=2){uv[j]=Math.min(1,Math.max(0,q[i]/W));uv[j+1]=1-Math.min(1,Math.max(0,q[i+2]/W))}m.geometry.setAttribute("uv",new THREE.BufferAttribute(uv,2));
+ GROUNDMAT=new THREE.MeshLambertMaterial({map:gt,lightMap:LIGHTMAP,lightMapIntensity:0});const m=mkMesh(pos,GROUNDMAT,0,null,1);worldUV2(m);m.geometry.setAttribute("uv",m.geometry.attributes.uv2);
  mkMesh(cb,new THREE.MeshLambertMaterial({color:0xa8aaae,side:THREE.DoubleSide}),0,null,1)}
 
 // Imagen del mapa (1 píxel = 1 m) para el mapa de aparición y el fondo del minimapa

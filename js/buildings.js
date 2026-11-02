@@ -75,8 +75,8 @@ function buildBuildings(){const CH=500,ch=new Map(),c=new THREE.Color(),R0=rng(3
   if(A<0){const q=new Float32Array(R.length);for(let i=0;i<R.length;i+=2){q[i]=R[R.length-2-i];q[i+1]=R[R.length-1-i]}R=q}A=Math.abs(A)/2;
   let cx=0,cz=0;for(let i=0;i<R.length;i+=2){cx+=R[i];cz+=R[i+1]}cx/=R.length/2;cz/=R.length/2;
   const o=get(Math.floor(cx/CH)*100+Math.floor(cz/CH)),h=b.h,r=R0(),ft=b.k===2;
-  const type=ft?3:h>70?3:h>25?(r<.65?0:r<.85?1:3):(r<.5?1:r<.85?2:0),s=o.f[type],uo=R0(),vo=Math.floor(R0()*4)/4;
-  c.set(type===3?0xffffff:b.c!==undefined?b.c:BCOL[bi%BCOL.length]);const sc2=new THREE.Color(1,1,1);
+  const type=ft?0:h>70?3:h>25?(r<.65?0:r<.85?1:3):(r<.5?1:r<.85?2:0),s=o.f[type],uo=R0(),vo=Math.floor(R0()*4)/4;
+  c.set(ft?0xf2f2ef:type===3?0xffffff:b.c!==undefined?b.c:BCOL[bi%BCOL.length]);const sc2=new THREE.Color(1,1,1);
   // Konbini: edificio pequeño junto a la calle (como mucho 40 en el mapa)
   const isK=!ft&&A>70&&A<600&&h<25&&kon<40&&R0()<.07;let kd=false;
   let per=0;for(let i=0;i<R.length;i+=2){const j=(i+2)%R.length,ax=R[i],az=R[i+1],bx=R[j],bz=R[j+1],L=Math.hypot(bx-ax,bz-az);if(L<.05)continue;const nx=(bz-az)/L,nz=-(bx-ax)/L,u0=per/14.4+uo,u1=(per+L)/14.4+uo;per+=L;
