@@ -1,6 +1,6 @@
 // Mobiliario urbano: árboles (OSM, parques y aceras), farolas con su charco de luz nocturno, señales de velocidad,
 // máquinas expendedoras y postes eléctricos con cables (muy típicos de las calles pequeñas de Tokio)
-let lampN=0;
+let lampN=0;const LAMPS=[];
 function decorate(){const tr=[],lp=[],sg=[],vm=[],up=[],wires=[],rnd=rng(11),TMAX=MOBILE?1800:3500;
  const free=(x,z,m)=>x>5&&z>5&&x<W-5&&z<W-5&&roadAt(x,z)<0&&!blockedAt(x,z,m);
  const tree=(x,z)=>{if(tr.length<TMAX&&free(x,z,.8)){tr.push([x,z,.8+rnd()*.5,rnd()*PI]);addCirc(x,z,.35)}};
@@ -20,6 +20,8 @@ function decorate(){const tr=[],lp=[],sg=[],vm=[],up=[],wires=[],rnd=rng(11),TMA
    if(free(x,z,.2)){sg.push([x,CURB,z,Math.atan2(ux,uz)+PI,r.s]);addCirc(x,z,.12)}}}
  for(const g of MAP.green){if(g.k===2)continue;const R=g.p,b=[1e9,1e9,-1e9,-1e9];for(let i=0;i<R.length;i+=2){b[0]=Math.min(b[0],R[i]);b[1]=Math.min(b[1],R[i+1]);b[2]=Math.max(b[2],R[i]);b[3]=Math.max(b[3],R[i+1])}
   const n=Math.min(250,(b[2]-b[0])*(b[3]-b[1])/(g.k?140:380));for(let k=0;k<n;k++){const x=b[0]+rnd()*(b[2]-b[0]),z=b[1]+rnd()*(b[3]-b[1]);if(inPoly(R,x,z))tree(x,z)}}
+ // Sin árboles pegados a una farola (la bombilla quedaría dentro de la copa)
+ for(let i=tr.length-1;i>=0;i--){const t=tr[i];for(const l of lp){const hx=l[0]+Math.sin(l[3])*1.5,hz=l[2]+Math.cos(l[3])*1.5;if((t[0]-hx)**2+(t[1]-hz)**2<30){tr.splice(i,1);break}}}
  // Árboles: la mitad "extra" solo se ve en calidad alta o ultra
  const tc=[0x3f7a3a,0x4f8a3f,0x356b35,0x5e9447],half=[tr.filter((t,i)=>i%2===0),tr.filter((t,i)=>i%2===1)];
  half.forEach((h,k)=>{inst(new THREE.CylinderGeometry(.16,.24,2.6,6).translate(0,1.3+CURB,0),new THREE.MeshLambertMaterial({color:0x5a4332}),h.map(t=>[t[0],0,t[1],t[3],t[2]]),k?2:0,true);
@@ -27,10 +29,8 @@ function decorate(){const tr=[],lp=[],sg=[],vm=[],up=[],wires=[],rnd=rng(11),TMA
  const steel=new THREE.MeshLambertMaterial({color:0x6d7178});
  inst(new THREE.CylinderGeometry(.08,.11,7,6).translate(0,3.5,0),steel,lp,0,true);inst(new THREE.BoxGeometry(.12,.12,1.6).translate(0,6.9,.75),steel,lp,0);
  NM.lampHead=new THREE.MeshLambertMaterial({color:0xfff6d8,emissive:0xffe2a8,emissiveIntensity:0});inst(new THREE.BoxGeometry(.35,.12,.6).translate(0,6.8,1.5),NM.lampHead,lp,0);lampN=lp.length;
- // Charco de luz bajo cada farola (solo de noche)
- const pool=canvasTex(64,64,(g)=>{const gr=g.createRadialGradient(32,32,0,32,32,32);gr.addColorStop(0,"rgba(255,214,150,1)");gr.addColorStop(.5,"rgba(255,190,120,.45)");gr.addColorStop(1,"rgba(255,180,110,0)");g.fillStyle=gr;g.fillRect(0,0,64,64)});
- NM.pool=new THREE.MeshBasicMaterial({map:pool,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,opacity:0});
- const pm=inst(new THREE.PlaneGeometry(14,14).rotateX(-PI/2).translate(0,.05,1.5),NM.pool,lp.map(l=>[l[0],CURB,l[2],l[3]]),0);if(pm){pm.renderOrder=1;pm.receiveShadow=false}
+ // Posición de cada bombilla: las más cercanas al jugador dan luz real (env.js)
+ for(const l of lp)LAMPS.push(l[0]+Math.sin(l[3])*1.5,6.5+CURB,l[2]+Math.cos(l[3])*1.5);
  inst(new THREE.CylinderGeometry(.04,.04,2.6,6).translate(0,1.3,0),new THREE.MeshLambertMaterial({color:0x9aa0a8}),sg.map(s=>s.slice(0,4)),0);
  for(const v of[...new Set(sg.map(s=>s[4]))]){const t=canvasTex(64,64,(g)=>{g.fillStyle="#fff";g.beginPath();g.arc(32,32,30,0,7);g.fill();g.strokeStyle="#d8232a";g.lineWidth=8;g.beginPath();g.arc(32,32,26,0,7);g.stroke();
    g.fillStyle="#1d4fa0";g.font="bold 26px system-ui";g.textAlign="center";g.textBaseline="middle";g.fillText(v,32,34)});

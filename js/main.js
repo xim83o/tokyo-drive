@@ -1,5 +1,5 @@
 // Bucle principal: física, cámaras, cinemáticas AFK, ambiente y render
-function resize(){rd.setSize(innerWidth,innerHeight,false);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix()}
+function resize(){rd.setSize(innerWidth,innerHeight,false);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();if(typeof postSize==="function")postSize()}
 addEventListener("resize",resize);resize();
 let last=performance.now(),t0=0;const LK=new THREE.Vector3();
 // La cámara no atraviesa paredes: si entre el coche y la cámara hay un edificio, se acerca al coche
@@ -30,6 +30,6 @@ function loop(n){requestAnimationFrame(loop);const dt=Math.min(.05,(n-last)/1e3)
   cam.fov=fv;cam.updateProjectionMatrix();mini()}
  else{audio(true);t0+=dt*.1;sc.fog.far=FOGF;sc.fog.near=FOGF*.2;
   if(spawned){cam.position.set(px+Math.sin(t0)*220,90,pz+Math.cos(t0)*220);cam.lookAt(px,20,pz)}else{cam.position.set(TX+Math.sin(t0)*420,140,TZ+Math.cos(t0)*420);cam.lookAt(TX,110,TZ)}}
- envUpdate(dt);rd.render(sc,cam)}
+ envUpdate(dt);if(typeof weather==="function")weather(dt);renderFrame()}
 loop(last);
 loadWorld().then(()=>{initTraffic();applyQuality();ld.hidden=true}).catch(e=>{console.error(e);ld.textContent="No se pudo cargar el mapa. Ábrelo con jugar.bat (necesita el servidor local)."});

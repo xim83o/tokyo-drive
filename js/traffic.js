@@ -11,7 +11,7 @@ function lanePos(L,s,o){const c=L.cum;s=Math.max(0,Math.min(L.len,s));let i=o&&o
 function mkLane(pts,a,b,r,off,eid){const n=pts.length/2,p=new Float32Array(pts.length);
  for(let i=0;i<n;i++){const i0=Math.max(0,i-1),i1=Math.min(n-1,i+1),dx=pts[i1*2]-pts[i0*2],dz=pts[i1*2+1]-pts[i0*2+1],l=Math.hypot(dx,dz)||1;p[i*2]=pts[i*2]+dz/l*off;p[i*2+1]=pts[i*2+1]-dx/l*off}
  const cum=[0];for(let i=1;i<n;i++)cum.push(cum[i-1]+Math.hypot(p[i*2]-p[i*2-2],p[i*2+1]-p[i*2-1]));
- const L={p,cum,len:cum[n-1],from:a,to:b,w:r.w,t:r.t,o:r.o,vmax:r.s?r.s/3.6:SPD[r.t],eid,rev:null,grp:0,internal:false,c:Float32Array.from(pts),off};LANES.push(L);GN[a].out.push(L);GN[b].inc.push(L);return L}
+ const L={p,cum,len:cum[n-1],from:a,to:b,w:r.w,t:r.t,o:r.o,ri:MAP.roads.indexOf(r),vmax:r.s?r.s/3.6:SPD[r.t],eid,rev:null,grp:0,internal:false,c:Float32Array.from(pts),off};LANES.push(L);GN[a].out.push(L);GN[b].inc.push(L);return L}
 function initTraffic(){const use=new Map(),node=new Map();
  for(const r of MAP.roads)r.n.forEach((id,i)=>use.set(id,(use.get(id)||0)+(i===0||i===r.n.length-1?2:1)));
  const gn=(id,x,z)=>{let k=node.get(id);if(k===undefined){k=GN.length;node.set(id,k);GN.push({x,z,out:[],inc:[],cl:-1,r:0,e:new Set(),busy:0})}return k};
@@ -37,7 +37,9 @@ function buildMarkings(){const wa=[],ya=[],done=new Set();
  const C=L=>{if(!L.cc){const c=L.c,cc=[0];for(let i=2;i<c.length;i+=2)cc.push(cc[cc.length-1]+Math.hypot(c[i]-c[i-2],c[i+1]-c[i-1]));L.cc=cc}return L.cc};
  const at=(L,s,o)=>{const c=L.c,cc=C(L);let i=0;while(i<cc.length-2&&cc[i+1]<s)i++;const t=Math.max(0,Math.min(1,(s-cc[i])/((cc[i+1]-cc[i])||1))),dx=c[i*2+2]-c[i*2],dz=c[i*2+3]-c[i*2+1],l=Math.hypot(dx,dz)||1;
   return[c[i*2]+dx*t+dz/l*o,c[i*2+1]+dz*t-dx/l*o]};
- const line=(a,L,o,s0,s1,w,dash,gap)=>{for(let s=s0;s<s1;s+=dash+gap){const e=Math.min(s1,s+dash);for(let q=s;q<e-.01;q+=3){const q2=Math.min(e,q+3),A=at(L,q,o),B=at(L,q2,o);quad(a,A[0],A[1],B[0],B[1],w/2,.012)}}};
+ // Solo se pinta donde la calzada es de esta calle (ni fuera del asfalto ni encima de otra calle que se cruza o se une)
+ const ok=(L,A,B)=>onlyRoad(A[0],A[1],L.ri,.2)&&onlyRoad(B[0],B[1],L.ri,.2);
+ const line=(a,L,o,s0,s1,w,dash,gap)=>{for(let s=s0;s<s1;s+=dash+gap){const e=Math.min(s1,s+dash);for(let q=s;q<e-.01;q+=3){const q2=Math.min(e,q+3),A=at(L,q,o),B=at(L,q2,o);if(ok(L,A,B))quad(a,A[0],A[1],B[0],B[1],w/2,.015)}}};
  for(const L of LANES){const len=C(L)[C(L).length-1],hw=L.w/2,g0=GN[L.from],g1=GN[L.to],s0=g0.r+.5,s1=len-g1.r-.5;
   if(!done.has(L.eid)&&s1>s0){done.add(L.eid);
    if(!L.o){if(L.t<=1)line(ya,L,0,s0,s1,.15,1e9,0);else if(L.t===2)line(wa,L,0,s0,s1,.15,1e9,0);else if(L.t===3)line(wa,L,0,s0,s1,.15,3,4.5);
@@ -46,10 +48,10 @@ function buildMarkings(){const wa=[],ya=[],done=new Set();
    for(const sg of[-1,1])line(wa,L,sg*(hw-.35),s0-.5,s1+.5,.15,1e9,0)}
   // Línea de detención (mitad izquierda o toda la calle si es de sentido único) y paso de cebra antes del cruce con semáforo
   if(g1.mt===undefined){g1.mt=9;for(const q of g1.inc.concat(g1.out))g1.mt=Math.min(g1.mt,q.t)}
-  if(g1.cl>=0||g1.r>0&&L.t>g1.mt){const sl=len-g1.r+.3,A=at(L,sl,L.o?-hw+.3:0),B=at(L,sl,hw-.3);quad(wa,A[0],A[1],B[0],B[1],.25,.013)}
-  if(g1.cl>=0&&!L.internal&&len-g1.r>5){const a0=len-g1.r+1.2,a1=a0+4;for(let o=-hw+.6;o<hw-.4;o+=.9){const A=at(L,a0,o),B=at(L,a1,o);quad(wa,A[0],A[1],B[0],B[1],.22,.013)}}}
- const mm=c=>new THREE.MeshLambertMaterial({color:c,depthFunc:THREE.AlwaysDepth});
- if(wa.length){const m=mkMesh(wa,mm(0xe8e8e2),-1);m.receiveShadow=true}if(ya.length){const m=mkMesh(ya,mm(0xe8b923),-1);m.receiveShadow=true}}
+  if(g1.cl>=0||g1.r>0&&L.t>g1.mt){const sl=len-g1.r+.3;for(let o=L.o?-hw+.3:0;o<hw-.3;o+=.5){const A=at(L,sl,o),B=at(L,sl,Math.min(hw-.3,o+.5));if(onlyRoad(A[0],A[1],L.ri,.1)&&onlyRoad(B[0],B[1],L.ri,.1))quad(wa,A[0],A[1],B[0],B[1],.22,.016)}}
+  if(g1.cl>=0&&!L.internal&&len-g1.r>5){const a0=len-g1.r+1.2,a1=a0+4;for(let o=-hw+.6;o<hw-.4;o+=.9){const A=at(L,a0,o),B=at(L,a1,o);if(ok(L,A,B))quad(wa,A[0],A[1],B[0],B[1],.22,.016)}}}
+ const mm=c=>new THREE.MeshLambertMaterial({color:c,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-6});
+ if(wa.length){const m=mkMesh(wa,mm(0xe2e2dc));m.receiveShadow=true}if(ya.length){const m=mkMesh(ya,mm(0xe0b020));m.receiveShadow=true}}
 // Ciclo de 24 s por grupo de cruces: un eje 9 s verde + 2 s ámbar, luego el otro
 function lightSt(L){const t=(TT+CLU[GN[L.to].cl].off+(L.grp?12:0))%24;return t<9?"g":t<11?"y":"r"}
 let LM=null,LIT=[];
