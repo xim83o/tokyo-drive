@@ -22,7 +22,7 @@
 - Enlace privado para jugar desde cualquier sitio: https://claude.ai/artifact/LnykPvsjA66oDMNeo9y586 (se actualiza con cada cambio).
 
 ## Pendiente (en este orden)
-1. Repositorio privado `tokyo-drive` en GitHub (falta instalar Git y GitHub CLI).
+1. HECHO: repositorio privado https://github.com/xim83o/tokyo-drive (Git = MinGit portable y GitHub CLI en %LOCALAPPDATA%\Programs, en el PATH del usuario; el instalador normal de Git falla en este PC con runtime error 217).
 2. Mapa real alrededor de la Torre de Tokio (OpenStreetMap descargado una vez a un archivo). Preparado para añadir más zonas. Autopista Shuto elevada: más adelante.
    - Hitbox ajustada a lo visible, bordillos con suspensión, parques reales, alturas inventadas si OSM no las tiene.
 3. Modelos 3D libres sin marcas (hypercar = hypercar, drift = estilo japonés…). Pedir permiso antes de cada descarga.
