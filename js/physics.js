@@ -1,4 +1,5 @@
-// Física arcade del coche y colisiones con la ciudad
+// Física arcade del coche, colisión exacta con el mapa y suspensión (bordillos)
+let bodyY=CURB,bodyV=0,pitch=0,roll=0;const WY=[CURB,CURB,CURB,CURB];
 function step(dt,i){thrL=i.t;brkL=i.b;stV+=(i.s-stV)*Math.min(1,dt*10);
  const vf0=vx*Math.sin(h)+vz*Math.cos(h),sp=Math.abs(vf0),dir=vf0>=0?1:-1,lat0=Math.abs(-vx*Math.cos(h)+vz*Math.sin(h));
  const tgt=i.s*2.1*Math.min(1,sp/5)/(1+sp/40)*(1+Math.min(.45,lat0/14))*(i.hb?1.3:1)*dir;
@@ -13,20 +14,24 @@ function step(dt,i){thrL=i.t;brkL=i.b;stV+=(i.s-stV)*Math.min(1,dt*10);
  let tg=cur.gr*(1-hs*sa*(.4*i.t*cur.dr+.22*i.b));if(i.hb)tg=cur.gr*.25;
  rg+=(tg-rg)*Math.min(1,dt*(tg<rg?7:6));
  slipV=Math.abs(vl);const vl0=vl;vl*=Math.exp(-rg*dt);vf=(vf>=0?1:-1)*Math.sqrt(vf*vf+(vl0*vl0-vl*vl)*.9);vf=Math.max(-14,Math.min(cur.vm,vf));
- vx=fx*vf+rx*vl;vz=fz*vf+rz*vl;const sv=Math.hypot(vx,vz);if(sv>cur.vm){vx*=cur.vm/sv;vz*=cur.vm/sv}px+=vx*dt;pz+=vz*dt;
- const ci=Math.floor(px/C),cj=Math.floor(pz/C);
- if(ci>=0&&cj>=0&&ci<N&&cj<N&&!park[ci*N+cj]){const lx=px-ci*C,lz=pz-cj*C;
-  if(lx>8&&lx<92&&lz>8&&lz<92){const d=[lx-8,92-lx,lz-8,92-lz],m=Math.min(...d),k=d.indexOf(m),vxo=vx,vzo=vz;
-   if(k==0){px-=m;if(vx>0)vx=0}else if(k==1){px+=m;if(vx<0)vx=0}else if(k==2){pz-=m;if(vz>0)vz=0}else{pz+=m;if(vz<0)vz=0}
-   const imp=Math.hypot(vxo-vx,vzo-vz);if(imp>3&&performance.now()-crashT>250){crashT=performance.now();thump(imp)}
-   const fr=Math.max(0,1-.9*dt);vx*=fr;vz*=fr;if(Math.hypot(vx,vz)>2&&vf>0)h+=ad(Math.atan2(vx,vz),h)*Math.min(1,dt*7)}}
- const td=Math.hypot(px-TX,pz-TZ);if(td<16){px=TX+(px-TX)/td*16;pz=TZ+(pz-TZ)/td*16;vx*=.5;vz*=.5}
- // Borde del mapa: muro invisible que frena el movimiento hacia fuera
- if(px<4||px>W-4){px=Math.max(4,Math.min(W-4,px));vx=0}if(pz<4||pz>W-4){pz=Math.max(4,Math.min(W-4,pz));vz=0}}
-// Saca de manzanas y de la torre un objeto suelto {x,z,vx,vz} (NPC desplazados); devuelve la velocidad del golpe
-function cityHit(o){let imp=0;const ci=Math.floor(o.x/C),cj=Math.floor(o.z/C);
- if(ci>=0&&cj>=0&&ci<N&&cj<N&&!park[ci*N+cj]){const lx=o.x-ci*C,lz=o.z-cj*C;
-  if(lx>8&&lx<92&&lz>8&&lz<92){const d=[lx-8,92-lx,lz-8,92-lz],m=Math.min(...d),k=d.indexOf(m);
-   if(k<2){o.x+=k?m:-m;imp=Math.abs(o.vx);o.vx*=-.3}else{o.z+=k==3?m:-m;imp=Math.abs(o.vz);o.vz*=-.3}}}
- const td=Math.hypot(o.x-TX,o.z-TZ);if(td<16){o.x=TX+(o.x-TX)/td*16;o.z=TZ+(o.z-TZ)/td*16;imp=Math.hypot(o.vx,o.vz);o.vx*=-.3;o.vz*=-.3}
- o.x=Math.max(5,Math.min(W-5,o.x));o.z=Math.max(5,Math.min(W-5,o.z));return imp}
+ vx=fx*vf+rx*vl;vz=fz*vf+rz*vl;const sv=Math.hypot(vx,vz);if(sv>cur.vm){vx*=cur.vm/sv;vz*=cur.vm/sv}
+ // Movimiento en subpasos de 0,4 m como máximo para no atravesar paredes a mucha velocidad
+ const n=Math.max(1,Math.ceil(Math.hypot(vx,vz)*dt/.4));for(let k=0;k<n;k++){px+=vx*dt/n;pz+=vz*dt/n;carHit(dt)}
+ // Borde del mapa: muro invisible (la niebla lo tapa)
+ if(px<8||px>W-8){px=Math.max(8,Math.min(W-8,px));vx=0}if(pz<8||pz>W-8){pz=Math.max(8,Math.min(W-8,pz));vz=0}
+ suspension(dt)}
+// Hitbox del coche: tres círculos del ancho del coche repartidos a lo largo, contra los bordes reales de edificios, agua, vías y postes
+const CO={x:0,z:0};
+function carHit(dt){if(!ready)return;const fx=Math.sin(h),fz=Math.cos(h),r=cur.w/2,d=cur.l/2-r;let sx=0,sz=0,nx=0,nz=0,hit=false;
+ for(const o of[-d,0,d]){CO.x=px+fx*o;CO.z=pz+fz*o;const cx=CO.x,cz=CO.z,hh=collide(CO,r);if(hh){hit=true;sx+=CO.x-cx;sz+=CO.z-cz;nx+=hh.nx;nz+=hh.nz}}
+ if(!hit)return;px+=sx;pz+=sz;const l=Math.hypot(nx,nz)||1;nx/=l;nz/=l;const vn=vx*nx+vz*nz;
+ if(vn<0){vx-=vn*nx;vz-=vn*nz;if(-vn>3&&performance.now()-crashT>250){crashT=performance.now();thump(-vn)}
+  // Roce: pierde algo de velocidad y el morro se alinea con la pared, sin rebote
+  const fr=Math.max(0,1-.9*dt);vx*=fr;vz*=fr;const vf=vx*fx+vz*fz;if(Math.hypot(vx,vz)>2&&vf>0)h+=ad(Math.atan2(vx,vz),h)*Math.min(1,dt*7)}}
+// Suspensión: cada rueda sigue la altura del suelo (calzada 0, acera +15 cm). Subir un bordillo rápido da un golpe y frena
+function suspension(dt){if(!ready)return;const c=Math.cos(h),s=Math.sin(h),hw=cur.w/2,hl=cur.l*.32,vf=vx*s+vz*c,sp=Math.abs(vf);let f=0,b=0,lt=0,rt=0;
+ for(let k=0;k<4;k++){const sx=k&1?-1:1,sz=k<2?1:-1,x=px+sx*hw*c+sz*hl*s,z=pz-sx*hw*s+sz*hl*c,t=surfH(x,z);
+  if(t>WY[k]+.05&&sp>2){const loss=Math.min(.25,.011*sp);vx*=1-loss;vz*=1-loss;bodyV+=Math.min(1.4,.045*sp);if(performance.now()-crashT>180){crashT=performance.now();thump(1.5+sp*.35)}}
+  WY[k]+=(t-WY[k])*Math.min(1,dt*30);if(sz>0)f+=WY[k];else b+=WY[k];if(sx>0)lt+=WY[k];else rt+=WY[k]}
+ bodyV+=(((f+b)/4-bodyY)*160-bodyV*13)*dt;bodyY+=bodyV*dt;
+ pitch+=((b-f)/2/(cur.l*.64)-pitch)*Math.min(1,dt*12);roll+=((lt-rt)/2/cur.w-roll)*Math.min(1,dt*12)}

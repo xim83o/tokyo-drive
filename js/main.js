@@ -4,7 +4,9 @@ addEventListener("resize",resize);resize();
 let last=performance.now(),t0=0;
 function loop(n){requestAnimationFrame(loop);const dt=Math.min(.05,(n-last)/1e3);last=n;
  if(state==="play"){const inp=input();idle=(inp.t||inp.b||Math.abs(inp.s)>.1||inp.hb||keyAct)?0:idle+dt;keyAct=0;step(dt,inp);npcs(dt);
-  car.position.set(px,0,pz);car.rotation.y=h;
+  car.position.set(px,bodyY,pz);car.rotation.set(pitch,h,roll);
+  // Niebla que se cierra al acercarse al borde del mapa (ahí hay un muro invisible)
+  const de=Math.min(px,pz,W-px,W-pz);sc.fog.far=Math.min(FOGF,90+de*2.2);sc.fog.near=sc.fog.far*.2;
   const sp=Math.hypot(vx,vz),kmh=Math.round(sp*3.6);
   gearCalc(dt);hud(kmh,gearL,rpmD);effects(dt);audio();
   const cin=idle>15;camH+=ad(h,camH)*Math.min(1,dt*(mode<2||cin?3.5:20));
@@ -17,10 +19,12 @@ function loop(n){requestAnimationFrame(loop);const dt=Math.min(.05,(n-last)/1e3)
    else if(cv2==3){cam.position.set(px+Math.sin(ca*.5)*20,26,pz+Math.cos(ca*.5)*20);cam.lookAt(px,0,pz);fv=55}
    else{const a=ca*.8+2;cam.position.set(px+Math.sin(a)*4.5,.6,pz+Math.cos(a)*4.5);cam.lookAt(px,.5,pz);fv=70}}
   else if(mode<2){const d=(mode?13:8)+sp*.04;cam.position.set(px-fx*d,(mode?5:3.2)+sp*.012,pz-fz*d);cam.lookAt(px+fx*6,1.2,pz+fz*6)}
-  else if(mode==2){cam.position.set(px+hx*1.5,1.1,pz+hz*1.5);cam.lookAt(px+hx*20,1.2,pz+hz*20)}
-  else if(mode==3){cam.position.set(px+hx*.1-Math.cos(h)*.38,cur.ey,pz+hz*.1+Math.sin(h)*.38);cam.lookAt(px+hx*20,cur.ey,pz+hz*20)}
+  else if(mode==2){cam.position.set(px+hx*1.5,1.1+bodyY,pz+hz*1.5);cam.lookAt(px+hx*20,1.2+bodyY,pz+hz*20)}
+  else if(mode==3){cam.position.set(px+hx*.1-Math.cos(h)*.38,cur.ey+bodyY,pz+hz*.1+Math.sin(h)*.38);cam.lookAt(px+hx*20,cur.ey+bodyY,pz+hz*20)}
   else{cam.up.set(fx,0,fz);cam.position.set(px,75,pz);cam.lookAt(px,0,pz);fv=55}
   cam.fov=fv;cam.updateProjectionMatrix();mini()}
- else{audio(true);t0+=dt*.1;const ax=spawned?px:TX,az=spawned?pz:TZ;cam.position.set(ax+Math.sin(t0)*220,90,az+Math.cos(t0)*220);cam.lookAt(ax,20,az)}
+ else{audio(true);t0+=dt*.1;sc.fog.far=FOGF;sc.fog.near=FOGF*.2;
+  if(spawned){cam.position.set(px+Math.sin(t0)*220,90,pz+Math.cos(t0)*220);cam.lookAt(px,20,pz)}else{cam.position.set(TX+Math.sin(t0)*420,140,TZ+Math.cos(t0)*420);cam.lookAt(TX,110,TZ)}}
  rd.render(sc,cam)}
-loop(last);
+const FOGF=sc.fog.far;loop(last);
+loadWorld().then(()=>{initTraffic();ld.hidden=true}).catch(e=>{console.error(e);ld.textContent="No se pudo cargar el mapa. Ábrelo con jugar.bat (necesita el servidor local)."});

@@ -10,7 +10,7 @@ const LOOK=[
  {bh:.5,ch:.42,cl:.42,cz:-.08,cw:.86,wg:1,rc:0xd8d8d8,ey:1.2,rr:.36},
  {bh:.42,ch:.36,cl:.36,cz:-.02,cw:.78,wg:2,rc:0x222222,ey:1.05,rr:.37},
  {bh:.52,ch:.44,cl:.4,cz:-.1,cw:.84,wg:3,rc:0xe6b800,ey:1.15,rr:.36}];
-function buildCar(k){cur=CARS[k];const o=LOOK[k];cur.ey=o.ey;if(car)sc.remove(car);car=new THREE.Group();
+function buildCar(k){cur=CARS[k];const o=LOOK[k];cur.ey=o.ey;if(car)sc.remove(car);car=new THREE.Group();car.rotation.order="YXZ";
  const {w,l}=cur,y0=.26,bt=y0+o.bh,G=0x15222f,cc=cur.c,
  bx=(a,b,c,col,x,y,z,em)=>{const m=new THREE.Mesh(new THREE.BoxGeometry(a,b,c),new THREE.MeshLambertMaterial({color:col,emissive:em||0}));m.position.set(x,y,z);car.add(m);return m};
  bx(w,o.bh,l,cc,0,y0+o.bh/2,0);

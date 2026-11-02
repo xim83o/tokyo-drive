@@ -1,6 +1,6 @@
 // Núcleo: utilidades, renderizador, escena, cámara, luces y estado del jugador
 const $=id=>document.getElementById(id);
-const N=16,C=100,W=N*C,TX=850,TZ=850,PI=Math.PI;
+const PI=Math.PI;let W=2400,TX=1200,TZ=1200;   // tamaño del mapa y posición de la Torre de Tokio (se ajustan al cargar el mapa)
 // ?movil en la dirección fuerza el modo móvil para probarlo en el PC
 const MOBILE=matchMedia("(pointer:coarse)").matches&&("ontouchstart" in window||navigator.maxTouchPoints>0)||/[?&]movil/.test(location.search);
 if(MOBILE)document.documentElement.classList.add("mobile");
@@ -9,7 +9,7 @@ const ad=(a,b)=>((a-b+PI)%(2*PI)+2*PI)%(2*PI)-PI;
 // Calidad automática: en móvil menos resolución y distancia de visión
 const rd=new THREE.WebGLRenderer({canvas:$('c'),antialias:!MOBILE});rd.setPixelRatio(Math.min(devicePixelRatio,MOBILE?1.5:2));
 const sc=new THREE.Scene();sc.background=new THREE.Color(0x9ec7ee);sc.fog=new THREE.Fog(0x9ec7ee,150,MOBILE?550:900);
-const cam=new THREE.PerspectiveCamera(65,1,.3,MOBILE?900:1500);
+const cam=new THREE.PerspectiveCamera(65,1,.3,MOBILE?650:1100);
 sc.add(new THREE.HemisphereLight(0xffffff,0x556677,.95));
 const sun=new THREE.DirectionalLight(0xffffff,.7);sun.position.set(200,400,100);sc.add(sun);
 

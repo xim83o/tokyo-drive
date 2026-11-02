@@ -13,7 +13,7 @@ function effects(dt){const vf=vx*Math.sin(h)+vz*Math.cos(h),sp=Math.hypot(vx,vz)
  if(sk>0){mAcc+=sp*dt;sT+=dt;
   const wp=sx=>[px+Math.cos(h)*sx*cur.w/2-Math.sin(h)*cur.l*.32,pz-Math.sin(h)*sx*cur.w/2-Math.cos(h)*cur.l*.32];
   if(mAcc>.9){mAcc=0;const yaw=Math.atan2(vx,vz);
-   for(const sx of[-1,1]){const q=wp(sx);mo.position.set(q[0],.07,q[1]);mo.rotation.set(-PI/2,yaw,0);mo.scale.set(1,1,1);mo.updateMatrix();mk.setMatrixAt(mi,mo.matrix);mb[mi]=now;mkk[mi]=.4+.6*sk;mi=(mi+1)%MK}}
+   for(const sx of[-1,1]){const q=wp(sx);mo.position.set(q[0],surfH(q[0],q[1])+.03,q[1]);mo.rotation.set(-PI/2,yaw,0);mo.scale.set(1,1,1);mo.updateMatrix();mk.setMatrixAt(mi,mo.matrix);mb[mi]=now;mkk[mi]=.4+.6*sk;mi=(mi+1)%MK}}
   if(sT>.04&&sk>.2){sT=0;const q=wp(Math.random()<.5?-1:1),m=SM[si];si=(si+1)%50;m.s.position.set(q[0],.4,q[1]);m.s.visible=true;m.l=0;m.o=.55*sk;m.vx=vx*.2+(Math.random()-.5);m.vy=.8+Math.random()*.6;m.vz=vz*.2+(Math.random()-.5)}}
  for(let k=0;k<MK;k++){if(mb[k]<0)continue;const t=(now-mb[k])/LIFE;
   if(t>=1){mo.scale.set(0,0,0);mo.updateMatrix();mk.setMatrixAt(k,mo.matrix);mb[k]=-99}else mk.setColorAt(k,mcol.copy(RC).lerp(BK,mkk[k]*(1-t)))}

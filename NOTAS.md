@@ -23,8 +23,13 @@
 
 ## Pendiente (en este orden)
 1. HECHO: repositorio privado https://github.com/xim83o/tokyo-drive (Git = MinGit portable y GitHub CLI en %LOCALAPPDATA%\Programs, en el PATH del usuario; el instalador normal de Git falla en este PC con runtime error 217).
-2. Mapa real alrededor de la Torre de Tokio (OpenStreetMap descargado una vez a un archivo). Preparado para añadir más zonas. Autopista Shuto elevada: más adelante.
-   - Hitbox ajustada a lo visible, bordillos con suspensión, parques reales, alturas inventadas si OSM no las tiene.
+2. HECHO (v1): mapa real de 2,4 × 2,4 km centrado en la Torre de Tokio (`data/tokyo-tower.json`).
+   - Regenerar o añadir zonas: `python -I tools/fetch_osm.py <nombre> <lat> <lon> <medio_lado_m>` y `python -I tools/osm2game.py <nombre>`; cambiar MAPNAME en js/world.js. (overpass-api.de tiene el certificado caducado; el script usa espejos.)
+   - Calles trunk/primary/secondary/tertiary (sin residential ni unclassified), aceras a +15 cm con bordillo y suspensión, colisión exacta con bordes de edificios/agua/vías/postes, edificios con planta real y ventanas (alturas inventadas si OSM no las tiene, siempre iguales), parques, agua, vías (las elevadas sobre pilares), árboles, farolas, señales de velocidad, templos (Zojoji) con tejado a cuatro aguas, Torre de Tokio propia.
+   - Tráfico por el grafo real con carriles por la izquierda, semáforos de OSM agrupados por cruce (horizontales, estilo japonés), ceder el paso en cruces sin semáforo.
+   - Muro invisible y niebla en el borde. Autopista Shuto elevada: más adelante.
+   - Pendiente de decidir: pasos de cebra, marcas viales, noche.
+3. Sonido de motor con grabaciones reales de licencia libre (pedir permiso por cada descarga).
 3. Modelos 3D libres sin marcas (hypercar = hypercar, drift = estilo japonés…). Pedir permiso antes de cada descarga.
 4. Calcomanías: packs sencillos por coche (ej. raya negra central) + editor tipo Motorfest (franjas, dorsales, colores, llantas, cristales), estilo anime con licencia libre. Diseño por coche y guardado.
 

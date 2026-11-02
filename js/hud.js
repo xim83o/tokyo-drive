@@ -18,6 +18,5 @@ const mc=$("mini").getContext("2d");
 function mini(){const s=.9,c=95;mc.setTransform(1,0,0,1,0,0);mc.clearRect(0,0,190,190);mc.save();mc.beginPath();mc.arc(c,c,c,0,7);mc.clip();mc.fillStyle="#1c1f26";mc.fillRect(0,0,190,190);
  const a=-s*Math.cos(h),b=-s*Math.sin(h),cc=s*Math.sin(h),d=a;
  mc.setTransform(a,b,cc,d,c-(a*px+cc*pz),c-(b*px+d*pz));
- const ci=Math.floor(px/C),cj=Math.floor(pz/C);
- for(let i=Math.max(0,ci-3);i<=Math.min(N-1,ci+3);i++)for(let j=Math.max(0,cj-3);j<=Math.min(N-1,cj+3);j++){mc.fillStyle=park[i*N+j]?"#2f6b3a":"#4a5062";mc.fillRect(i*C+10,j*C+10,80,80)}
+ if(mapImg)mc.drawImage(mapImg,0,0);
  mc.restore();mc.setTransform(1,0,0,1,0,0);mc.fillStyle="#e5173f";mc.strokeStyle="#fff";mc.lineWidth=2;mc.beginPath();mc.moveTo(c,c-11);mc.lineTo(c+8,c+9);mc.lineTo(c-8,c+9);mc.closePath();mc.fill();mc.stroke()}
