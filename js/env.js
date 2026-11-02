@@ -65,10 +65,11 @@ function envUpdate(dt){HOUR=hourNow();const e=Math.sin((HOUR-6)/12*PI),day=Math.
  sun.position.set(px+dx*400,dy*400,pz+dz*400);sun.target.position.set(px,0,pz);sun.target.updateMatrixWorld();
  const se=Math.asin(Math.max(-1,Math.min(1,e))),sx=Math.cos(se)*Math.sin(az),sz=Math.cos(se)*Math.cos(az)*.6+.4;SKYU.sunDir.value.set(sx,Math.sin(se),sz).normalize();SKYU.moonDir.value.set(-.4,.75,.5).normalize();
  SKYU.sunC.value.copy(PAL.sunD).lerp(PAL.sunK,dusk);SKYU.time.value=performance.now()/1000;SKYU.cloud.value=WEA.cloud;SKYU.night.value=NF;SKYU.flash.value=WEA.flash;
- sun.intensity=(day>0?.25+.6*Math.min(1,e/.35)*day:.14)*(1-rn*.6)+WEA.flash*1.5;sun.color.copy(day>0?PAL.sunD:PAL.moon).lerp(PAL.sunK,day>0?dusk*.7:0);
- hemi.intensity=(.22+.68*day)*(1-rn*.3)+WEA.flash;hemi.color.copy(PAL.hNight).lerp(PAL.hSky,day);
+ sun.intensity=(day>0?.25+.6*Math.min(1,e/.35)*day:.22)*(1-rn*.6)+WEA.flash*1.5;sun.color.copy(day>0?PAL.sunD:PAL.moon).lerp(PAL.sunK,day>0?dusk*.7:0);
+ hemi.intensity=(.34+.56*day)*(1-rn*.3)+WEA.flash;hemi.color.copy(PAL.hNight).lerp(PAL.hSky,day);
  // Luces nocturnas
- for(const m of NM.win){m.emissiveIntensity=NF*.95;if(m.envMap)m.reflectivity=.45*(1-NF*.85)}for(const m of NM.sign)m.emissiveIntensity=.12+NF*1.1;
+ for(const m of NM.win)if(m.envMap)m.reflectivity=.25*(1-NF*.85);
+ for(const m of NM.int){const s=m.userData.sh;if(s){s.uniforms.uNight.value=NF;s.uniforms.uSkyT.value.copy(SKYU.top.value);s.uniforms.uSkyH.value.copy(SKYU.hor.value)}}for(const m of NM.sign)m.emissiveIntensity=.12+NF*1.1;
  if(NM.lampHead)NM.lampHead.emissiveIntensity=NF*2;if(NM.vend)NM.vend.emissiveIntensity=.15+NF*.85;
  if(NM.head)NM.head.emissiveIntensity=.2+NF*1.8;if(NM.tail)NM.tail.emissiveIntensity=.25+NF*1.3;
  if(towerMat)towerMat.emissive.copy(PAL.tw).multiplyScalar(NF*.55);for(const m of NM.ledT)m.color.setScalar(.75+NF*.25);
