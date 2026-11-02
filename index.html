@@ -1,0 +1,43 @@
+<!DOCTYPE html><html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Tokyo Drive</title>
+<link rel="stylesheet" href="css/style.css">
+</head><body>
+<canvas id="c"></canvas>
+<canvas id="mini" width="190" height="190" hidden></canvas>
+<canvas id="hud" width="240" height="240" hidden></canvas>
+<div id="help" hidden>WASD / flechas · Espacio: freno de mano · V: cámara · M: mapa · C: coches · N: sonido · T: tráfico · Mando: RT/LT, stick, A freno de mano, X cámara, Y mapa, Back coches</div>
+<div id="topbar">
+ <button class="tb mob" onclick="act('cam')">🎥</button>
+ <button class="tb mob" onclick="act('map')">🗺️</button>
+ <button class="tb mob" onclick="act('cars')">🚘</button>
+ <button class="tb" id="snd" onclick="initAudio();setMute(!mute)">🔊</button>
+ <button class="tb" id="trf" onclick="setNpc(npcLvl+1)">🚗 Medio</button>
+</div>
+<div id="touch" hidden>
+ <div id="joy"><div id="knob"></div></div>
+ <button class="pd" id="tHb">FRENO MANO</button>
+ <button class="pd" id="tBrk">FRENO</button>
+ <button class="pd" id="tGas">GAS</button>
+</div>
+<div id="rot">🔄<br>Gira el móvil en horizontal para jugar</div>
+<div class="ov" id="ov">
+ <div class="pn" id="carsP"><h1>Elige tu coche</h1><div id="tabs"></div><div id="cards"></div></div>
+ <div class="pn" id="mapP" hidden><h1>¿Dónde quieres aparecer?</h1><p>Haz clic en el mapa de Tokio (aproximado) y confirma. La torre roja es la referencia.</p>
+  <canvas id="mp" width="640" height="640"></canvas>
+  <div><button class="b" id="ok" disabled>Confirmar</button><button class="b g" id="cancel">Cancelar</button></div></div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="js/core.js"></script>
+<script src="js/world.js"></script>
+<script src="js/cars.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/input.js"></script>
+<script src="js/touch.js"></script>
+<script src="js/physics.js"></script>
+<script src="js/effects.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/traffic.js"></script>
+<script src="js/hud.js"></script>
+<script src="js/main.js"></script>
+</body></html>
