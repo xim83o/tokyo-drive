@@ -2,9 +2,14 @@
 function resize(){rd.setSize(innerWidth,innerHeight,false);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();if(typeof postSize==="function")postSize()}
 addEventListener("resize",resize);resize();
 let last=performance.now(),t0=0;const LK=new THREE.Vector3();
-// La cámara no atraviesa paredes: si entre el coche y la cámara hay un edificio, se acerca al coche
+// La cámara no atraviesa nada: edificios, árboles, postes, coches ni la Torre de Tokio. Si algo se interpone entre el coche
+// y la cámara, la cámara se acerca al coche
+function camHit(x,y,z){if(camBlocked(x,y,z))return true;const c=gq(x,z);
+ for(const k of c.o){const b=k*3,r=CI[b+2]+.6;if(y<10&&(x-CI[b])**2+(z-CI[b+1])**2<r*r)return true}
+ for(const n of NPC)if(n.g.visible&&y<2.4&&(x-n.x)**2+(z-n.z)**2<6.5)return true;
+ const u=(x-TX)*Math.cos(TA)+(z-TZ)*Math.sin(TA),v=-(x-TX)*Math.sin(TA)+(z-TZ)*Math.cos(TA),w=y<250?37*Math.exp(-y/86)+3.5:3;return Math.abs(u)<w&&Math.abs(v)<w&&y<333}
 function clipCam(){if(!ready)return;const tx=px,ty=1.4+bodyY,tz=pz,P=cam.position;let ok=1;
- for(let k=1;k<=16;k++){const f=k/16;if(camBlocked(tx+(P.x-tx)*f,ty+(P.y-ty)*f,tz+(P.z-tz)*f)){ok=(k-1)/16*.9;break}}
+ for(let k=2;k<=20;k++){const f=k/20;if(camHit(tx+(P.x-tx)*f,ty+(P.y-ty)*f,tz+(P.z-tz)*f)){ok=(k-1)/20*.92;break}}
  if(ok<1)P.set(tx+(P.x-tx)*ok,ty+(P.y-ty)*ok,tz+(P.z-tz)*ok);P.y=Math.max(P.y,CURB+.35)}
 function loop(n){requestAnimationFrame(loop);const dt=Math.min(.05,(n-last)/1e3);last=n;
  if(state==="play"){const inp=input();idle=(inp.t||inp.b||Math.abs(inp.s)>.1||inp.hb||keyAct)?0:idle+dt;keyAct=0;step(dt,inp);npcs(dt);

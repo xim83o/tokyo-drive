@@ -125,10 +125,10 @@ function buildBuildings(){const CH=500,ch=new Map(),c=new THREE.Color(),R0=rng(3
   // Detalle cercano (balcones): solo visible a menos de 260 m (ver lodUpdate)
   if(o.d.length){const cxk=(Math.floor(o.k/100)+.5)*CH,czk=((o.k%100)+.5)*CH,a=mkMesh(o.d,BALM||(BALM=new THREE.MeshLambertMaterial({color:0xd4d0c8,side:THREE.DoubleSide})),0,null,2),b=mkMesh(o.rl,RAILM||(RAILM=new THREE.MeshLambertMaterial({color:0x9aa1a8,transparent:true,opacity:.6,side:THREE.DoubleSide,depthWrite:false})));
    DET.push({m:[a,b],x:cxk,z:czk})}}
- inst(new THREE.BoxGeometry(3.4,2.8,3.4).translate(0,1.4,0),new THREE.MeshLambertMaterial({color:0xffffff}),PH,1,true);
+ instZ(new THREE.BoxGeometry(3.4,2.8,3.4).translate(0,1.4,0),new THREE.MeshLambertMaterial({color:0xffffff}),PH,1,true);
  const gm=new THREE.MeshLambertMaterial({color:0xc9cbcc});
- inst(new THREE.BoxGeometry(1.2,.8,.8).translate(0,.4,0),gm,roofT,1);inst(new THREE.CylinderGeometry(1.1,1.1,2.4,10).translate(0,2.4,0),new THREE.MeshLambertMaterial({color:0x9db0bf}),tank,1,true);
- inst(new THREE.CylinderGeometry(.04,.06,5,4).translate(0,2.5,0),new THREE.MeshLambertMaterial({color:0x777b80}),ant,2);
+ instZ(new THREE.BoxGeometry(1.2,.8,.8).translate(0,.4,0),gm,roofT,1);instZ(new THREE.CylinderGeometry(1.1,1.1,2.4,10).translate(0,2.4,0),new THREE.MeshLambertMaterial({color:0x9db0bf}),tank,1,true);
+ instZ(new THREE.CylinderGeometry(.04,.06,5,4).translate(0,2.5,0),new THREE.MeshLambertMaterial({color:0x777b80}),ant,2);
  vs.forEach((l,i)=>{const t=signTex(i),m=new THREE.MeshLambertMaterial({map:t,emissiveMap:t,emissive:0xffffff,emissiveIntensity:.15,side:THREE.DoubleSide});NM.sign.push(m);inst(new THREE.PlaneGeometry(1.1,1).translate(0,.5,0),m,l,0)});
  leds.forEach((l,i)=>{const cv=document.createElement("canvas");cv.width=320;cv.height=180;const t=new THREE.CanvasTexture(cv),m=new THREE.MeshBasicMaterial({map:t,toneMapped:false});
   NM.led.push({g:cv.getContext("2d"),t,ph:i*1.7});NM.ledT.push(m);inst(new THREE.PlaneGeometry(10,5.6).translate(0,0,.05),m,l,0);

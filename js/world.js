@@ -59,7 +59,16 @@ const flat=(c,o)=>new THREE.MeshLambertMaterial(Object.assign({color:c,polygonOf
 // Instancias: cada elemento [x,y,z,giro,escala,escalaY,color]; q = calidad mínima para mostrarse (0 baja … 3 ultra)
 function inst(geo,mat,list,q,cast){if(!list.length)return null;const m=new THREE.InstancedMesh(geo,mat,list.length),o=new THREE.Object3D(),c=new THREE.Color();
  list.forEach((e,i)=>{o.position.set(e[0],e[1],e[2]);o.rotation.set(0,e[3]||0,0);const s=e[4]||1;o.scale.set(s,e[5]||s,s);o.updateMatrix();m.setMatrixAt(i,o.matrix);if(e[6]!==undefined)m.setColorAt(i,c.set(e[6]))});
- m.userData.q=q||0;m.castShadow=!!cast;m.receiveShadow=true;sc.add(m);return m}
+ m.userData.q=q||0;m.castShadow=!!cast;m.receiveShadow=true;
+ // Esfera envolvente de todas las instancias (si no, la cámara descartaría el grupo mirando solo la pieza original)
+ let x0=1e9,z0=1e9,x1=-1e9,z1=-1e9,y1=0;for(const e of list){x0=Math.min(x0,e[0]);x1=Math.max(x1,e[0]);z0=Math.min(z0,e[2]);z1=Math.max(z1,e[2]);y1=Math.max(y1,e[1])}
+ if(!geo.boundingSphere)geo.computeBoundingSphere();const g2=geo.clone();g2.boundingSphere=new THREE.Sphere(new THREE.Vector3((x0+x1)/2,y1/2+5,(z0+z1)/2),Math.hypot(x1-x0,z1-z0)/2+geo.boundingSphere.radius*3+y1);m.geometry=g2;
+ sc.add(m);return m}
+// Igual que inst() pero repartido en zonas de 400 m, para que solo se dibujen las zonas que tiene delante la cámara
+// Malla grande (solo posiciones) repartida en zonas de 600 m por el centro de cada triángulo; devuelve las mallas creadas
+function mkMeshZ(pos,mat,ro,shadow){const Z=new Map();for(let i=0;i<pos.length;i+=9){const x=(pos[i]+pos[i+3]+pos[i+6])/3,z=(pos[i+2]+pos[i+5]+pos[i+8])/3,k=Math.floor(x/600)*100+Math.floor(z/600);let a=Z.get(k);if(!a){a=[];Z.set(k,a)}for(let j=0;j<9;j++)a.push(pos[i+j])}
+ return[...Z.values()].map(a=>mkMesh(a,mat,ro,null,shadow))}
+function instZ(geo,mat,list,q,cast){const Z=new Map();for(const e of list){const k=Math.floor(e[0]/800)*100+Math.floor(e[2]/800);if(!Z.has(k))Z.set(k,[]);Z.get(k).push(e)}for(const l of Z.values())inst(geo,mat,l,q,cast)}
 function canvasTex(w,h,draw,rep){const c=document.createElement("canvas");c.width=w;c.height=h;draw(c.getContext("2d"),w,h);const t=new THREE.CanvasTexture(c);if(rep){t.wrapS=t.wrapT=THREE.RepeatWrapping}t.anisotropy=8;return t}
 // Aleatorio reproducible (mismo mapa siempre igual)
 function rng(s){return()=>(s=s*16807%2147483647)/2147483647}
@@ -92,8 +101,7 @@ async function loadWorld(){
  const asph=canvasTex(256,256,(g,w,h)=>{g.fillStyle="#3a3c42";g.fillRect(0,0,w,h);const r=rng(5);for(let i=0;i<9000;i++){const v=44+r()*44|0;g.fillStyle=`rgb(${v},${v},${v+3})`;g.fillRect(r()*w,r()*h,1+r()*1.6,1+r()*1.6)}
   g.globalAlpha=.08;for(let i=0;i<30;i++){g.fillStyle=r()<.5?"#000":"#888";g.beginPath();g.ellipse(r()*w,r()*h,8+r()*30,4+r()*14,r()*PI,0,7);g.fill()}g.globalAlpha=1},true);
  ROADMAT=new THREE.MeshPhongMaterial({map:asph,specularMap:puddleTex(),specular:0x000000,shininess:70,lightMap:LIGHTMAP,lightMapIntensity:0});
- const rg=mkMesh(ra,ROADMAT,0,null,1);worldUV2(rg);
- {const q=rg.geometry.attributes.position.array,uv=new Float32Array(q.length/3*2);for(let i=0,j=0;i<q.length;i+=3,j+=2){uv[j]=q[i]/7;uv[j+1]=q[i+2]/7}rg.geometry.setAttribute("uv",new THREE.BufferAttribute(uv,2))}
+ for(const rg of mkMeshZ(ra,ROADMAT,0,1)){worldUV2(rg);const q=rg.geometry.attributes.position.array,uv=new Float32Array(q.length/3*2);for(let i=0,j=0;i<q.length;i+=3,j+=2){uv[j]=q[i]/7;uv[j+1]=q[i+2]/7}rg.geometry.setAttribute("uv",new THREE.BufferAttribute(uv,2))}
  buildGround();
  // Vías de tren: a ras de suelo bloquean el paso salvo en los pasos a nivel; las elevadas van sobre pilares
  const ba=[],rl=[],dk=[],pil=[];
@@ -124,16 +132,14 @@ function buildGround(){const GS=MOBILE?4:3,N=Math.ceil(W/GS)+1,SD=new Float32Arr
   for(let j=j0;j<=j1;j++)for(let i=i0;i<=i1;i++){const d=Math.sqrt(segD2(i*GS,j*GS,ax,az,bx,bz))-hw,o=j*N+i;if(d<SD[o])SD[o]=d}}
  const pos=[],cb=[],Y=CURB;
  const rect=(x0,z0,x1,z1)=>{flatTri(pos,Y,x0,z0,x1,z0,x1,z1);flatTri(pos,Y,x0,z0,x1,z1,x0,z1)};
- const curb=(x0,z0,x1,z1,cx,cz)=>{const L=Math.hypot(x1-x0,z1-z0);if(L<.01)return;let nx=(z1-z0)/L,nz=-(x1-x0)/L;if((cx-x0)*nx+(cz-z0)*nz<0){nx=-nx;nz=-nz}const ox=nx*.22,oz=nz*.22;
-  cb.push(x0,0,z0,x1,0,z1,x1,Y,z1,x0,0,z0,x1,Y,z1,x0,Y,z0,x0,Y,z0,x1,Y,z1,x1+ox,Y,z1+oz,x0,Y,z0,x1+ox,Y,z1+oz,x0+ox,Y,z0+oz)};
+ const curb=(x0,z0,x1,z1)=>{if(Math.hypot(x1-x0,z1-z0)<.01)return;cb.push(x0,0,z0,x1,0,z1,x1,Y,z1,x0,0,z0,x1,Y,z1,x0,Y,z0)};
  for(let j=0;j<N-1;j++){let run=-1;for(let i=0;i<N;i++){const o=j*N+i,v0=SD[o],v1=SD[o+1],v2=SD[o+N+1],v3=SD[o+N],full=i<N-1&&v0>0&&v1>0&&v2>0&&v3>0;
   if(full){if(run<0)run=i;continue}if(run>=0){rect(run*GS,j*GS,i*GS,(j+1)*GS);run=-1}if(i>=N-1||(v0<=0&&v1<=0&&v2<=0&&v3<=0))continue;
   // Celda con borde: polígono de la parte "acera" e interpolación lineal del borde
   const C=[[i*GS,j*GS,v0],[(i+1)*GS,j*GS,v1],[(i+1)*GS,(j+1)*GS,v2],[i*GS,(j+1)*GS,v3]],poly=[],edge=[];
   for(let e=0;e<4;e++){const a=C[e],b=C[(e+1)%4];if(a[2]>0)poly.push(a);if((a[2]>0)!==(b[2]>0)){const t=a[2]/(a[2]-b[2]),q=[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t];poly.push(q);edge.push(q)}}
   for(let k=1;k<poly.length-1;k++)flatTri(pos,Y,poly[0][0],poly[0][1],poly[k][0],poly[k][1],poly[k+1][0],poly[k+1][1]);
-  let cx=0,cz=0,n=0;for(const q of C)if(q[2]>0){cx+=q[0];cz+=q[1];n++}
-  for(let k=0;k+1<edge.length;k+=2)curb(edge[k][0],edge[k][1],edge[k+1][0],edge[k+1][1],cx/n,cz/n)}}
+  for(let k=0;k+1<edge.length;k+=2)curb(edge[k][0],edge[k][1],edge[k+1][0],edge[k+1][1])}}
  // Alrededor del mapa, suelo liso hasta el horizonte
  const F=4000;rect(-F,-F,W+F,0);rect(-F,W,W+F,W+F);rect(-F,0,0,W);rect(W,0,W+F,W);
  // Textura de colores del suelo (1 píxel ≈ 1,2 m): acera, parques, campos y agua
@@ -142,8 +148,8 @@ function buildGround(){const GS=MOBILE?4:3,N=Math.ceil(W/GS)+1,SD=new Float32Arr
   for(const q of MAP.green){g.fillStyle=["#4f7d45","#3f6c3a","#5b8f4d"][q.k];poly(q.p)}g.fillStyle="#2d5878";for(const R of MAP.water)poly(R);
   g.strokeStyle="#2d5878";g.lineCap=g.lineJoin="round";for(const q of MAP.rivers){g.lineWidth=q.w*s;g.beginPath();g.moveTo(q.p[0]*s,q.p[1]*s);for(let i=2;i<q.p.length;i+=2)g.lineTo(q.p[i]*s,q.p[i+1]*s);g.stroke()}});
  gt.wrapS=gt.wrapT=THREE.ClampToEdgeWrapping;
- GROUNDMAT=new THREE.MeshLambertMaterial({map:gt,lightMap:LIGHTMAP,lightMapIntensity:0});const m=mkMesh(pos,GROUNDMAT,0,null,1);worldUV2(m);m.geometry.setAttribute("uv",m.geometry.attributes.uv2);
- mkMesh(cb,new THREE.MeshLambertMaterial({color:0xa8aaae,side:THREE.DoubleSide}),0,null,1)}
+ GROUNDMAT=new THREE.MeshLambertMaterial({map:gt,lightMap:LIGHTMAP,lightMapIntensity:0});for(const m of mkMeshZ(pos,GROUNDMAT,0,1)){worldUV2(m);m.geometry.setAttribute("uv",m.geometry.attributes.uv2)}
+ mkMeshZ(cb,new THREE.MeshLambertMaterial({color:0xa8aaae,side:THREE.DoubleSide}),0,1)}
 
 // Imagen del mapa (1 píxel = 1 m) para el mapa de aparición y el fondo del minimapa
 function drawMapImg(){const c=document.createElement("canvas");c.width=c.height=W;const g=c.getContext("2d"),poly=(R)=>{g.beginPath();g.moveTo(R[0],R[1]);for(let i=2;i<R.length;i+=2)g.lineTo(R[i],R[i+1]);g.closePath();g.fill()},

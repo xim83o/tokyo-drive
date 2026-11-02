@@ -51,7 +51,7 @@ function buildMarkings(){const wa=[],ya=[],done=new Set();
   if(g1.cl>=0||g1.r>0&&L.t>g1.mt){const sl=len-g1.r+.3;for(let o=L.o?-hw+.3:0;o<hw-.3;o+=.5){const A=at(L,sl,o),B=at(L,sl,Math.min(hw-.3,o+.5));if(onlyRoad(A[0],A[1],L.ri,.1)&&onlyRoad(B[0],B[1],L.ri,.1))quad(wa,A[0],A[1],B[0],B[1],.22,.016)}}
   if(g1.cl>=0&&!L.internal&&len-g1.r>5){const a0=len-g1.r+1.2,a1=a0+4;for(let o=-hw+.6;o<hw-.4;o+=.9){const A=at(L,a0,o),B=at(L,a1,o);if(ok(L,A,B))quad(wa,A[0],A[1],B[0],B[1],.22,.016)}}}
  const mm=c=>new THREE.MeshLambertMaterial({color:c,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-6});
- if(wa.length){const m=mkMesh(wa,mm(0xe2e2dc));m.receiveShadow=true}if(ya.length){const m=mkMesh(ya,mm(0xe0b020));m.receiveShadow=true}}
+ if(wa.length)mkMeshZ(wa,mm(0xe2e2dc),0,1);if(ya.length)mkMeshZ(ya,mm(0xe0b020),0,1)}
 // Ciclo de 24 s por grupo de cruces: un eje 9 s verde + 2 s ámbar, luego el otro
 function lightSt(L){const t=(TT+CLU[GN[L.to].cl].off+(L.grp?12:0))%24;return t<9?"g":t<11?"y":"r"}
 let LM=null,LIT=[];

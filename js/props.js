@@ -3,10 +3,10 @@
 let lampN=0;const LAMPS=[];
 // Geometría de un árbol (tronco + copa de varios bultos deformados con colores variados). sp: 0 ginkgo, 1 copa redonda, 2 conífera
 function treeGeo(sp){const r=rng(31+sp*7),parts=[],col=(g,cs)=>{const n=g.attributes.position.count,a=new Float32Array(n*3),c=new THREE.Color();for(let i=0;i<n;i++){c.set(cs[(r()*cs.length)|0]);c.offsetHSL(0,0,(r()-.5)*.06);a[i*3]=c.r;a[i*3+1]=c.g;a[i*3+2]=c.b}g.setAttribute("color",new THREE.BufferAttribute(a,3));return g};
- const lump=(rad,x,y,z,sx,sy,cs)=>{const g=new THREE.IcosahedronGeometry(rad,1).toNonIndexed(),p=g.attributes.position;for(let i=0;i<p.count;i++){const k=.82+r()*.32;p.setXYZ(i,p.getX(i)*k*sx+x,p.getY(i)*k*sy+y,p.getZ(i)*k*sx+z)}g.computeVertexNormals();parts.push(col(g,cs))};
+ const lump=(rad,x,y,z,sx,sy,cs)=>{const g=new THREE.IcosahedronGeometry(rad,0).toNonIndexed(),p=g.attributes.position;for(let i=0;i<p.count;i++){const k=.82+r()*.32;p.setXYZ(i,p.getX(i)*k*sx+x,p.getY(i)*k*sy+y,p.getZ(i)*k*sx+z)}g.computeVertexNormals();parts.push(col(g,cs))};
  const trunk=(h,r0)=>{const g=new THREE.CylinderGeometry(r0*.65,r0,h,7).toNonIndexed();g.translate(0,h/2,0);parts.push(col(g,["#5a4332","#4d392b","#634a37"]))};
  if(sp===0){trunk(5,.2);const cs=["#e6c22e","#d9b21f","#f0d34a","#b8a63a","#c9b52c"];lump(1.3,0,5.6,0,1,1.5,cs);lump(1,.5,4.2,.3,1,1.3,cs);lump(1,-.45,4.4,-.35,1,1.3,cs);lump(.8,.1,7,0,1,1.2,cs)}
- else if(sp===1){trunk(3,.22);const cs=["#3f7a3a","#4f8a3f","#356b35","#6a8f3a","#8a8f34"];for(let k=0;k<6;k++){const a=k/6*PI*2,d=k?1.1:0;lump(k?1.2:1.5,Math.cos(a)*d,3.9+(k?r()*.8:1),Math.sin(a)*d,1,.85,cs)}}
+ else if(sp===1){trunk(3,.22);const cs=["#3f7a3a","#4f8a3f","#356b35","#6a8f3a","#8a8f34"];for(let k=0;k<7;k++){const a=k/6*PI*2,d=k?1.1:0;lump(k?1.2:1.5,Math.cos(a)*d,3.9+(k?r()*.8:1),Math.sin(a)*d,1,.85,cs)}}
  else{trunk(2.5,.2);const cs=["#2f5a34","#36633a","#284d2d"];for(let k=0;k<3;k++){const g=new THREE.ConeGeometry(1.9-k*.5,2.6,8).toNonIndexed();g.translate(0,2.6+k*1.5,0);parts.push(col(g,cs))}}
  // Unir todas las partes en una sola geometría
  let n=0;for(const g of parts)n+=g.attributes.position.count;const P=new Float32Array(n*3),N=new Float32Array(n*3),C=new Float32Array(n*3);let o=0;
@@ -37,10 +37,10 @@ function decorate(){const tr=[],lp=[],sg=[],vm=[],up=[],wires=[],rnd=rng(11),TMA
  // Tres especies hechas de varios volúmenes irregulares con colores de otoño: ginkgo (amarillo, típico de las avenidas de Tokio),
  // árbol de copa redonda (zelkova) y conífera. Cada especie es una sola malla instanciada; la mitad "extra" solo en calidad alta
  const SP=[treeGeo(0),treeGeo(1),treeGeo(2)],tm=new THREE.MeshLambertMaterial({vertexColors:true}),TT=[0xfff0c0,0xe8ffe0,0xffffff,0xd8f0d0];
- for(let s=0;s<3;s++)for(let k=0;k<2;k++){const l=tr.filter((t,i)=>t[4]===s&&i%2===k);inst(SP[s],tm,l.map((t,i)=>[t[0],CURB,t[1],t[3],t[2],t[2]*(.9+(i%5)*.06),TT[i%4]]),k?2:0,true)}
+ for(let s=0;s<3;s++)for(let k=0;k<2;k++){const l=tr.filter((t,i)=>t[4]===s&&i%2===k);instZ(SP[s],tm,l.map((t,i)=>[t[0],CURB,t[1],t[3],t[2],t[2]*(.9+(i%5)*.06),TT[i%4]]),k?2:0,true)}
  const steel=new THREE.MeshLambertMaterial({color:0x6d7178});
- inst(new THREE.CylinderGeometry(.08,.11,7,6).translate(0,3.5,0),steel,lp,0,true);inst(new THREE.BoxGeometry(.12,.12,1.6).translate(0,6.9,.75),steel,lp,0);
- NM.lampHead=new THREE.MeshLambertMaterial({color:0xfff6d8,emissive:0xffe2a8,emissiveIntensity:0});inst(new THREE.BoxGeometry(.35,.12,.6).translate(0,6.8,1.5),NM.lampHead,lp,0);lampN=lp.length;
+ instZ(new THREE.CylinderGeometry(.08,.11,7,6).translate(0,3.5,0),steel,lp,0,true);instZ(new THREE.BoxGeometry(.12,.12,1.6).translate(0,6.9,.75),steel,lp,0);
+ NM.lampHead=new THREE.MeshLambertMaterial({color:0xfff6d8,emissive:0xffe2a8,emissiveIntensity:0});instZ(new THREE.BoxGeometry(.35,.12,.6).translate(0,6.8,1.5),NM.lampHead,lp,0);lampN=lp.length;
  // Posición de cada bombilla: las más cercanas al jugador dan luz real (env.js)
  for(const l of lp)LAMPS.push(l[0]+Math.sin(l[3])*1.5,6.5+CURB,l[2]+Math.cos(l[3])*1.5);
  // Luz de todas las farolas en el mapa de luz: manchas suaves alargadas en el sentido de la calle que se funden entre sí
@@ -58,9 +58,9 @@ function decorate(){const tr=[],lp=[],sg=[],vm=[],up=[],wires=[],rnd=rng(11),TMA
    g.fillStyle="#1d4fa0";g.font="bold 26px system-ui";g.textAlign="center";g.textBaseline="middle";g.fillText(v,32,34)});
   inst(new THREE.CircleGeometry(.32,20).translate(0,2.75,.05),new THREE.MeshLambertMaterial({map:t,transparent:true,side:THREE.DoubleSide}),sg.filter(s=>s[4]===v).map(s=>s.slice(0,4)),0)}
  // Máquinas expendedoras: cuerpo de color y frontal iluminado con bebidas
- const VC=[0xd12a2a,0xf2f2f2,0x1f5fbf,0x2a8a3e];inst(new THREE.BoxGeometry(1,1.85,.75).translate(0,.925,0),new THREE.MeshLambertMaterial({color:0xffffff}),vm.map((v,i)=>[...v,1,1,VC[i%4]]),1,true);
+ const VC=[0xd12a2a,0xf2f2f2,0x1f5fbf,0x2a8a3e];instZ(new THREE.BoxGeometry(1,1.85,.75).translate(0,.925,0),new THREE.MeshLambertMaterial({color:0xffffff}),vm.map((v,i)=>[...v,1,1,VC[i%4]]),1,true);
  const vt=canvasTex(64,128,(g)=>{g.fillStyle="#e9eef2";g.fillRect(0,0,64,128);const r=rng(4);for(let y=0;y<3;y++)for(let x=0;x<6;x++){g.fillStyle=`hsl(${r()*360},70%,50%)`;g.fillRect(4+x*9.5,8+y*24,7,16)}g.fillStyle="#222";g.fillRect(6,82,52,10);g.fillRect(20,100,24,20)});
- NM.vend=new THREE.MeshLambertMaterial({map:vt,emissiveMap:vt,emissive:0xffffff,emissiveIntensity:.15});inst(new THREE.PlaneGeometry(.86,1.6).translate(0,1,.38),NM.vend,vm,1);
+ NM.vend=new THREE.MeshLambertMaterial({map:vt,emissiveMap:vt,emissive:0xffffff,emissiveIntensity:.15});instZ(new THREE.PlaneGeometry(.86,1.6).translate(0,1,.38),NM.vend,vm,1);
  // Postes eléctricos de hormigón con travesaño y cables
- const conc=new THREE.MeshLambertMaterial({color:0x9c9a95});inst(new THREE.CylinderGeometry(.12,.17,10,7).translate(0,5,0),conc,up,1,true);inst(new THREE.BoxGeometry(1.8,.12,.12).translate(0,9.6,0),conc,up,1);
+ const conc=new THREE.MeshLambertMaterial({color:0x9c9a95});instZ(new THREE.CylinderGeometry(.12,.17,10,7).translate(0,5,0),conc,up,1,true);instZ(new THREE.BoxGeometry(1.8,.12,.12).translate(0,9.6,0),conc,up,1);
  if(wires.length){const g=new THREE.BufferGeometry();g.setAttribute("position",new THREE.Float32BufferAttribute(wires,3));const l=new THREE.LineSegments(g,new THREE.LineBasicMaterial({color:0x1d1f22}));l.userData.q=1;sc.add(l)}}

@@ -32,11 +32,11 @@ Pedido por el usuario (todo con permiso ya dado; descargas permitidas: partes de
 - [x] 3. Ventanas: interior mapping (habitaciones con profundidad), cristal con reflejo, marcos, cortinas; de noche solo algunas encendidas.
 - [x] 4. Tiendas: escaparates en 3D, toldos salientes, interiores iluminados, konbinis inventados y más letreros (el usuario no vio ninguna tienda).
 - [x] 5. Árboles: varias especies con copas de varios volúmenes (que no parezcan "un png pegado").
-- [ ] 6. Edificios con volumen: escalonados (base + torre), cornisas, balcones en 3D (solo cerca), casetas en tejados; partes de edificio reales de OSM (building:part).
-- [ ] 7. Lluvia: aleatoria ~1 de cada 5 días de juego, calles mojadas con reflejos y charcos, salpicaduras, menos agarre, sonido (CC0), tormentas con rayos a veces, gotas en pantalla SOLO en la cámara interior.
-- [ ] 8. Cinemáticas y cámaras: no atravesar ningún objeto (árboles, postes, coches, torre, edificios).
-- [ ] 8b. Líneas pintadas mal (revisar marcas viales) y cielo menos soso (nubes, sol, atardeceres, luna).
-- [ ] 9. Optimizar (LOD por distancia), probar, publicar en el enlace, commit + push, resumen y test para el usuario.
+- [x] 6. Edificios con volumen: podio + torre retranqueada, cornisas, balcones en 3D (solo a <260 m), casetas en tejados. PENDIENTE: partes de edificio reales de OSM (building:part) — los servidores Overpass daban error 502 esa noche; reintentar con `python -I tools/fetch_osm.py tokyo-tower 35.65858 139.74543 1200 --parts` y luego usarlas en osm2game.py.
+- [x] 7. Lluvia: aleatoria (~1 de cada 5 días de juego), tormentas con relámpagos y truenos, asfalto mojado (más oscuro y brillante, charcos con mapa especular), agua de las ruedas, -25 % de agarre, gotas en el cristal solo en la cámara interior, opción Clima en el menú. Sonido de lluvia y truenos GENERADO POR CÓDIGO: las grabaciones CC0 encontradas pesaban 3,03 MB (Ylmir, "Rain (loopable)") y 3,36 MB (rubberduck, "30 CC0 SFX loops"), por encima del límite de 3 MB del usuario; preguntarle si las quiere.
+- [x] 8. Cinemáticas y cámaras: no atraviesan edificios, árboles, postes, coches ni la torre (0/300 posiciones de prueba dentro de algo).
+- [x] 8b. Marcas viales solo sobre la calzada de su calle; cielo con nubes, sol, atardeceres y luna.
+- [x] 9. Optimizado (árboles más ligeros, mobiliario y suelo por zonas): Baja 0,77 M triángulos / ~8 ms; Alta 2,5 M / ~13 ms en el PC del usuario (panel pequeño). Publicado y subido.
 
 ## Pendiente / ideas
 - Autopista Shuto elevada.
