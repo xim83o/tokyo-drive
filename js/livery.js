@@ -31,7 +31,18 @@ const STK=[
   g.beginPath();g.arc(128,110,8,0,7);g.fill();g.fillStyle="#111";g.beginPath();g.ellipse(128,206,9,6,0,0,7);g.fill()}},
  {n:"Cuadros",d:g=>{for(let y=0;y<4;y++)for(let x=0;x<8;x++){g.fillStyle=(x+y)%2?"#111":"#fff";g.fillRect(x*32,64+y*32,32,32)}}},
  {n:"Corazón",d:g=>{g.fillStyle="#ff3b6b";g.strokeStyle="#fff";g.lineWidth=10;g.beginPath();g.moveTo(128,220);g.bezierCurveTo(10,140,40,30,128,84);g.bezierCurveTo(216,30,246,140,128,220);g.closePath();g.fill();g.stroke()}}];
+// Pegatinas de imágenes de licencia libre (textures/stickers, ver CREDITOS.txt): se recorta cada personaje de la hoja original.
+// round: insignia redonda con borde blanco (para recortes con fondo)
+const IMGS={};
+function imgStk(n,src,cr,round,cred){return{n,cred,src,d:g=>{const im=IMGS[src];if(!im||!im.complete||!im.naturalWidth)return;const[x,y,w,h]=cr,k=Math.min(240/w,240/h),dw=w*k,dh=h*k;
+ if(round){g.save();g.beginPath();g.arc(128,128,118,0,7);g.clip();g.drawImage(im,x,y,w,h,128-dw/2,128-dh/2,dw,dh);g.restore();g.strokeStyle="#fff";g.lineWidth=10;g.beginPath();g.arc(128,128,118,0,7);g.stroke()}
+ else g.drawImage(im,x,y,w,h,128-dw/2,128-dh/2,dw,dh)}}}
+STK.push(imgStk("Hachi chibi","textures/stickers/hachi-chibi.png",[0,0,285,390]),imgStk("Hachi chibi guiño","textures/stickers/hachi-chibi.png",[570,0,285,390]),imgStk("Hachi chibi risa","textures/stickers/hachi-chibi.png",[855,400,285,390]),
+ imgStk("Hachi","textures/stickers/hachi.png",[0,20,430,620]),imgStk("Hachi guiño","textures/stickers/hachi.png",[830,20,430,620]),
+ imgStk("Chica anime (Niabot, CC BY 3.0)","textures/stickers/anime-girl-niabot.svg",[505,10,330,330],true,"«Anime Girl» de Niabot, CC BY 3.0"));
 const STKT=[];const stkTex=i=>STKT[i]||(STKT[i]=canvasTex(256,256,g=>STK[i].d(g)));
+// Al cargar una imagen se redibujan sus pegatinas (texturas ya creadas y miniaturas del editor)
+for(const src of new Set(STK.filter(s=>s.src).map(s=>s.src))){const im=new Image();IMGS[src]=im;im.onload=()=>{STK.forEach((s,i)=>{if(s.src!==src||!STKT[i])return;const c=STKT[i].image,g=c.getContext("2d");g.clearRect(0,0,256,256);s.d(g);STKT[i].needsUpdate=true});if(state==="liv")drawLiv()};im.src=src}
 // Franjas: 0 ninguna · 1 central · 2 doble · 3 lateral · 4 diagonal
 const STRIPES=["Ninguna","Central","Doble","Lateral","Diagonal"];
 function stripeTex(st,col){const c="#"+new THREE.Color(col).getHexString();return canvasTex(128,512,g=>{g.fillStyle=c;if(st===1)g.fillRect(24,0,80,512);else if(st===2){g.fillRect(14,0,38,512);g.fillRect(76,0,38,512)}else if(st===3){g.fillRect(52,0,22,512);g.fillRect(80,0,7,512)}
@@ -82,7 +93,8 @@ function drawLiv(){const P=$("livP"),L=LIV[livK];P.innerHTML="<h1>Calcomanías</
  sec("Cristales tintados");r=row();[[0,"Sin tintar"],[.35,"Claro"],[.65,"Oscuro"],[.9,"Muy oscuro"]].forEach(([v,t])=>btn(r,t,L.tint===v,()=>{livSet({tint:v});drawLiv()}));
  sec("Franjas");r=row();STRIPES.forEach((t,i)=>btn(r,t,L.st===i,()=>{livSet({st:i});drawLiv()}));if(L.st)sw(row(),L.sc,c=>livSet({sc:c}));
  sec("Dorsal (número de carreras)");r=row();const ni=document.createElement("input");ni.type="number";ni.min=0;ni.max=99;ni.value=L.num||"";ni.placeholder="Sin número";ni.oninput=()=>livSet({num:Math.max(0,Math.min(99,+ni.value||0))});r.appendChild(ni);if(L.num)sw(row(),L.nc,c=>livSet({nc:c}));
- sec("Pegatinas");const g=document.createElement("div");g.className="stkg";STK.forEach((s,i)=>{const b=document.createElement("button");b.title=s.n;const cv=document.createElement("canvas");cv.width=cv.height=64;const x=cv.getContext("2d");x.scale(.25,.25);s.d(x);b.appendChild(cv);
+ sec("Pegatinas");{const p=document.createElement("p");p.style.cssText="font-size:11px;margin:0 0 6px";p.textContent="Las 12 primeras están dibujadas para el juego. Personaje Hachi: HachiStudio (CC0). Chica anime redonda: «Anime Girl» de Niabot (CC BY 3.0).";P.appendChild(p)}
+ const g=document.createElement("div");g.className="stkg";STK.forEach((s,i)=>{const b=document.createElement("button");b.title=s.n;const cv=document.createElement("canvas");cv.width=cv.height=64;const x=cv.getContext("2d");x.scale(.25,.25);s.d(x);b.appendChild(cv);
   b.onclick=()=>{L.stk.push({i,sd:0,u:0,v:.5,s:1,r:0});livSel=L.stk.length-1;saveLiv();applyDecals();drawLiv()};g.appendChild(b)});P.appendChild(g);
  L.stk.forEach((k,j)=>{const d=document.createElement("div");d.className="stki"+(j===livSel?" on":"");d.innerHTML=`<b>${j+1}. ${STK[k.i].n}</b>`;d.onclick=e=>{if(e.target===d||e.target.tagName==="B"){livSel=j;drawLiv()}};P.appendChild(d);
   if(j!==livSel)return;const rr=document.createElement("div");rr.className="lrow";SIDES.forEach((t,q)=>btn(rr,t,k.sd===q,()=>{k.sd=q;saveLiv();applyDecals();drawLiv()}));d.appendChild(rr);
