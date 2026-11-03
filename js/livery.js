@@ -41,6 +41,15 @@ STK.push(imgStk("Hachi chibi","textures/stickers/hachi-chibi.png",[0,0,285,390])
  imgStk("Hachi","textures/stickers/hachi.png",[0,20,430,620]),imgStk("Hachi guiño","textures/stickers/hachi.png",[830,20,430,620]),
  imgStk("Chica anime (Niabot, CC BY 3.0)","textures/stickers/anime-girl-niabot.svg",[505,10,330,330],true,"«Anime Girl» de Niabot, CC BY 3.0"));
 const STKT=[];const stkTex=i=>STKT[i]||(STKT[i]=canvasTex(256,256,g=>STK[i].d(g)));
+// Imágenes propias del jugador: se reducen a 256 px y se guardan solo en su navegador (td-stk). En las pegatinas van como ci (id)
+let CUS=[];try{CUS=JSON.parse(localStorage.getItem("td-stk")||"[]")}catch(e){}
+const saveCus=()=>{try{localStorage.setItem("td-stk",JSON.stringify(CUS));return true}catch(e){return false}};
+const CUST={};
+function cusTex(id){if(CUST[id])return CUST[id];const c=CUS.find(q=>q.id===id),t=canvasTex(256,256,()=>{});CUST[id]=t;if(c){const im=new Image();im.onload=()=>{t.image.getContext("2d").drawImage(im,0,0,256,256);t.needsUpdate=true};im.src=c.url}return t}
+function addCus(file,done){const rd2=new FileReader();rd2.onload=()=>{const im=new Image();im.onload=()=>{const cv=document.createElement("canvas");cv.width=cv.height=256;const g=cv.getContext("2d"),k=Math.min(256/im.width,256/im.height),w=im.width*k,h=im.height*k;
+  g.drawImage(im,128-w/2,128-h/2,w,h);let url=cv.toDataURL("image/webp",.9);if(!url.startsWith("data:image/webp"))url=cv.toDataURL("image/png");
+  const id=Date.now();CUS.push({id,url,n:file.name.replace(/\.[^.]+$/,"").slice(0,24)});if(!saveCus()){CUS.pop();alert("No queda espacio para más imágenes: borra alguna.");return}done(id)};im.onerror=()=>alert("No se pudo leer esa imagen.");im.src=rd2.result};rd2.readAsDataURL(file)}
+const stkName=k=>k.ci!==undefined?((CUS.find(q=>q.id===k.ci)||{}).n||"Mi imagen"):STK[k.i].n;
 // Al cargar una imagen se redibujan sus pegatinas (texturas ya creadas y miniaturas del editor)
 for(const src of new Set(STK.filter(s=>s.src).map(s=>s.src))){const im=new Image();IMGS[src]=im;im.onload=()=>{STK.forEach((s,i)=>{if(s.src!==src||!STKT[i])return;const c=STKT[i].image,g=c.getContext("2d");g.clearRect(0,0,256,256);s.d(g);STKT[i].needsUpdate=true});if(state==="liv")drawLiv()};im.src=src}
 // Franjas: 0 ninguna · 1 central · 2 doble · 3 lateral · 4 diagonal
@@ -73,7 +82,7 @@ function applyDecals(){if(!car||!carBody||!THREE.DecalGeometry)return;for(const 
  if(L.st){const t=stripeTex(L.st,L.sc);if(L.st===3)for(const sd of[0,1])add(t,new THREE.Vector3(sd?bb.max.x:bb.min.x,bb.min.y+s.y*.42,c.z),new THREE.Euler(0,sd?PI/2:-PI/2,PI/2),new THREE.Vector3(s.y*1.2,s.z*1.05,s.x*.8));
   else add(t,new THREE.Vector3(c.x,bb.max.y,c.z),new THREE.Euler(-PI/2,0,0),new THREE.Vector3(s.x*.9,s.z*1.05,s.y*2.2))}
  if(L.num){const t=numTex(L.num,L.nc);for(const sd of[0,1])add(t,...side(sd,0,.42,s.y*.5));add(t,...side(2,0,.5,s.x*.45))}
- for(const k of L.stk){const[p,r,z]=side(k.sd,k.u,k.v,s.y*.55*k.s,k.r);add(stkTex(k.i),p,r,z)}
+ for(const k of L.stk){if(k.ci!==undefined&&!CUS.some(q=>q.id===k.ci))continue;const[p,r,z]=side(k.sd,k.u,k.v,s.y*.55*k.s,k.r);add(k.ci!==undefined?cusTex(k.ci):stkTex(k.i),p,r,z)}
  car.position.copy(P);car.rotation.copy(R);car.updateMatrixWorld(true)}
 
 // --- Editor ---
@@ -96,7 +105,15 @@ function drawLiv(){const P=$("livP"),L=LIV[livK];P.innerHTML="<h1>Calcomanías</
  sec("Pegatinas");{const p=document.createElement("p");p.style.cssText="font-size:11px;margin:0 0 6px";p.textContent="Las 12 primeras están dibujadas para el juego. Personaje Hachi: HachiStudio (CC0). Chica anime redonda: «Anime Girl» de Niabot (CC BY 3.0).";P.appendChild(p)}
  const g=document.createElement("div");g.className="stkg";STK.forEach((s,i)=>{const b=document.createElement("button");b.title=s.n;const cv=document.createElement("canvas");cv.width=cv.height=64;const x=cv.getContext("2d");x.scale(.25,.25);s.d(x);b.appendChild(cv);
   b.onclick=()=>{L.stk.push({i,sd:0,u:0,v:.5,s:1,r:0});livSel=L.stk.length-1;saveLiv();applyDecals();drawLiv()};g.appendChild(b)});P.appendChild(g);
- L.stk.forEach((k,j)=>{const d=document.createElement("div");d.className="stki"+(j===livSel?" on":"");d.innerHTML=`<b>${j+1}. ${STK[k.i].n}</b>`;d.onclick=e=>{if(e.target===d||e.target.tagName==="B"){livSel=j;drawLiv()}};P.appendChild(d);
+ // Mis imágenes: subir desde el ordenador o el móvil, ponerlas y borrarlas
+ sec("Mis imágenes");{const g2=document.createElement("div");g2.className="stkg";for(const c of CUS){const w=document.createElement("div");w.className="cusw";const b=document.createElement("button");b.title=c.n;const im=document.createElement("img");im.src=c.url;b.appendChild(im);
+   b.onclick=()=>{L.stk.push({i:0,ci:c.id,sd:0,u:0,v:.5,s:1,r:0});livSel=L.stk.length-1;saveLiv();applyDecals();drawLiv()};
+   const x=document.createElement("button");x.className="cusx";x.textContent="×";x.title="Borrar imagen";x.onclick=()=>{if(!confirm("¿Borrar esta imagen?"))return;CUS=CUS.filter(q=>q.id!==c.id);saveCus();for(const q of LIV)q.stk=q.stk.filter(s=>s.ci!==c.id);saveLiv();livSel=-1;applyDecals();drawLiv()};
+   w.appendChild(b);w.appendChild(x);g2.appendChild(w)}P.appendChild(g2);
+  const fi=document.createElement("input");fi.type="file";fi.accept="image/*";fi.hidden=true;fi.onchange=()=>{const f=fi.files[0];if(f)addCus(f,id=>{L.stk.push({i:0,ci:id,sd:0,u:0,v:.5,s:1,r:0});livSel=L.stk.length-1;saveLiv();applyDecals();drawLiv()})};
+  const ub=document.createElement("button");ub.className="b g";ub.textContent="📷 Subir imagen";ub.onclick=()=>fi.click();P.appendChild(fi);P.appendChild(ub);
+  const p=document.createElement("p");p.style.cssText="font-size:11px;margin:6px 0 0";p.textContent="Tus imágenes se guardan solo en este navegador. Las PNG con fondo transparente quedan mejor.";P.appendChild(p)}
+ L.stk.forEach((k,j)=>{const d=document.createElement("div");d.className="stki"+(j===livSel?" on":"");d.innerHTML=`<b>${j+1}. ${stkName(k)}</b>`;d.onclick=e=>{if(e.target===d||e.target.tagName==="B"){livSel=j;drawLiv()}};P.appendChild(d);
   if(j!==livSel)return;const rr=document.createElement("div");rr.className="lrow";SIDES.forEach((t,q)=>btn(rr,t,k.sd===q,()=>{k.sd=q;saveLiv();applyDecals();drawLiv()}));d.appendChild(rr);
   for(const[key,t,mn,mx,st]of[["u","Delante / detrás",-1,1,.05],["v","Altura",.1,.9,.02],["s","Tamaño",.3,2.5,.05],["r","Giro",-3.14,3.14,.05]]){const q=document.createElement("label");q.className="lsl";q.innerHTML=`<span>${t}</span><input type="range" min="${mn}" max="${mx}" step="${st}" value="${k[key]||0}">`;
    q.querySelector("input").oninput=e=>{k[key]=+e.target.value;saveLiv();applyDecals()};d.appendChild(q)}
