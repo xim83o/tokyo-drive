@@ -3,7 +3,11 @@ function gearCalc(dt){const vf=vx*Math.sin(h)+vz*Math.cos(h),r=Math.min(1,Math.a
  const lo=T[g],hi=Math.min(1,T[g+1]),tr=.25+.7*(r-lo)/(hi-lo)+thrL*.05;
  rpmD+=(Math.min(1,tr)-rpmD)*Math.min(1,dt*12);gearL=vf<-.5?"R":(Math.abs(vf)<.5&&!thrL?"N":String(g+1))}
 const hc=$("hud").getContext("2d");
-function hud(kmh,gl,rpm){const U=ENV.units==="mph"?.6214:1;kmh=Math.round(kmh*U);const mx=Math.ceil(cur.vm*3.6*U*1.05/20)*20,a0=.75*PI,sw=1.5*PI,cx=120,cy=120;
+const SPDH={n:$("spdN"),u:$("spdU"),g:$("spdG"),b:$("spdB").firstChild,last:""};
+function hud(kmh,gl,rpm){const U=ENV.units==="mph"?.6214:1;kmh=Math.round(kmh*U);
+ // Móvil: barra fina arriba (solo se toca el DOM cuando cambia algo)
+ if(MOBILE){const k=kmh+gl+(rpm*20|0)+U;if(k!==SPDH.last){SPDH.last=k;SPDH.n.textContent=kmh;SPDH.u.textContent=U<1?"mph":"km/h";SPDH.g.textContent=gl;SPDH.b.style.width=Math.min(100,kmh/(cur.vm*3.6*U)*100)+"%";SPDH.b.style.background=rpm>.88?"#ff2d2d":"#3ab0ff"}return}
+ const mx=Math.ceil(cur.vm*3.6*U*1.05/20)*20,a0=.75*PI,sw=1.5*PI,cx=120,cy=120;
  hc.clearRect(0,0,240,240);hc.fillStyle="rgba(10,11,16,.8)";hc.beginPath();hc.arc(cx,cy,114,0,7);hc.fill();
  hc.strokeStyle="rgba(255,255,255,.3)";hc.lineWidth=2;hc.beginPath();hc.arc(cx,cy,112,0,7);hc.stroke();
  hc.lineWidth=6;hc.strokeStyle=rpm>.88?"#ff2d2d":"#3ab0ff";hc.beginPath();hc.arc(cx,cy,58,a0,a0+sw*rpm);hc.stroke();

@@ -39,12 +39,12 @@ Pedido por el usuario (todo con permiso ya dado; descargas permitidas: partes de
 - [x] 9. Optimizado (árboles más ligeros, mobiliario y suelo por zonas): Baja 0,77 M triángulos / ~8 ms; Alta 2,5 M / ~13 ms en el PC del usuario (panel pequeño). Publicado y subido.
 
 ## Tanda 2026-11-03 (mañana) — orden acordado con el usuario
-- [x] Errores: FootTown encajado entre las patas (56×56 m, 13 m), sombra de contacto bajo los coches, huecos de acera tapados (capa de asfalto + groundD), objetos solo sobre acera, haz de faros en el suelo (beamMat), NPC que siguen recto y salen por el borde, sin cámara satélite. FALTA comprobar visualmente la torre.
-- [ ] Ajustes (Esc/engranaje; también en móvil salvo cambiar teclas): gráficos, hora y clima, volumen por separado, tráfico, cambiar teclas (solo PC), km/h-mph, mostrar/ocultar HUD. Zoom en minimapa y mapa grande; edificios importantes marcados.
-- [ ] Gráficos: lluvia en el parabrisas (no en la cara), LED/carteles más luminosos de noche, relieve en edificios (ventanas hundidas, pilares/franjas, balcones/terrazas, escaleras y aires en fachada, tejados inclinados en casas bajas), tiendas que parezcan tiendas con LOD, toldos proporcionados, konbinis por dentro y más, yatai, árboles con hojas en racimos 3D según calidad.
-- [ ] Coches: buscar modelos 3D libres y preguntar uno a uno (nombre, web, tamaño, licencia).
-- [ ] Calcomanías: packs, color, franjas, dorsales, llantas, tintado, pegatinas libres; anime propio + libre con permiso.
-- [ ] Móvil (al final): el coche va hacia donde apunta el joystick, atrás = marcha atrás; botones freno y freno de mano separados; velocímetro como barra fina arriba.
+- [x] Errores: FootTown encajado entre las patas (56×56 m, 13 m), sombra de contacto bajo los coches, huecos de acera tapados (capa de asfalto + groundD), objetos solo sobre acera, haz de faros en el suelo (beamMat), NPC que siguen recto y salen por el borde, sin cámara satélite. Torre comprobada con capturas.
+- [x] Ajustes (js/settings.js, Esc/⚙️; también en móvil salvo Teclas): gráficos (calidad, sombras, distancia, resplandor), hora y clima, volumen por canal (BUS en audio.js), tráfico, teclas (solo PC), km/h-mph, HUD. Zoom en minimapa (+/− y rueda) y mapa grande (rueda, pellizco, arrastrar); torre, Zojoji, FootTown y parques con nombre.
+- [x] Gráficos: parabrisas con gotas y limpiaparabrisas, LED con halo nocturno, ventanas hundidas (shader), interiores de tiendas (estanterías, mostrador) y konbinis (pasillos, neveras) — arreglado que Lambert no recibía cameraPosition (uCamP), 3 juegos de tiendas con letrero/noren, toldos bajo el letrero, hasta 70 konbinis, pilares/franjas/aires/escaleras/terrazas (DET, solo de cerca), tejados a dos aguas en casas bajas, 32 yatai con farolillos, árboles con ramas y racimos de hojas en Alta/Ultra (treeGeoHi).
+- [ ] Coches: preguntado al usuario (Kenney Car Kit / Quaternius / Sketchfab él mismo / código).
+- [ ] Calcomanías: packs, color, franjas, dorsales, llantas, tintado, pegatinas libres; anime propio + libre con permiso. Depende del modelo de coche elegido.
+- [x] Móvil: joystick delante = acelerar, atrás = frenar y marcha atrás, lados = girar; botones FRENO y FRENO MANO; velocímetro como barra fina arriba (#spd).
 
 ## Pendiente / ideas
 - Autopista Shuto elevada.

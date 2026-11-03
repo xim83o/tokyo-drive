@@ -17,7 +17,7 @@ function show(w){state=w;$("ov").hidden=false;$("carsP").hidden=w!=="cars";$("ma
  hudVis(false);$("touch").hidden=true}
 function resume(){state="play";$("ov").hidden=true;hudVis(true);$("touch").hidden=!MOBILE}
 // HUD (minimapa, velocímetro y ayuda): se puede quitar cada parte en Ajustes → Pantalla
-function hudVis(on){$("mini").hidden=!on||!ENV.hud.mini;$("hud").hidden=!on||!ENV.hud.speed;$("help").hidden=!on||!ENV.hud.help||MOBILE;$("mz").hidden=!on||!ENV.hud.mini}
+function hudVis(on){$("mini").hidden=!on||!ENV.hud.mini;$("hud").hidden=!on||!ENV.hud.speed||MOBILE;$("spd").hidden=!on||!ENV.hud.speed||!MOBILE;$("help").hidden=!on||!ENV.hud.help||MOBILE;$("mz").hidden=!on||!ENV.hud.mini}
 const mp=$("mp"),mx=mp.getContext("2d");
 // Vista del mapa grande: zoom (rueda, pellizco o botones + y −) y desplazamiento arrastrando
 let mapV={z:1,x:1200,z0:1200},LMK=null;
