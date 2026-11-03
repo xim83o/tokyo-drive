@@ -36,7 +36,7 @@ function loop(n){requestAnimationFrame(loop);const dt=Math.min(.05,(n-last)/1e3)
   // En ajustes con la partida empezada, la imagen se queda quieta (pausa)
   if(state==="set"&&spawned&&setPrev==="play"){}
   // Editor de calcomanías: la cámara gira alrededor del coche, que queda a la derecha del panel
-  else if(state==="liv"){const a=h+livA,pw=$("livP").offsetWidth+12;cam.position.set(px+Math.sin(a)*6.5,2.2,pz+Math.cos(a)*6.5);cam.lookAt(px,.7,pz);cam.fov=50;
+  else if(state==="liv"){const a=h+livA,pw=$("livP").offsetWidth+12,c=livCenter();cam.position.set(c.x+Math.sin(a)*6.5,c.y+2.2,c.z+Math.cos(a)*6.5);cam.lookAt(c.x,c.y+.7,c.z);cam.fov=50;
    cam.setViewOffset(innerWidth,innerHeight,-pw/2,0,innerWidth,innerHeight);cam.updateProjectionMatrix()}
   else if(spawned){cam.position.set(px+Math.sin(t0)*220,90,pz+Math.cos(t0)*220);cam.lookAt(px,20,pz)}else{cam.position.set(TX+Math.sin(t0)*420,140,TZ+Math.cos(t0)*420);cam.lookAt(TX,110,TZ)}}
  envUpdate(dt);studio();if(typeof weather==="function")weather(dt);renderFrame()}

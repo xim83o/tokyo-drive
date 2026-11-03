@@ -1,7 +1,7 @@
 // Mapa real (OpenStreetMap, ver tools/): consultas de superficie y colisión exacta, suelo, calzada, bordillos, agua y vías.
 // Edificios en buildings.js, Torre de Tokio en tower.js, árboles y mobiliario urbano en props.js
 const MAPNAME="tokyo-tower",HC=20,CURB=.15;
-let MAP=null,ready=false,mapImg=null,TA=0;   // TA: giro de la Torre de Tokio (su base está alineada con FootTown)
+let MAP=null,ready=false,mapImg=null,TA=0,DEALER=null;   // TA: giro de la Torre de Tokio (su base está alineada con FootTown)
 // Rejilla espacial: cada celda de 20 m guarda índices de bordes (e), cápsulas (c), polígonos (p), círculos (o) y tramos de calle (r)
 const CELLS=new Map(),EMPTY={e:[],c:[],p:[],o:[],r:[]};
 function gadd(x0,z0,x1,z1,list,v){const i0=Math.floor(x0/HC),i1=Math.floor(x1/HC),j0=Math.floor(z0/HC),j1=Math.floor(z1/HC);
@@ -99,6 +99,15 @@ async function loadWorld(){
   // FootTown encajado entre las patas (como en la realidad): planta cuadrada de 56 m y 13 m de alto, por debajo de los arcos
   const L=[[-28,-28],[28,-28],[28,28],[-28,28]];ft.p=new Float32Array(L.flatMap(([u,v])=>[TX+u*c-v*s,TZ+u*s+v*c]));ft.h=13;
   MAP.buildings=MAP.buildings.filter(b=>!b.del)}
+ // Concesionario "Tokyo Drive Motors": un edificio mediano junto a una calle principal, a unos 450 m de la torre. Se vuelve una
+ // sala de exposición de cristal de 9 m de alto (buildings.js) y delante, en la calle, hay una marca para entrar con el coche
+ {let best=null,bs=1e9;for(const b of MAP.buildings){if(b.k)continue;const R=b.p;let A=0,cx=0,cz=0;for(let i=0,j=R.length-2;i<R.length;j=i,i+=2){A+=R[j]*R[i+1]-R[i]*R[j+1];cx+=R[i];cz+=R[i+1]}A=Math.abs(A)/2;cx/=R.length/2;cz/=R.length/2;
+   const d=Math.hypot(cx-TX,cz-TZ);if(A<500||A>2200||d<250||d>800||cx<200||cz<200||cx>W-200||cz>W-200)continue;
+   // Tiene que dar a una avenida (calle principal o secundaria ancha)
+   let rd=1e9,rq=null;for(const r of MAP.roads){if(r.t>2||r.w<10)continue;const p=r.p;for(let i=2;i<p.length;i+=2){const q=segD2(cx,cz,p[i-2],p[i-1],p[i],p[i+1]);if(q<rd){rd=q;rq={x:_cx,z:_cz,w:r.w,a:Math.atan2(p[i]-p[i-2],p[i+1]-p[i-1])}}}}
+   rd=Math.sqrt(rd);if(rd>Math.sqrt(A)*.75+14)continue;const s=Math.abs(d-450)+Math.abs(A-1100)*.05+rd*2;if(s<bs){bs=s;best={b,cx,cz,rq}}}
+  if(best){best.b.dealer=1;best.b.h=9;const q=best.rq,dx=best.cx-q.x,dz=best.cz-q.z,l=Math.hypot(dx,dz)||1,o=Math.max(1,q.w/2-2.2);
+   DEALER={bx:best.cx,bz:best.cz,x:q.x+dx/l*o,z:q.z+dz/l*o,h:q.a}}}
  // Edificios primero: las calles se estrechan donde se meterían en uno, y los adornos comprueban si caen dentro
  for(const b of MAP.buildings)addPoly(b.p,b.h);
  for(const R of MAP.water)addPoly(R,0);

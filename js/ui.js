@@ -28,6 +28,7 @@ function mapZoom(d,cx,cz){const z=Math.max(1,Math.min(8,mapV.z*(d>0?1.5:1/1.5)))
 function landmarks(){if(LMK||!ready)return LMK;LMK=[{x:TX,z:TZ,n:"Torre de Tokio",c:"#ff5a3c"}];const T=MAP.buildings.filter(b=>b.k===1||b.k===3);
  if(T.length){let x=0,z=0,n=0;for(const b of T)for(let i=0;i<b.p.length;i+=2){x+=b.p[i];z+=b.p[i+1];n++}LMK.push({x:x/n,z:z/n,n:"Templo Zojoji",c:"#e2553f"})}
  const ft=MAP.buildings.find(b=>b.k===2);if(ft)LMK.push({x:TX,z:TZ+34,n:"FootTown",c:"#f2f2ef",s:1});
+ if(DEALER)LMK.push({x:DEALER.bx,z:DEALER.bz,n:"🎨 Concesionario",c:"#29d3ff"});
  const big=MAP.green.filter(g=>g.k!==2).map(g=>{let a=0,x=0,z=0;const R=g.p;for(let i=0;i<R.length;i+=2){x+=R[i];z+=R[i+1]}const n=R.length/2;for(let i=0,j=R.length-2;i<R.length;j=i,i+=2)a+=R[j]*R[i+1]-R[i]*R[j+1];return{x:x/n,z:z/n,a:Math.abs(a)/2}}).filter(g=>g.a>20000).sort((a,b)=>b.a-a.a).slice(0,4);
  for(const g of big)if(!LMK.some(l=>Math.hypot(l.x-g.x,l.z-g.z)<150))LMK.push({x:g.x,z:g.z,n:"Parque",c:"#8fd18a",s:1});return LMK}
 function drawMap(){const S=mapS(),[ox,oz]=mapO();mx.setTransform(1,0,0,1,0,0);mx.fillStyle="#1c1f26";mx.fillRect(0,0,640,640);

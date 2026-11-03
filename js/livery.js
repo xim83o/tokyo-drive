@@ -95,14 +95,47 @@ function applyDecals(){if(!car||!carBody||!THREE.DecalGeometry)return;for(const 
  for(const k of L.stk){if(k.ci!==undefined?!CUS.some(q=>q.id===k.ci):STK[k.i].hide)continue;const[p,r,z]=side(k.sd,k.u,k.v,s.y*.55*k.s,k.r);add(k.ci!==undefined?cusTex(k.ci):stkTex(k.i),p,r,z)}
  car.position.copy(P);car.rotation.copy(R);car.updateMatrixWorld(true)}
 
-// Focos de estudio: de noche, mientras el editor está abierto, tres focos iluminan el coche (siempre están en la escena con
-// intensidad 0 para que no se recompilen los materiales al encenderlos)
+// --- Concesionario "Tokyo Drive Motors" ---
+// Fondo del editor: la ciudad (el coche donde esté) o la sala de exposición, construida aparte, 300 m por debajo del mapa:
+// suelo brillante, plataforma giratoria, paredes blancas con el logotipo, tiras de luz y techo con paneles luminosos
+let livBg=ENV.livbg||"city",SHOW=null,DMK=null,dealerCool=true;const SR={x:1200,y:-300,z:1200};
+const dealerOn=()=>state==="liv"&&livBg==="dealer";
+function logoTex(w,h){return canvasTex(w,h,g=>{g.fillStyle="#111";g.fillRect(0,0,w,h);g.fillStyle="#e5173f";g.fillRect(0,h*.78,w,h*.1);g.fillStyle="#fff";g.font=`italic 900 ${h*.42}px system-ui`;g.textAlign="center";g.textBaseline="middle";g.fillText("TOKYO DRIVE MOTORS",w/2,h*.4);
+ g.font=`bold ${h*.14}px 'Yu Gothic','Meiryo',sans-serif`;g.fillStyle="#ff9aa8";g.fillText("東京ドライブ・モーターズ",w/2,h*.66)})}
+function buildShowroom(){if(SHOW)return;const g=new THREE.Group();g.position.set(SR.x,SR.y,SR.z);
+ const fl=canvasTex(256,256,(c)=>{c.fillStyle="#2b2d32";c.fillRect(0,0,256,256);c.fillStyle="#3a3c42";c.fillRect(0,0,256,3);c.fillRect(0,0,3,256)},true);fl.repeat.set(9,7);
+ const box=(w,hh,d,m,x,y,z)=>{const o=new THREE.Mesh(new THREE.BoxGeometry(w,hh,d),m);o.position.set(x,y,z);g.add(o);return o};
+ const floor=new THREE.Mesh(new THREE.PlaneGeometry(36,28).rotateX(-PI/2),new THREE.MeshPhongMaterial({map:fl,shininess:140,specular:0x777777,envMap:SKYCUBE,reflectivity:.18,emissive:0x111214}));g.add(floor);
+ const tt=new THREE.Mesh(new THREE.CylinderGeometry(3.8,3.9,.1,64),new THREE.MeshPhongMaterial({color:0xcfd2d6,shininess:120,specular:0x999999,emissive:0x202224}));tt.position.y=.05;g.add(tt);
+ const wall=new THREE.MeshLambertMaterial({color:0xe8e9eb,emissive:0x4a4b4e}),dark=new THREE.MeshLambertMaterial({color:0x1b1d22,emissive:0x0a0b0d}),strip=new THREE.MeshBasicMaterial({color:0xfff4e4});
+ box(36,9,.3,wall,0,4.5,-14);box(36,9,.3,dark,0,4.5,14);box(.3,9,28,wall,-18,4.5,0);box(.3,9,28,wall,18,4.5,0);
+ const lg=new THREE.Mesh(new THREE.PlaneGeometry(16,2.5),new THREE.MeshBasicMaterial({map:logoTex(1024,160)}));lg.position.set(0,5.6,-13.8);g.add(lg);
+ for(const x of[-14,-7,7,14])box(.25,6.5,.08,strip,x,4,-13.82);for(const z of[-9,-3,3,9]){box(.08,6.5,.25,strip,-17.82,4,z);box(.08,6.5,.25,strip,17.82,4,z)}
+ const ce=canvasTex(256,256,(c)=>{c.fillStyle="#2a2b2e";c.fillRect(0,0,256,256);c.fillStyle="#fffaf0";for(let y=0;y<4;y++)for(let x=0;x<4;x++)c.fillRect(20+x*60,24+y*60,36,22)},true);ce.repeat.set(3,2);
+ const ceil=new THREE.Mesh(new THREE.PlaneGeometry(36,28).rotateX(PI/2),new THREE.MeshBasicMaterial({map:ce}));ceil.position.y=8.6;g.add(ceil);
+ g.visible=false;sc.add(g);SHOW=g}
+// Marca en la calle delante del concesionario (anillo que late) y cartel luminoso en el tejado. Al parar encima se abre el editor
+function buildDealer(){if(!DEALER||DMK)return;DMK=new THREE.Group();DMK.position.set(DEALER.x,.06,DEALER.z);
+ DMK.add(new THREE.Mesh(new THREE.RingGeometry(2.6,3.2,48).rotateX(-PI/2),new THREE.MeshBasicMaterial({color:0x29d3ff,transparent:true,opacity:.85,blending:THREE.AdditiveBlending,depthWrite:false})));
+ const ic=canvasTex(128,128,(c)=>{c.font="84px system-ui";c.textAlign="center";c.textBaseline="middle";c.fillText("🎨",64,70)});DMK.add(new THREE.Mesh(new THREE.PlaneGeometry(2.4,2.4).rotateX(-PI/2),new THREE.MeshBasicMaterial({map:ic,transparent:true,depthWrite:false})));
+ sc.add(DMK);const s=new THREE.Mesh(new THREE.PlaneGeometry(14,2.2),new THREE.MeshLambertMaterial({map:logoTex(1024,160),emissiveMap:logoTex(1024,160),emissive:0xffffff,emissiveIntensity:.3,side:THREE.DoubleSide}));
+ // En el borde del tejado que da a la calle (desde el centro del edificio hacia la marca, hasta salir de él)
+ const dx=DEALER.x-DEALER.bx,dz=DEALER.z-DEALER.bz,l=Math.hypot(dx,dz)||1;let t=0;while(t<l&&inBuilding(DEALER.bx+dx/l*(t+1),DEALER.bz+dz/l*(t+1)))t++;
+ NM.sign.push(s.material);s.position.set(DEALER.bx+dx/l*Math.max(0,t-.6),11.2,DEALER.bz+dz/l*Math.max(0,t-.6));s.rotation.y=Math.atan2(dx,dz);sc.add(s)}
+// Cada imagen: anillo que late y entrar al concesionario al pasar despacio por encima (hay que salir de la marca para volver a entrar)
+function dealerTick(){if(!ready)return;buildDealer();if(!DMK)return;const k=1+Math.sin(performance.now()/300)*.06;DMK.scale.set(k,1,k);
+ if(state!=="play")return;const d=Math.hypot(px-DEALER.x,pz-DEALER.z);if(d>9)dealerCool=false;if(d<3.2&&Math.hypot(vx,vz)<9&&!dealerCool){dealerCool=true;vx=vz=0;livBg="dealer";openLiv()}}
+// Centro de la vista del editor: el coche en la ciudad o en la plataforma del concesionario
+function livCenter(){return dealerOn()?SR:{x:px,y:bodyY,z:pz}}
+// Focos de estudio: en el concesionario siempre; en la ciudad, de noche (siempre están en la escena con intensidad 0 para que no
+// se recompilen los materiales al encenderlos)
 const STUDIO=[0,1,2].map(()=>{const l=new THREE.SpotLight(0xfff6ea,0,30,.55,.6,1);sc.add(l,l.target);return l});
-function studio(){const on=state==="liv"&&NF>.12;STUDIO.forEach((l,i)=>{l.intensity=on?NF*(i===2?.45:.75):0;if(!on)return;const a=h+[.9,-2.2,PI][i],d=[5.5,5.5,6.5][i];
- l.position.set(px+Math.sin(a)*d,[4.5,4,6][i],pz+Math.cos(a)*d);l.target.position.set(px,.6,pz);l.target.updateMatrixWorld()})}
+function studio(){dealerTick();const dl=dealerOn();if(SHOW)SHOW.visible=dl;if(state==="liv"&&car){const c=livCenter();car.position.set(c.x,c.y+(dl?.1:0),c.z);car.rotation.set(0,h,0)}
+ const on=state==="liv"&&(dl||NF>.12),c=livCenter();STUDIO.forEach((l,i)=>{l.intensity=on?(dl?[1.1,1.1,.8][i]:NF*(i===2?.45:.75)):0;if(!on)return;const a=h+[.9,-2.2,PI][i],d=[5.5,5.5,6.5][i];
+ l.position.set(c.x+Math.sin(a)*d,c.y+[4.5,4,6][i],c.z+Math.cos(a)*d);l.target.position.set(c.x,c.y+.6,c.z);l.target.updateMatrixWorld()})}
 // --- Editor ---
 let livK=0,livSel=-1,livPrev="cars",livA=.6;
-function openLiv(){livPrev=state;state="liv";livK=carK;car.position.set(px,bodyY,pz);car.rotation.set(0,h,0);$("ov").hidden=false;$("ov").classList.add("liv");$("carsP").hidden=$("mapP").hidden=$("setP").hidden=true;$("livP").hidden=false;hudVis(false);$("touch").hidden=true;drawLiv()}
+function openLiv(){livPrev=state;state="liv";livK=carK;if(livBg==="dealer")buildShowroom();$("ov").hidden=false;$("ov").classList.add("liv");$("carsP").hidden=$("mapP").hidden=$("setP").hidden=true;$("livP").hidden=false;hudVis(false);$("touch").hidden=true;drawLiv()}
 function closeLiv(){saveLiv();$("livP").hidden=true;$("ov").classList.remove("liv");if(livPrev==="play")resume();else show("cars")}
 function livSet(o){Object.assign(LIV[livK],o);saveLiv();if(livK!==carK||o.c!==undefined||o.tint!==undefined)buildCar(livK);else applyDecals()}
 function drawLiv(){const P=$("livP"),L=LIV[livK];P.innerHTML="<h1>Calcomanías</h1>";
@@ -111,6 +144,7 @@ function drawLiv(){const P=$("livP"),L=LIV[livK];P.innerHTML="<h1>Calcomanías</
  const sw=(r,cur2,f,allowNone)=>{if(allowNone)btn(r,"Original",cur2===undefined,()=>f(undefined));for(const c of PAL8)btn(r,"",cur2===c,()=>f(c),`background:#${c.toString(16).padStart(6,"0")};width:26px;height:26px;padding:0;border-radius:13px`);
   const i=document.createElement("input");i.type="color";i.value="#"+((cur2===undefined?0xffffff:cur2).toString(16).padStart(6,"0"));i.oninput=()=>f(parseInt(i.value.slice(1),16));r.appendChild(i)};
  let r=row();CARS.forEach((c,i)=>btn(r,c.n,i===livK,()=>{livK=i;livSel=-1;buildCar(i);drawLiv()}));
+ sec("Fondo");r=row();[["city","Ciudad"],["dealer","Concesionario"]].forEach(([v,t])=>btn(r,t,livBg===v,()=>{livBg=v;ENV.livbg=v;saveEnv();if(v==="dealer")buildShowroom();drawLiv()}));
  sec("Packs");r=row();PACKS.forEach(p=>btn(r,p.n,false,()=>{LIV[livK]=Object.assign(LIVDEF(),JSON.parse(JSON.stringify(p.o)));saveLiv();buildCar(livK);drawLiv()}));btn(r,"Quitar todo",false,()=>{LIV[livK]=LIVDEF();saveLiv();buildCar(livK);drawLiv()});
  sec("Color de carrocería");sw(row(),L.c===undefined?CARS[livK].c:L.c,c=>livSet({c:c===undefined?CARS[livK].c:c}));
  sec("Llantas");sw(row(),L.wc,c=>{LIV[livK].wc=c;saveLiv();buildCar(livK)},true);
