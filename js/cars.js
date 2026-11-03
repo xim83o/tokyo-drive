@@ -22,6 +22,17 @@ function paintCell(scene){const A={};scene.traverse(o=>{if(!o.isMesh||!o.name.st
  for(let i=0;i<n;i+=3){const i0=ix?ix.getX(i):i,i1=ix?ix.getX(i+1):i+1,i2=ix?ix.getX(i+2):i+2;a.fromBufferAttribute(p,i0);b.fromBufferAttribute(p,i1).sub(a);c.fromBufferAttribute(p,i2).sub(a);
   const u=(uv.getX(i0)+uv.getX(i1)+uv.getX(i2))/3,v=(uv.getY(i0)+uv.getY(i1)+uv.getY(i2))/3,row=Math.floor(v*4);if(row!==1)continue;const k=Math.floor(u*8);A[k]=(A[k]||0)+b.cross(c).length()}});
  let best=-1,bv=0;for(const k in A)if(A[k]>bv){bv=A[k];best=+k}return best}
+// Casillas de la paleta que usan las ruedas, con su brillo medio (las oscuras son el neumático y las claras la llanta)
+function wheelCells(scene){const A={};scene.traverse(o=>{if(!o.isMesh||!o.name.startsWith("wheel"))return;const uv=o.geometry.attributes.uv;for(let i=0;i<uv.count;i++){const k=Math.floor(uv.getX(i)*8)+","+Math.floor(uv.getY(i)*4);A[k]=(A[k]||0)+1}});
+ const g=document.createElement("canvas").getContext("2d");g.canvas.width=g.canvas.height=512;g.drawImage(CMAP,0,0);
+ return Object.keys(A).map(k=>{const[c,r]=k.split(",").map(Number),d=g.getImageData(c*64,r*128,64,128).data;let m=0;for(let i=0;i<d.length;i+=4)m+=d[i]*.3+d[i+1]*.59+d[i+2]*.11;return{c,r,l:m/(d.length/4)/255}})}
+// Cambia el color de una casilla de la paleta conservando su sombreado
+function recolor(g,c,r,col){const d=g.getImageData(c*64,r*128,64,128),q=d.data,k=new THREE.Color(col);let m=0;for(let i=0;i<q.length;i+=4)m+=q[i]*.3+q[i+1]*.59+q[i+2]*.11;m=Math.max(1,m/(q.length/4));
+ const dark=m<60;for(let i=0;i<q.length;i+=4){const l=dark?.55+.45*(q[i]*.3+q[i+1]*.59+q[i+2]*.11)/m:(q[i]*.3+q[i+1]*.59+q[i+2]*.11)/m;q[i]=Math.min(255,k.r*255*l);q[i+1]=Math.min(255,k.g*255*l);q[i+2]=Math.min(255,k.b*255*l)}g.putImageData(d,c*64,r*128)}
+const WMAT=new Map();
+function wheelMat(f,rim,tire){const key=f+"|"+rim+"|"+tire;if(WMAT.has(key))return WMAT.get(key);const cv=document.createElement("canvas");cv.width=cv.height=512;const g=cv.getContext("2d");g.drawImage(CMAP,0,0);
+ for(const q of MODELS[f].wc){if(q.l<.35){if(tire!==undefined)recolor(g,q.c,q.r,tire)}else if(rim!==undefined)recolor(g,q.c,q.r,rim)}
+ const t=new THREE.CanvasTexture(cv);t.flipY=false;const m=new THREE.MeshPhongMaterial({map:t,shininess:70,specular:0x333333});WMAT.set(key,m);return m}
 const PTEX=new Map();
 // tint: tintado de los cristales (0-1); los cristales usan la primera casilla de la paleta
 function paintTex(cell,col,tint){const key=cell+"|"+col+"|"+(tint||0);if(PTEX.has(key))return PTEX.get(key);const cv=document.createElement("canvas");cv.width=cv.height=512;const g=cv.getContext("2d");g.drawImage(CMAP,0,0);
@@ -33,7 +44,7 @@ const PMAT=new Map();
 function paintMat(cell,col,tint){const key=cell+"|"+col+"|"+(tint||0);if(!PMAT.has(key))PMAT.set(key,new THREE.MeshPhongMaterial({map:paintTex(cell,col,tint),shininess:60,specular:0x2a2a2a}));return PMAT.get(key)}
 function loadCars(){if(!THREE.GLTFLoader)return Promise.resolve();const L=new THREE.GLTFLoader(),names=[...new Set([...CARS.map(c=>c.f),...NPCK.map(k=>k.f)])];
  return new Promise(ok=>{const im=new Image();im.onload=()=>{CMAP=im;ok()};im.onerror=()=>ok();im.src="models/cars/Textures/colormap.png"})
-  .then(()=>Promise.all(names.map(n=>L.loadAsync(`models/cars/${n}.json`).then(g=>{const s=g.scene,bb=new THREE.Box3().setFromObject(s);MODELS[n]={s,bb,cell:paintCell(s)}}).catch(e=>console.warn("Modelo",n,e)))))
+  .then(()=>Promise.all(names.map(n=>L.loadAsync(`models/cars/${n}.json`).then(g=>{const s=g.scene,bb=new THREE.Box3().setFromObject(s);MODELS[n]={s,bb,cell:paintCell(s),wc:CMAP?wheelCells(s):[]}}).catch(e=>console.warn("Modelo",n,e)))))
   .then(()=>{if(CMAP&&MODELS[cur.f])buildCar(carK)})}
 // Copia del modelo escalada al largo pedido (un poco más bajo que el original, que es de estilo juguete), con la pintura elegida
 function modelInst(n,len,col,flat,tint){const M=MODELS[n],s=M.s.clone(true),sz=M.bb.getSize(new THREE.Vector3()),k=len/sz.z,mat=paintMat(col===undefined?-1:M.cell,col,tint);
@@ -58,7 +69,7 @@ function buildCar(k){carK=k;cur=CARS[k];if(car)sc.remove(car);car=new THREE.Grou
   for(const s of[-1,1]){const p=new THREE.Mesh(new THREE.BoxGeometry(.08,L+.04,.08),pm);p.position.set(s*w*.46,y,z);p.rotation.x=ang;intG.add(p)}
   const hd=new THREE.Mesh(new THREE.BoxGeometry(w*.96,.1,.14),pm);hd.position.set(0,ey+.31,.2);intG.add(hd)}
  const wgp=new THREE.Group();wgp.position.set(-w*.2,cur.ey-.2,.6);wgp.rotation.x=-.9;whl=new THREE.Mesh(new THREE.TorusGeometry(.17,.02,6,16),dm);wgp.add(whl);intG.add(wgp);intG.visible=false;
- car.add(blob(w,l));sc.add(car);if(typeof applyDecals==="function")applyDecals();car.position.set(px,bodyY,pz);car.rotation.set(pitch,h,roll)}
+ car.add(blob(w,l));sc.add(car);if(typeof applyDecals==="function")applyDecals();if(spawned){car.position.set(px,bodyY,pz);car.rotation.set(pitch,h,roll)}}
 // Ruedas: giran con la velocidad y las delanteras se orientan con el volante
 function wheelSpin(dt){const vf=vx*Math.sin(h)+vz*Math.cos(h),r=cur.wr||.36;for(const q of WHEELS){q.o.rotation.x+=vf*dt/r;q.o.rotation.y=q.f?stV*.45:0}}
 // Color de cada coche (lo cambia el editor de calcomanías)

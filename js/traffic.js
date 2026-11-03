@@ -70,7 +70,7 @@ function lamps2(){if(!LM)return;LIT.forEach((L,i)=>{const st=lightSt(L);LM.setCo
 // --- Coches NPC. mode: 0 conduce · 1 desplazado por un choque · 2 parado tras el choque. wreck: siniestrado ---
 function mkNpc(){if(CMAP){let r=Math.random()*NPCK.reduce((a,k)=>a+k.p,0),K=NPCK[0];for(const k of NPCK){r-=k.p;if(r<=0){K=k;break}}
   if(MODELS[K.f]){const g=new THREE.Group(),m=modelInst(K.f,K.l,K.paint?NCOL[Math.floor(Math.random()*NCOL.length)]:undefined);g.add(m.s);carLights(g,m.w,m.h,K.l);g.add(blob(m.w,K.l));
-   return{g,x:-9999,z:-9999,h:0,v:0,vt:12,m:K.m,l:K.l,hp:.85+Math.random()*.3,si:0}}}
+   return{g,x:-9999,z:-9999,h:0,v:0,vt:12,m:K.m,l:K.l,w:m.w,hp:.85+Math.random()*.3,si:0}}}
  const g=new THREE.Group(),t=Math.floor(Math.random()*3),w=1.75,l=[3.6,4.3,4.8][t],bh=[.75,.6,.95][t],c=NCOL[Math.floor(Math.random()*NCOL.length)];
  const bx=(a,b,d,col,x,y,z)=>{const m=new THREE.Mesh(new THREE.BoxGeometry(a,b,d),new THREE.MeshLambertMaterial({color:col}));m.position.set(x,y,z);g.add(m)};
  bx(w,bh,l,c,0,.3+bh/2,0);bx(w*.88,.5,l*[.55,.45,.75][t],0x1a2430,0,.3+bh+.25,l*[-.05,-.1,.05][t]);
@@ -106,6 +106,11 @@ function hitNpc(n,dv,nx,nz,along){const fx=Math.sin(n.h),fz=Math.cos(n.h);let dl
  let sp=(n.mode?n.sp:0)-along*lat*dv*.09*(kmh<20?.3:1)+(kmh>=20?(Math.random()-.5)*dv*(kmh>=60?.15:.1):0);
  if(kmh>=60)sp=Math.sign(sp||1)*Math.max(Math.abs(sp),dv*.12);n.sp=Math.max(-3.5,Math.min(3.5,sp));
  if(kmh>=60)n.wreck=true;n.stunT=kmh>=20?3:0;n.mode=1;n.v=0;n.tr=null;n.nx=null;n.exit=false}
+// Choque entre dos coches como cajas giradas (ancho × largo reales), por separación de ejes. Devuelve la dirección en la que hay
+// que mover el coche A para separarlo del B y cuánto (p), o null si no se tocan
+function boxHit(ax,az,ah,aw,al,bx,bz,bh,bw,bl){const A=[[Math.sin(ah),Math.cos(ah)],[Math.cos(ah),-Math.sin(ah)]],B=[[Math.sin(bh),Math.cos(bh)],[Math.cos(bh),-Math.sin(bh)]],dx=ax-bx,dz=az-bz;let best=null;
+ for(const u of[...A,...B]){const d=dx*u[0]+dz*u[1],ra=Math.abs(A[0][0]*u[0]+A[0][1]*u[1])*al/2+Math.abs(A[1][0]*u[0]+A[1][1]*u[1])*aw/2,rb=Math.abs(B[0][0]*u[0]+B[0][1]*u[1])*bl/2+Math.abs(B[1][0]*u[0]+B[1][1]*u[1])*bw/2,o=ra+rb-Math.abs(d);
+  if(o<=0)return null;if(!best||o<best.p){const s=d<0?-1:1;best={p:o,nx:u[0]*s,nz:u[1]*s}}}return best}
 function knock(n,dt){n.x+=n.vx*dt;n.z+=n.vz*dt;n.h+=n.sp*dt;
  // Rozamiento de neumáticos: de lado frena mucho (~1 g), hacia delante algo menos (el conductor frena)
  const s=Math.hypot(n.vx,n.vz),fx=Math.sin(n.h),fz=Math.cos(n.h),fw=n.wreck?1.3:1;let l=n.vx*fx+n.vz*fz,r=-n.vx*fz+n.vz*fx;
@@ -162,14 +167,15 @@ function npcs(dt){if(!LANES.length)return;TT+=dt;const k2=Math.floor(TT*2);if(k2
     if(!n.tr){const[x,z,a]=lanePos(n.lane,n.s,n),f=Math.exp(-2*dt);n.ox=(n.ox||0)*f;n.oz=(n.oz||0)*f;n.x=x+n.ox;n.z=z+n.oz;n.h+=ad(a,n.h)*Math.min(1,dt*(n.ox?3:8))}}
    n.v=vt<n.v?Math.max(vt,n.v-Math.max(8,(n.v-vt)*4)*dt):n.v+(vt-n.v)*Math.min(1,dt)}
   // Un NPC desplazado puede empujar a otros (solo si lo ha golpeado el jugador)
-  if(n.mode===1&&(n.vx||n.vz))for(let q=0;q<cnt;q++){const o=NPC[q];if(o===n||!o.lane)continue;const dx=o.x-n.x,dz=o.z-n.z,d=Math.hypot(dx,dz);
-   if(d<3.6&&d>.01){const nx=dx/d,nz=dz/d,pen=(3.6-d)/2;o.x+=nx*pen;o.z+=nz*pen;n.x-=nx*pen;n.z-=nz*pen;
+  if(n.mode===1&&(n.vx||n.vz))for(let q=0;q<cnt;q++){const o=NPC[q];if(o===n||!o.lane)continue;const dx=o.x-n.x,dz=o.z-n.z;
+   const hb=dx*dx+dz*dz<64&&boxHit(o.x,o.z,o.h,o.w||1.8,o.l,n.x,n.z,n.h,n.w||1.8,n.l);
+   if(hb){const nx=hb.nx,nz=hb.nz,pen=hb.p/2;o.x+=nx*pen;o.z+=nz*pen;n.x-=nx*pen;n.z-=nz*pen;
     const [ux,uz]=npcVel(o),vn=(n.vx-ux)*nx+(n.vz-uz)*nz;
     if(vn>.5){const j=1.2*vn/(1/n.m+1/o.m);n.vx-=nx*j/n.m;n.vz-=nz*j/n.m;hitNpc(o,j/o.m,nx,nz,-(dx*Math.sin(o.h)+dz*Math.cos(o.h)));
      if(vn>3&&Math.hypot(n.x-px,n.z-pz)<60&&performance.now()-crashT>250){crashT=performance.now();thump(vn*.6)}}}}
   // Choque con el jugador: impulso según masas. El jugador pierde velocidad y se desvía un poco, sin trompo (estilo Motorfest)
-  const dx=px-n.x,dz=pz-n.z,d2=Math.hypot(dx,dz);
-  if(d2<3.8&&d2>.01){const nx=dx/d2,nz=dz/d2;px+=nx*(3.8-d2);pz+=nz*(3.8-d2);
+  const dx=px-n.x,dz=pz-n.z,hp=dx*dx+dz*dz<64&&boxHit(px,pz,h,cur.w,cur.l,n.x,n.z,n.h,n.w||1.8,n.l);
+  if(hp){const nx=hp.nx,nz=hp.nz;px+=nx*hp.p;pz+=nz*hp.p;
    const [ux,uz]=npcVel(n),vn=(vx-ux)*nx+(vz-uz)*nz;
    if(vn<-.5){const j=-1.2*vn/(1/cur.m+1/n.m),dvp=j/cur.m*.65;vx+=nx*dvp;vz+=nz*dvp;
     if(vx*Math.sin(h)+vz*Math.cos(h)>3)h+=Math.max(-.12,Math.min(.12,ad(Math.atan2(vx,vz),h)*.5));

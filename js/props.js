@@ -1,6 +1,15 @@
 // Mobiliario urbano: árboles (OSM, parques y aceras), farolas con su charco de luz nocturno, señales de velocidad,
 // máquinas expendedoras y postes eléctricos con cables (muy típicos de las calles pequeñas de Tokio)
-let lampN=0;const LAMPS=[];
+let lampN=0;const LAMPS=[],TREES=[],TREEH=[];
+// Nivel de detalle de los árboles (cada 0,3 s). Baja y Media: solo la mitad de los árboles, sencillos. Alta y Ultra: detallados a
+// menos de 260 m (Ultra 400 m) y sencillos más lejos. Un árbol se oculta en su malla poniendo su escala a cero
+const _to=new THREE.Object3D(),_tz=new THREE.Matrix4().makeScale(0,0,0),_tc=new THREE.Color();
+function treeLod(){if(!TREES.length)return;const lv=qLevel(),R=lv>=3?400:260,P=cam.position,dirty=new Set(),hi=[[],[],[]];
+ for(const t of TREES){const near=lv>=2&&Math.hypot(t.e[0]-P.x,t.e[2]-P.z)<R,want=near?"hi":(lv<2&&t.odd?"no":"lo");if(near)hi[t.s].push(t);if(want===t.st)continue;
+  if(want==="lo"){const e=t.e,s=e[4];_to.position.set(e[0],e[1],e[2]);_to.rotation.set(0,e[3],0);_to.scale.set(s,e[5],s);_to.updateMatrix();t.m.setMatrixAt(t.j,_to.matrix)}else t.m.setMatrixAt(t.j,_tz);t.st=want;dirty.add(t.m)}
+ for(const m of dirty)m.instanceMatrix.needsUpdate=true;
+ TREEH.forEach((H,s)=>{const L=hi[s];L.forEach((t,i)=>{const e=t.e,k=e[4];_to.position.set(e[0],e[1],e[2]);_to.rotation.set(0,e[3],0);_to.scale.set(k,e[5],k);_to.updateMatrix();H.w.setMatrixAt(i,_to.matrix);H.l.setMatrixAt(i,_to.matrix);H.l.setColorAt(i,_tc.set(e[6]))});
+  H.w.count=H.l.count=L.length;H.w.instanceMatrix.needsUpdate=H.l.instanceMatrix.needsUpdate=true;H.l.instanceColor.needsUpdate=true})}
 // Geometría de un árbol (tronco + copa de varios bultos deformados con colores variados). sp: 0 ginkgo, 1 copa redonda, 2 conífera
 function treeGeo(sp){const r=rng(31+sp*7),parts=[],col=(g,cs)=>{const n=g.attributes.position.count,a=new Float32Array(n*3),c=new THREE.Color();for(let i=0;i<n;i++){c.set(cs[(r()*cs.length)|0]);c.offsetHSL(0,0,(r()-.5)*.06);a[i*3]=c.r;a[i*3+1]=c.g;a[i*3+2]=c.b}g.setAttribute("color",new THREE.BufferAttribute(a,3));return g};
  const lump=(rad,x,y,z,sx,sy,cs)=>{const g=new THREE.IcosahedronGeometry(rad,0).toNonIndexed(),p=g.attributes.position;for(let i=0;i<p.count;i++){const k=.82+r()*.32;p.setXYZ(i,p.getX(i)*k*sx+x,p.getY(i)*k*sy+y,p.getZ(i)*k*sx+z)}g.computeVertexNormals();parts.push(col(g,cs))};
@@ -17,7 +26,9 @@ function treeGeo(sp){const r=rng(31+sp*7),parts=[],col=(g,cs)=>{const n=g.attrib
 // luz la ilumine como un volumen. Devuelve [madera, hojas] para usar con dos materiales
 const LEAFTEX=[];
 function leafTex(sp){if(LEAFTEX[sp])return LEAFTEX[sp];const cs=[["#f2cf3a","#e3b21f","#f7dc5a","#c9a227","#d8be3c"],["#4e8a3e","#3f7a35","#5f9a45","#7a9a3a","#8f8f32","#b07a2a"],["#2f5a34","#3a6a3c","#264c2b","#43703f"]][sp],r=rng(55+sp);
- const t=canvasTex(256,256,(g)=>{for(let i=0;i<(sp===2?1100:260);i++){const x=20+r()*216,y=20+r()*216,d=Math.hypot(x-128,y-128);if(d>112)continue;g.fillStyle=cs[(r()*cs.length)|0];g.save();g.translate(x,y);g.rotate(r()*PI*2);
+ // Base irregular más oscura bajo las hojas: así cada racimo es casi opaco por dentro y solo los bordes quedan recortados
+ const t=canvasTex(256,256,(g)=>{const base=["#a88a1e","#2f5a2a","#1e3d22"][sp];g.fillStyle=base;for(let i=0;i<16;i++){const a=r()*PI*2,d=r()*55;g.beginPath();g.arc(128+Math.cos(a)*d,128+Math.sin(a)*d,34+r()*22,0,7);g.fill()}
+  for(let i=0;i<(sp===2?1100:320);i++){const x=20+r()*216,y=20+r()*216,d=Math.hypot(x-128,y-128);if(d>112)continue;g.fillStyle=cs[(r()*cs.length)|0];g.save();g.translate(x,y);g.rotate(r()*PI*2);
   if(sp===0){g.beginPath();g.moveTo(0,0);g.arc(0,0,9+r()*5,-.9,.9);g.closePath();g.fill()}else if(sp===1){g.beginPath();g.ellipse(0,0,4+r()*3,9+r()*4,0,0,7);g.fill()}else{g.fillRect(-1.5,-9,3,18)}g.restore()}});
  t.wrapS=t.wrapT=THREE.ClampToEdgeWrapping;return LEAFTEX[sp]=t}
 function treeGeoHi(sp){const r=rng(77+sp*11),wood=[],leaf=[];
@@ -26,7 +37,7 @@ function treeGeoHi(sp){const r=rng(77+sp*11),wood=[],leaf=[];
  const H=sp===0?5.2:sp===1?3.4:2.2,cy=sp===0?6.4:sp===1?4.6:4.8,RX=sp===0?1.9:sp===1?2.9:2,RY=sp===0?2.9:sp===1?2:3.2;
  cyl(0,0,0,0,H,0,sp===2?.2:.24,.14);
  const tips=[];for(let k=0;k<(sp===2?0:5);k++){const a=k/5*PI*2+r(),e=.4+r()*.5,x=Math.cos(a)*RX*.6,z=Math.sin(a)*RX*.6,y=cy+(r()-.5)*RY*.6;cyl(0,H*.85,0,x,y,z,.09,.04);tips.push([x,y,z])}
- const N=sp===2?26:22,C=new THREE.Vector3(0,cy,0);
+ const N=sp===2?34:26,C=new THREE.Vector3(0,cy,0);
  for(let k=0;k<N;k++){let x,y,z;if(sp===2){const t=r(),rr=(1-t)*RX*(.55+r()*.45),a=r()*PI*2;x=Math.cos(a)*rr;z=Math.sin(a)*rr;y=1.4+t*RY*1.9}
   else{const u=r()*2-1,a=r()*PI*2,s=Math.sqrt(1-u*u),q=.55+r()*.45;x=Math.cos(a)*s*RX*q;z=Math.sin(a)*s*RX*q;y=cy+u*RY*q*.85}
   const sz=sp===2?1.3:1.5+r()*.5;
@@ -62,12 +73,15 @@ function decorate(){const tr=[],lp=[],sg=[],vm=[],up=[],wires=[],rnd=rng(11),TMA
  // Tres especies hechas de varios volúmenes irregulares con colores de otoño: ginkgo (amarillo, típico de las avenidas de Tokio),
  // árbol de copa redonda (zelkova) y conífera. Cada especie es una sola malla instanciada; la mitad "extra" solo en calidad alta
  const SP=[treeGeo(0),treeGeo(1),treeGeo(2)],tm=new THREE.MeshLambertMaterial({vertexColors:true}),TT=[0xfff0c0,0xe8ffe0,0xffffff,0xd8f0d0];
- // Baja y Media: árboles sencillos (la mitad); Alta y Ultra: todos con ramas y racimos de hojas (treeGeoHi)
+ // Árboles sencillos por zonas de 800 m (todos; cada árbol recuerda su malla y su índice para poder ocultarlo) y, por especie,
+ // una sola malla de árboles detallados con los cercanos, que treeLod rellena al moverse
  const bark=new THREE.MeshLambertMaterial({color:0x5a4332});
- for(let s=0;s<3;s++){const all=tr.filter(t=>t[4]===s).map((t,i)=>[t[0],CURB,t[1],t[3],t[2],t[2]*(.9+(i%5)*.06),TT[i%4]]);
-  for(const m of instZ(SP[s],tm,all.filter((t,i)=>i%2===0),0,true))if(m)m.userData.qx=1;
+ for(let s=0;s<3;s++){const all=tr.filter(t=>t[4]===s).map((t,i)=>[t[0],CURB,t[1],t[3],t[2],t[2]*(.9+(i%5)*.06),TT[i%4]]),Z=new Map();
+  all.forEach((e,i)=>{const k=Math.floor(e[0]/800)*100+Math.floor(e[2]/800);if(!Z.has(k))Z.set(k,[]);Z.get(k).push([e,i])});
+  for(const l of Z.values()){const m=inst(SP[s],tm,l.map(q=>q[0]),0,true);delete m.userData.q;l.forEach(([e,i],j)=>TREES.push({s,e,m,j,odd:i%2,st:"lo"}))}
   const[gw,gl]=treeGeoHi(s),lt=leafTex(s),lm=new THREE.MeshLambertMaterial({map:lt,alphaTest:.45,side:THREE.DoubleSide}),dm=new THREE.MeshDepthMaterial({depthPacking:THREE.RGBADepthPacking,map:lt,alphaTest:.45});
-  instZ(gw,bark,all,2,true);for(const m of instZ(gl,lm,all,2,true))if(m)m.customDepthMaterial=dm}
+  const hw=new THREE.InstancedMesh(gw,bark,all.length),hl=new THREE.InstancedMesh(gl,lm,all.length);for(const m of[hw,hl]){m.count=0;m.frustumCulled=false;m.castShadow=m.receiveShadow=true;sc.add(m)}
+  hl.customDepthMaterial=dm;hl.instanceColor=new THREE.InstancedBufferAttribute(new Float32Array(all.length*3),3);TREEH[s]={w:hw,l:hl}}
  const steel=new THREE.MeshLambertMaterial({color:0x6d7178});
  instZ(new THREE.CylinderGeometry(.08,.11,7,6).translate(0,3.5,0),steel,lp,0,true);instZ(new THREE.BoxGeometry(.12,.12,1.6).translate(0,6.9,.75),steel,lp,0);
  NM.lampHead=new THREE.MeshLambertMaterial({color:0xfff6d8,emissive:0xffe2a8,emissiveIntensity:0});instZ(new THREE.BoxGeometry(.35,.12,.6).translate(0,6.8,1.5),NM.lampHead,lp,0);lampN=lp.length;

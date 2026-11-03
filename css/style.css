@@ -44,6 +44,7 @@ button.b:disabled{opacity:.4;cursor:default}button.g{background:rgba(128,128,128
 .stkg{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}.stkg button{padding:2px;border:0;border-radius:8px;background:rgba(128,128,128,.2);cursor:pointer}.stkg canvas{width:100%;display:block}
 .cusw{position:relative}.cusw>button:first-child{width:100%;padding:2px;border:0;border-radius:8px;background:rgba(128,128,128,.2);cursor:pointer}.cusw img{width:100%;display:block;aspect-ratio:1;object-fit:contain}
 .cusx{position:absolute;top:-6px;right:-6px;width:20px;height:20px;border:0;border-radius:10px;background:var(--ac);color:#fff;font:700 13px/20px system-ui;cursor:pointer;padding:0}
+.stki{position:relative}.stkx{top:6px;right:6px;width:24px;height:24px;line-height:24px;font-size:15px}
 .stki{margin-top:6px;padding:8px;border-radius:10px;background:rgba(128,128,128,.14);cursor:pointer;font-size:13px}.stki.on{outline:2px solid var(--ac)}
 .lsl{display:flex;align-items:center;gap:8px;margin-top:6px;font-size:12px;color:var(--mu)}.lsl span{width:110px}.lsl input{flex:1;accent-color:var(--ac)}
 /* Zoom del minimapa */

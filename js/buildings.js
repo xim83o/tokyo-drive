@@ -43,7 +43,12 @@ function interior(mat,o){const sh0=o.shop||0;mat.onBeforeCompile=sh=>{Object.ass
  sh.fragmentShader=sh.fragmentShader.replace("#include <common>",`#include <common>
 uniform sampler2D wMask;uniform float uNight,uShop;uniform vec3 uSkyT,uSkyH,uRec,uCamP;uniform vec4 uRoom;uniform vec2 uCells;varying vec3 vWP;varying vec3 vWN;
 float hR(vec2 p){return fract(sin(dot(p,vec2(41.3,289.1)))*15731.743);}`).replace("#include <emissivemap_fragment>",`#include <emissivemap_fragment>
- if(texture2D(wMask,vUv).r>.5){vec3 N=normalize(vWN),T=normalize(cross(N,vec3(0.,1.,0.))),V=normalize(vWP-uCamP);float vn=max(.08,-dot(V,N));
+ if(texture2D(wMask,vUv).r>.5){
+  // De lejos (más de 300 m) versión barata sin habitación ni hueco: cristal con la luz encendida o apagada de cada ventana
+  if(length(vWP-uCamP)>300.){vec2 id=floor(vUv*uCells);float r1=hR(id+vec2(3.7,11.1)),r2=hR(id*1.37+vec2(8.3,1.9)),lit=step(r1,uRoom.w)+min(uShop,1.);
+   vec3 c0=mix(vec3(.3,.32,.34),vec3(.6,.56,.5),r2),inner=c0*(uShop>.5?.8:.25)*(1.-uNight)+c0*vec3(1.,.86,.64)*min(1.,lit)*uNight*(uShop>.5?1.5:1.05);
+   diffuseColor.rgb*=.12;totalEmissiveRadiance+=mix(inner,mix(uSkyH,uSkyT,.5)*(1.-uNight*.85),.3);}
+  else{vec3 N=normalize(vWN),T=normalize(cross(N,vec3(0.,1.,0.))),V=normalize(vWP-uCamP);float vn=max(.08,-dot(V,N));
   vec2 uvG=vUv+vec2(-dot(V,T),V.y)*uRec.x/vn/uRec.yz;T=-T;
   if(uRec.x>0.&&texture2D(wMask,uvG).r<.5){float side=abs(dot(V,T))>abs(V.y)?.62:(V.y<0.?.5:.78);diffuseColor.rgb=diffuse*texture2D(map,uvG).rgb*side;
   #ifdef USE_COLOR
@@ -82,7 +87,7 @@ float hR(vec2 p){return fract(sin(dot(p,vec2(41.3,289.1)))*15731.743);}`).replac
   if(uShop<.5&&r2>.62){float cw=.25+.35*r3;if(f.x<cw||f.x>1.-cw*.6)col=mix(vec3(.82,.76,.6),vec3(.6,.68,.78),r3)*(lit>.5?1.:.7);}
   float fr=pow(1.-abs(dot(V,N)),3.);vec3 refl=mix(uSkyH,uSkyT,clamp(-V.y*1.5+.4,0.,1.));
   vec3 inner=col*(uShop>.5?.95:.28)*(1.-uNight)+col*vec3(1.,.86,.64)*min(1.,lit)*uNight*(uShop>1.5?1.8:uShop>.5?1.5:1.05);
-  diffuseColor.rgb*=.12;totalEmissiveRadiance+=mix(inner,refl*(1.-uNight*.85),clamp(uShop>.5?.04+fr*.3:.12+fr*.65,0.,.85));}}`)};
+  diffuseColor.rgb*=.12;totalEmissiveRadiance+=mix(inner,refl*(1.-uNight*.85),clamp(uShop>.5?.04+fr*.3:.12+fr*.65,0.,.85));}}}`)};
  mat.customProgramCacheKey=()=>"int"+sh0+o.depth+(o.rec||0);NM.int.push(mat);return mat}
 // Letreros verticales japoneses (texto en vertical, colores de neón)
 const SIGNS=[["ラーメン","#c8102e","#fff"],["カラオケ","#1a1a1a","#ffde00"],["居酒屋","#f4e9d0","#b3121d"],["焼肉","#111","#ff5a1f"],["寿司","#fff","#0b3d91"],["薬局","#0a7d3b","#fff"],["喫茶","#5a3220","#f6d9a8"],["ホテル","#3a1f6b","#ff7ad9"],["中華","#d61f26","#ffd23f"],["酒場","#0d2b4f","#7fd4ff"]];
@@ -99,7 +104,7 @@ function drawAd(g,w,h,tm,ph){const n=ADS.length,k=Math.floor(tm/5+ph)%n,a=ADS[k]
 
 let BALM=null,RAILM=null,DETM=null;const DET=[];
 // Muestra el detalle cercano (balcones, pilares, aires, escaleras) solo en los bloques de 500 m próximos a la cámara
-function lodUpdate(){const lv=qLevel();for(const d of DET){const dx=Math.max(0,Math.abs(cam.position.x-d.x)-250),dz=Math.max(0,Math.abs(cam.position.z-d.z)-250),v=lv>=1&&dx*dx+dz*dz<260*260;for(const m of d.m)m.visible=v}}
+function lodUpdate(){const lv=qLevel();if(typeof treeLod==="function")treeLod();for(const d of DET){const dx=Math.max(0,Math.abs(cam.position.x-d.x)-250),dz=Math.max(0,Math.abs(cam.position.z-d.z)-250),v=lv>=1&&dx*dx+dz*dz<260*260;for(const m of d.m)m.visible=v}}
 const BCOL=[0xe6e2d8,0xd4d4d0,0xcfc6b4,0xb9b6ae,0xa9b1ba,0xe2dccd,0x9a958c,0xc4bfb2];
 // Rectángulo orientado mínimo de una planta (para templos y puerta)
 function obb(R){let best=null;for(let i=0;i<R.length;i+=2){const j=(i+2)%R.length,a=Math.atan2(R[j+1]-R[i+1],R[j]-R[i]),c=Math.cos(a),s=Math.sin(a);let u0=1e9,u1=-1e9,v0=1e9,v1=-1e9;
@@ -138,23 +143,25 @@ function buildBuildings(){const CH=500,ch=new Map(),c=new THREE.Color(),R0=rng(3
   // Edificios altos y grandes: base (podio) y torre retranqueada encima
   let Rs=null,top=h;if(!ft&&h>45&&A>400){const k=.74+R0()*.1;Rs=new Float32Array(R.length);for(let i=0;i<R.length;i+=2){Rs[i]=cx+(R[i]-cx)*k;Rs[i+1]=cz+(R[i+1]-cz)*k}
    let ok=true;for(let i=0;i<Rs.length&&ok;i+=2)if(!inPoly(R,Rs[i],Rs[i+1]))ok=false;if(ok)top=Math.min(22,Math.max(9,h*.2));else Rs=null}
-  let acN=0,stE=null;
+  let acN=0,stE=null;const balc=!ft&&(type===1||type===2&&bi%5<2||type===0&&h<40&&bi%4===0);
   let per=0;for(let i=0;i<R.length;i+=2){const j=(i+2)%R.length,ax=R[i],az=R[i+1],bx=R[j],bz=R[j+1],L=Math.hypot(bx-ax,bz-az);if(L<.05)continue;const nx=(bz-az)/L,nz=-(bx-ax)/L,u0=per/14.4+uo,u1=(per+L)/14.4+uo;per+=L;
-   const mx=(ax+bx)/2,mz=(az+bz)/2,shop=!ft&&h<70&&L>4&&(roadAt(mx+nx*4.5,mz+nz*4.5)>=0||roadAt(mx+nx*8,mz+nz*8)>=0||roadAt(mx+nx*12,mz+nz*12)>=0);
+   // Tienda: hay calle delante y entre medias no hay otro edificio pegado (si no, los toldos se meterían en el de al lado)
+   const mx=(ax+bx)/2,mz=(az+bz)/2,fr=(t)=>!inBuilding(mx+nx*t,mz+nz*t),shop=!ft&&h<70&&L>4&&fr(1.5)&&fr(3)&&(roadAt(mx+nx*4.5,mz+nz*4.5)>=0||fr(6)&&roadAt(mx+nx*8,mz+nz*8)>=0||fr(6)&&fr(10)&&roadAt(mx+nx*12,mz+nz*12)>=0);
    if(shop){const K=isK&&L>7;if(K&&!kd){kd=true;kon++}
     wall(o.f[K?7:4+bi%3],ax,az,bx,bz,0,4,u0,u1,0,1,nx,nz,sc2);wall(s,ax,az,bx,bz,4,top,u0,u1,vo+4/13.2,vo+top/13.2,nx,nz,c);
     // Toldos que salen sobre la acera (uno por local, no todos) y letrero luminoso de konbini
     const ang=Math.atan2(nx,nz);if(K)KS.push([mx+nx*.2,4.15,mz+nz*.2,ang,Math.min(L*.85,14)]);
-    else for(let t=1.8;t<L-1.6;t+=3.6){const q=Math.floor((u0*14.4+t)/3.6),sh=SHOPS[bi%3][((q%4)+4)%4];if(sh.shut||sh.k[3]||R0()<.35)continue;AW.push([ax+(bx-ax)*t/L+nx*.5,2.95,az+(bz-az)*t/L+nz*.5,ang,sh.hue])}
+    else for(let t=1.8;t<L-1.6;t+=3.6){const q=Math.floor((u0*14.4+t)/3.6),sh=SHOPS[bi%3][((q%4)+4)%4];if(sh.shut||sh.k[3]||R0()<.35||inBuilding(ax+(bx-ax)*t/L+nx*1.3,az+(bz-az)*t/L+nz*1.3))continue;AW.push([ax+(bx-ax)*t/L+nx*.5,2.95,az+(bz-az)*t/L+nz*.5,ang,sh.hue])}
     // Letrero vertical perpendicular a la fachada y, en edificios altos, alguna pantalla LED
-    if(h>8&&h<60&&R0()<.45){const t=.15+R0()*.7,sh=Math.min(9,h-5);vs[Math.floor(R0()*SIGNS.length)].push([ax+(bx-ax)*t+nx*.75,4.6,az+(bz-az)*t+nz*.75,Math.atan2(nx,nz)+PI/2,1,sh])}
-    if(h>25&&L>13&&R0()<.18&&leds.flat().length<40)leds[Math.floor(R0()*3)].push([mx+nx*.35,Math.min(h-4,22),mz+nz*.35,Math.atan2(nx,nz)])}
+    // (no en fachadas con balcones: se meterían dentro)
+    if(h>8&&h<60&&!balc&&R0()<.45){const t=.15+R0()*.7,sh=Math.min(9,h-5);vs[Math.floor(R0()*SIGNS.length)].push([ax+(bx-ax)*t+nx*.75,4.6,az+(bz-az)*t+nz*.75,Math.atan2(nx,nz)+PI/2,1,sh])}
+    if(h>25&&L>13&&!balc&&R0()<.18&&leds.flat().length<40)leds[Math.floor(R0()*3)].push([mx+nx*.35,Math.min(h-4,22),mz+nz*.35,Math.atan2(nx,nz)])}
    else wall(s,ax,az,bx,bz,0,top,u0,u1,vo,vo+top/13.2,nx,nz,c);
    // Balcones en 3D (solo pisos de viviendas; se muestran al acercarse)
    // Aires acondicionados colgados de la fachada bajo las ventanas (pisos y edificios antiguos)
    if((type===1||type===2)&&!ft&&h<30&&L>4&&acN<12){const ang=Math.atan2(nx,nz),nf=Math.floor(top/3.3);for(let f=shop?2:1;f<nf&&acN<12;f++)for(let t=2;t<L-1.5;t+=4)if(R0()<.22){bxP(o,ax+(bx-ax)*t/L+nx*.17,az+(bz-az)*t/L+nz*.17,ang,.8,.32,f*3.3+.25,f*3.3+.83,ACC);acN++}}
    if(!shop&&L>6.5&&(!stE||L>stE[4]))stE=[ax,az,bx,bz,L,nx,nz];
-   if((type===1||type===2&&bi%5<2||type===0&&h<40&&bi%4===0)&&L>5&&!ft){const f0=shop?2:1,nf=Math.min(14,Math.floor(top/3.3));for(let f=f0;f<nf;f++){const y=f*3.3+CURB-.05,ux=(bx-ax)/L,uz=(bz-az)/L,x0=ax+ux*.4,z0=az+uz*.4,x1=bx-ux*.4,z1=bz-uz*.4,ox=nx*.95,oz=nz*.95;
+   if(balc&&L>5){const f0=shop?2:1,nf=Math.min(14,Math.floor(top/3.3));for(let f=f0;f<nf;f++){const y=f*3.3+CURB-.05,ux=(bx-ax)/L,uz=(bz-az)/L,x0=ax+ux*.4,z0=az+uz*.4,x1=bx-ux*.4,z1=bz-uz*.4,ox=nx*.95,oz=nz*.95;
      o.d.push(x0,y,z0,x1,y,z1,x1+ox,y,z1+oz,x0,y,z0,x1+ox,y,z1+oz,x0+ox,y,z0+oz, x0+ox,y-.14,z0+oz,x1+ox,y-.14,z1+oz,x1+ox,y,z1+oz,x0+ox,y-.14,z0+oz,x1+ox,y,z1+oz,x0+ox,y,z0+oz);
      o.rl.push(x0+ox,y,z0+oz,x1+ox,y,z1+oz,x1+ox,y+1.05,z1+oz,x0+ox,y,z0+oz,x1+ox,y+1.05,z1+oz,x0+ox,y+1.05,z0+oz)}}}
   // Torre retranqueada sobre el podio

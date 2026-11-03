@@ -1,5 +1,5 @@
 // Física arcade del coche, colisión exacta con el mapa y suspensión (bordillos)
-let bodyY=CURB,bodyV=0,pitch=0,roll=0;const WY=[CURB,CURB,CURB,CURB];
+let bodyY=CURB,bodyV=0,pitch=0,roll=0;const WY=[CURB,CURB,CURB,CURB],CRB=[0,0,0,0];
 function step(dt,i){thrL=i.t;brkL=i.b;stV+=(i.s-stV)*Math.min(1,dt*10);
  const vf0=vx*Math.sin(h)+vz*Math.cos(h),sp=Math.abs(vf0),dir=vf0>=0?1:-1,lat0=Math.abs(-vx*Math.cos(h)+vz*Math.sin(h));
  const tgt=i.s*2.1*Math.min(1,sp/5)/(1+sp/40)*(1+Math.min(.45,lat0/14))*(i.hb?1.3:1)*dir;
@@ -32,7 +32,8 @@ function carHit(dt){if(!ready)return;const fx=Math.sin(h),fz=Math.cos(h),r=cur.w
 // Suspensión: cada rueda sigue la altura del suelo (calzada 0, acera +15 cm). Subir un bordillo rápido da un golpe y frena
 function suspension(dt){if(!ready)return;const c=Math.cos(h),s=Math.sin(h),hw=cur.w/2,hl=cur.l*.32,vf=vx*s+vz*c,sp=Math.abs(vf);let f=0,b=0,lt=0,rt=0;
  for(let k=0;k<4;k++){const sx=k&1?-1:1,sz=k<2?1:-1,x=px+sx*hw*c+sz*hl*s,z=pz-sx*hw*s+sz*hl*c,t=surfH(x,z);
-  if(t>WY[k]+.05&&sp>2){const loss=Math.min(.25,.011*sp);vx*=1-loss;vz*=1-loss;bodyV+=Math.min(1.4,.045*sp);if(performance.now()-crashT>180){crashT=performance.now();thump(1.5+sp*.35)}}
+  // Golpe al subir un bordillo: como mucho uno por rueda cada 0,5 s (si la rueda va justo por el borde no frena en cada imagen)
+  const now=performance.now();if(t>WY[k]+.05&&sp>2&&now-CRB[k]>500){CRB[k]=now;const loss=Math.min(.12,.006*sp);vx*=1-loss;vz*=1-loss;bodyV+=Math.min(1.4,.045*sp);if(now-crashT>180){crashT=now;thump(1.5+sp*.35)}}
   WY[k]+=(t-WY[k])*Math.min(1,dt*30);if(sz>0)f+=WY[k];else b+=WY[k];if(sx>0)lt+=WY[k];else rt+=WY[k]}
  bodyV+=(((f+b)/4-bodyY)*160-bodyV*13)*dt;bodyY+=bodyV*dt;
  pitch+=((b-f)/2/(cur.l*.64)-pitch)*Math.min(1,dt*12);roll+=((lt-rt)/2/cur.w-roll)*Math.min(1,dt*12)}

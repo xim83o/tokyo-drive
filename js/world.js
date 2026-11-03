@@ -73,7 +73,7 @@ function inst(geo,mat,list,q,cast){if(!list.length)return null;const m=new THREE
 // Malla grande (solo posiciones) repartida en zonas de 600 m por el centro de cada triángulo; devuelve las mallas creadas
 function mkMeshZ(pos,mat,ro,shadow){const Z=new Map();for(let i=0;i<pos.length;i+=9){const x=(pos[i]+pos[i+3]+pos[i+6])/3,z=(pos[i+2]+pos[i+5]+pos[i+8])/3,k=Math.floor(x/600)*100+Math.floor(z/600);let a=Z.get(k);if(!a){a=[];Z.set(k,a)}for(let j=0;j<9;j++)a.push(pos[i+j])}
  return[...Z.values()].map(a=>mkMesh(a,mat,ro,null,shadow))}
-function instZ(geo,mat,list,q,cast){const Z=new Map();for(const e of list){const k=Math.floor(e[0]/800)*100+Math.floor(e[2]/800);if(!Z.has(k))Z.set(k,[]);Z.get(k).push(e)}return[...Z.values()].map(l=>inst(geo,mat,l,q,cast))}
+function instZ(geo,mat,list,q,cast,zs){zs=zs||800;const Z=new Map();for(const e of list){const k=Math.floor(e[0]/zs)*100+Math.floor(e[2]/zs);if(!Z.has(k))Z.set(k,[]);Z.get(k).push(e)}return[...Z.values()].map(l=>inst(geo,mat,l,q,cast))}
 function canvasTex(w,h,draw,rep){const c=document.createElement("canvas");c.width=w;c.height=h;draw(c.getContext("2d"),w,h);const t=new THREE.CanvasTexture(c);if(rep){t.wrapS=t.wrapT=THREE.RepeatWrapping}t.anisotropy=8;return t}
 // Aleatorio reproducible (mismo mapa siempre igual)
 function rng(s){return()=>(s=s*16807%2147483647)/2147483647}

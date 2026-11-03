@@ -68,7 +68,10 @@ function setupPost(){if(!THREE.EffectComposer||composer)return;composer=new THRE
 function postSize(){if(!composer)return;const pr=rd.getPixelRatio();composer.setPixelRatio(pr);composer.setSize(innerWidth,innerHeight);fxaa.material.uniforms.resolution.value.set(1/(innerWidth*pr),1/(innerHeight*pr))}
 function renderFrame(){const lv=qLevel(),bl=ENV.bl==="auto"?lv>=2:ENV.bl==="on";if(composer&&(lv>=1||bl)){bloom.enabled=bl;bloom.strength=.1+NF*.7+WEA.wet*.1;bloom.threshold=.78-NF*.12;composer.render()}else rd.render(sc,cam)}
 let ledT=0;
-function envUpdate(dt){HOUR=hourNow();const e=Math.sin((HOUR-6)/12*PI),day=Math.min(1,Math.max(0,(e+.06)/.32)),dusk=Math.max(0,1-Math.abs(e)/.28),rn=WEA.rain;NF=Math.min(1,1-day+rn*.25*day);
+// Transición suave: la luz del día baja poco a poco desde media tarde (curva suave de 15:00 a 19:00, y al revés al amanecer) y el color
+// anaranjado del atardecer dura más (franja ancha alrededor del horizonte)
+const sstep=(a,b,x)=>{const t=Math.min(1,Math.max(0,(x-a)/(b-a)));return t*t*(3-2*t)};
+function envUpdate(dt){HOUR=hourNow();const e=Math.sin((HOUR-6)/12*PI),day=sstep(-.28,.68,e),dusk=Math.max(0,1-Math.abs(e-.05)/.5),rn=WEA.rain;NF=Math.min(1,1-day+rn*.25*day);
  _c.copy(PAL.nTop).lerp(PAL.dTop,day).lerp(PAL.kTop,dusk*.55).lerp(PAL.rain,rn*.6*day);SKYU.top.value.copy(_c);
  _c2.copy(PAL.nHor).lerp(PAL.dHor,day).lerp(PAL.kHor,dusk*.6*(1-rn)).lerp(PAL.rain,rn*.7*day);SKYU.hor.value.copy(_c2);
  sc.fog.color.copy(_c2);sc.background=_c2;stars.material.opacity=Math.max(0,NF-.3)*1.2*(1-WEA.cloud);sky.position.copy(cam.position);stars.position.copy(cam.position);
@@ -101,5 +104,5 @@ function applyQuality(){const lv=qLevel(),Q=QUAL[lv];rd.setPixelRatio(Math.max(.
  const sh=ENV.sh==="auto"?Q.sh>0:ENV.sh==="on",SM=Q.sh||1024,SR=Q.R||110,relight=rd.shadowMap.enabled!==sh||LPL.length!==Q.lights||qApplied<0;setLampLights(Q.lights);
  if(relight){rd.shadowMap.enabled=sh;rd.shadowMap.type=THREE.PCFSoftShadowMap;sc.traverse(o=>{if(o.material){(Array.isArray(o.material)?o.material:[o.material]).forEach(m=>m.needsUpdate=true)}})}
  sun.castShadow=sh;if(sh){if(sun.shadow.map){sun.shadow.map.dispose();sun.shadow.map=null}sun.shadow.mapSize.set(SM,SM);const c=sun.shadow.camera;c.left=c.bottom=-SR;c.right=c.top=SR;c.near=10;c.far=900;c.updateProjectionMatrix();sun.shadow.bias=-.0004;sun.shadow.normalBias=.04}
- FOGQ=Q.far*ENV.far;cam.far=FOGQ+150;cam.updateProjectionMatrix();sc.traverse(o=>{if(o.userData.q!==undefined)o.visible=lv>=o.userData.q&&(o.userData.qx===undefined||lv<=o.userData.qx)});qApplied=lv;resize()}
+ FOGQ=Q.far*ENV.far;cam.far=FOGQ+150;cam.updateProjectionMatrix();sc.traverse(o=>{if(o.userData.q!==undefined)o.visible=lv>=o.userData.q&&(o.userData.qx===undefined||lv<=o.userData.qx)});qApplied=lv;lodUpdate();resize()}
 if(ENV.wx===undefined)ENV.wx="auto";

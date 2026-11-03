@@ -8,7 +8,8 @@ const saveLiv=()=>{try{localStorage.setItem("td-liv",JSON.stringify(LIV))}catch(
 const PAL8=[0xf2f2f2,0x1b1c20,0x8a9097,0xe5173f,0xff7a1a,0xf5b800,0x2fae5a,0x2a6cff,0x6b3fd1,0xff6fb5,0x00b8c8,0x5a3a22];
 // --- Diseños de las pegatinas (lienzo 256×256 con fondo transparente) ---
 const STK=[
- {n:"Chica anime",d:g=>{g.fillStyle="#3b2a6b";g.beginPath();g.ellipse(128,112,92,96,0,0,7);g.fill();g.fillStyle="#ffe2cc";g.beginPath();g.ellipse(128,140,70,74,0,0,7);g.fill();
+ // hide: retirada a petición del usuario (se deja en la lista para no cambiar los números de las pegatinas guardadas)
+ {n:"Chica anime",hide:1,d:g=>{g.fillStyle="#3b2a6b";g.beginPath();g.ellipse(128,112,92,96,0,0,7);g.fill();g.fillStyle="#ffe2cc";g.beginPath();g.ellipse(128,140,70,74,0,0,7);g.fill();
   g.fillStyle="#3b2a6b";g.beginPath();g.moveTo(52,110);g.quadraticCurveTo(128,40,204,110);g.lineTo(180,96);g.lineTo(160,124);g.lineTo(140,92);g.lineTo(116,124);g.lineTo(98,94);g.lineTo(76,124);g.closePath();g.fill();
   for(const x of[100,156]){g.fillStyle="#fff";g.beginPath();g.ellipse(x,146,15,20,0,0,7);g.fill();g.fillStyle="#e2337a";g.beginPath();g.ellipse(x,150,11,15,0,0,7);g.fill();g.fillStyle="#2a0f2a";g.beginPath();g.ellipse(x,152,6,9,0,0,7);g.fill();g.fillStyle="#fff";g.beginPath();g.arc(x-4,143,4,0,7);g.fill()}
   g.fillStyle="rgba(255,110,140,.45)";for(const x of[86,170]){g.beginPath();g.ellipse(x,172,12,6,0,0,7);g.fill()}g.strokeStyle="#a0405a";g.lineWidth=3;g.beginPath();g.arc(128,178,9,.2,PI-.2);g.stroke();
@@ -54,13 +55,14 @@ const stkName=k=>k.ci!==undefined?((CUS.find(q=>q.id===k.ci)||{}).n||"Mi imagen"
 for(const src of new Set(STK.filter(s=>s.src).map(s=>s.src))){const im=new Image();IMGS[src]=im;im.onload=()=>{STK.forEach((s,i)=>{if(s.src!==src||!STKT[i])return;const c=STKT[i].image,g=c.getContext("2d");g.clearRect(0,0,256,256);s.d(g);STKT[i].needsUpdate=true});if(state==="liv")drawLiv()};im.src=src}
 // Franjas: 0 ninguna · 1 central · 2 doble · 3 lateral · 4 diagonal
 const STRIPES=["Ninguna","Central","Doble","Lateral","Diagonal"];
-function stripeTex(st,col){const c="#"+new THREE.Color(col).getHexString();return canvasTex(128,512,g=>{g.fillStyle=c;if(st===1)g.fillRect(24,0,80,512);else if(st===2){g.fillRect(14,0,38,512);g.fillRect(76,0,38,512)}else if(st===3){g.fillRect(52,0,22,512);g.fillRect(80,0,7,512)}
+// Franjas con filetes finos a los lados (como las de los coches de carreras de verdad)
+function stripeTex(st,col){const c="#"+new THREE.Color(col).getHexString();return canvasTex(128,512,g=>{g.fillStyle=c;if(st===1){g.fillRect(40,0,48,512);g.fillRect(32,0,3,512);g.fillRect(93,0,3,512)}
+ else if(st===2){g.fillRect(36,0,22,512);g.fillRect(70,0,22,512);g.fillRect(30,0,2,512);g.fillRect(96,0,2,512)}else if(st===3){g.fillRect(52,0,22,512);g.fillRect(80,0,7,512)}
  else if(st===4){g.beginPath();g.moveTo(0,330);g.lineTo(128,170);g.lineTo(128,230);g.lineTo(0,390);g.closePath();g.fill()}})}
 function numTex(n,col){const c="#"+new THREE.Color(col).getHexString();return canvasTex(256,256,g=>{g.fillStyle=c;g.beginPath();g.arc(128,128,116,0,7);g.fill();g.strokeStyle="#111";g.lineWidth=10;g.beginPath();g.arc(128,128,108,0,7);g.stroke();
  g.fillStyle=new THREE.Color(col).getHSL({}).l>.5?"#111":"#fff";g.font="italic 900 140px system-ui";g.textAlign="center";g.textBaseline="middle";g.fillText(n,128,138)})}
 // Packs ya hechos
 const PACKS=[{n:"Franja negra",o:{st:1,sc:0x111111}},{n:"Rayas de carreras",o:{st:2,sc:0xffffff,num:7,nc:0xffffff}},{n:"Sakura",o:{c:0xffc4dc,st:3,sc:0xe2477d,stk:[{i:2,sd:0,u:.1,v:.5,s:1},{i:2,sd:1,u:.1,v:.5,s:1}]}},
- {n:"Anime",o:{c:0x6b3fd1,st:4,sc:0xff6fb5,stk:[{i:0,sd:0,u:0,v:.5,s:1.2},{i:0,sd:1,u:0,v:.5,s:1.2},{i:5,sd:2,u:0,v:.5,s:.9}]}},
  {n:"Drift Tokio",o:{c:0xf2f2f2,st:3,sc:0xe5173f,tint:.7,stk:[{i:7,sd:0,u:-.15,v:.55,s:1.1},{i:7,sd:1,u:-.15,v:.55,s:1.1},{i:6,sd:2,u:0,v:.5,s:1}]}},
  {n:"Llamas",o:{c:0x1b1c20,stk:[{i:8,sd:0,u:.45,v:.35,s:1.3},{i:8,sd:1,u:.45,v:.35,s:1.3}]}},{n:"Kitsune",o:{c:0xf2f2f2,st:1,sc:0xd61f26,stk:[{i:9,sd:2,u:0,v:.5,s:1}]}}];
 // Lados donde se pega: 0 izquierda · 1 derecha · 2 capó · 3 techo · 4 detrás
@@ -68,23 +70,36 @@ const SIDES=["Izquierda","Derecha","Capó","Techo","Detrás"];
 const DMAT=new Map();const dmat=t=>{if(!DMAT.has(t))DMAT.set(t,new THREE.MeshPhongMaterial({map:t,transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-4,shininess:60,specular:0x222222}));return DMAT.get(t)};
 let DEC=[];
 function applyDecals(){if(!car||!carBody||!THREE.DecalGeometry)return;for(const m of DEC){car.remove(m);m.geometry.dispose()}DEC=[];const L=LIV[carK];
- // Llantas del color elegido (multiplica la textura: la goma sigue negra)
- for(const q of WHEELS){if(L.wc===undefined)continue;const k="w"+L.wc;if(!DMAT.has(k))DMAT.set(k,new THREE.MeshPhongMaterial({map:q.o.material.map,color:L.wc,shininess:80}));q.o.material=DMAT.get(k)}
+ // Llantas y neumáticos, cada uno de su color
+ if((L.wc!==undefined||L.tc!==undefined)&&MODELS[cur.f]){const m=wheelMat(cur.f,L.wc,L.tc);for(const q of WHEELS)q.o.material=m}
  // Proyectar con el coche en el origen (las calcomanías quedan en coordenadas del coche)
  const P=car.position.clone(),R=car.rotation.clone();car.position.set(0,0,0);car.rotation.set(0,0,0);car.updateMatrixWorld(true);
  const bb=new THREE.Box3().setFromObject(carBody),c=bb.getCenter(new THREE.Vector3()),s=bb.getSize(new THREE.Vector3());
  const add=(tex,pos,rot,size)=>{const g=new THREE.DecalGeometry(carBody,pos,rot,size);if(!g.attributes.position.count)return;const m=new THREE.Mesh(g,dmat(tex));m.renderOrder=2;car.add(m);DEC.push(m)};
  // El lado izquierdo del coche es +x (el coche mira hacia +z); el giro de cada proyección hace que los textos se lean desde fuera
  const side=(sd,u,v,sz,rz)=>{rz=rz||0;if(sd<2){const x=sd?bb.min.x:bb.max.x;return[new THREE.Vector3(x,bb.min.y+s.y*v,c.z+u*s.z*.45),new THREE.Euler(0,sd?-PI/2:PI/2,rz),new THREE.Vector3(sz,sz,s.x*.8)]}
-  if(sd===2)return[new THREE.Vector3(c.x+v*0,bb.max.y,c.z+s.z*(.3+u*.12)),new THREE.Euler(-PI/2,0,PI+rz),new THREE.Vector3(sz,sz,s.y*1.2)];
+  // Capó: se lee desde delante del coche (mirando hacia fuera)
+  if(sd===2)return[new THREE.Vector3(c.x,bb.max.y,c.z+s.z*(.3+u*.12)),new THREE.Euler(-PI/2,0,rz),new THREE.Vector3(sz,sz,s.y*1.2)];
   if(sd===3)return[new THREE.Vector3(c.x,bb.max.y,c.z+u*s.z*.2),new THREE.Euler(-PI/2,0,PI+rz),new THREE.Vector3(sz,sz,s.y*.6)];
   return[new THREE.Vector3(c.x+u*s.x*.3,bb.min.y+s.y*v,bb.min.z),new THREE.Euler(0,PI,rz),new THREE.Vector3(sz,sz,s.z*.5)]};
  if(L.st){const t=stripeTex(L.st,L.sc);if(L.st===3)for(const sd of[0,1])add(t,new THREE.Vector3(sd?bb.max.x:bb.min.x,bb.min.y+s.y*.42,c.z),new THREE.Euler(0,sd?PI/2:-PI/2,PI/2),new THREE.Vector3(s.y*1.2,s.z*1.05,s.x*.8));
-  else add(t,new THREE.Vector3(c.x,bb.max.y,c.z),new THREE.Euler(-PI/2,0,0),new THREE.Vector3(s.x*.9,s.z*1.05,s.y*2.2))}
+  else{// Por capó, techo y maletero, cortadas en los cristales: se proyectan sobre una copia de la carrocería sin las caras
+   // inclinadas o verticales de la parte alta (parabrisas, luneta y ventanillas)
+   const src=carBody.geometry.index?carBody.geometry.toNonIndexed():carBody.geometry,p=src.attributes.position,out=[],belt=bb.min.y+s.y*.5,A=new THREE.Vector3(),B=new THREE.Vector3(),C=new THREE.Vector3(),n=new THREE.Vector3();
+   for(let i=0;i<p.count;i+=3){A.fromBufferAttribute(p,i).applyMatrix4(carBody.matrixWorld);B.fromBufferAttribute(p,i+1).applyMatrix4(carBody.matrixWorld);C.fromBufferAttribute(p,i+2).applyMatrix4(carBody.matrixWorld);
+    n.subVectors(B,A).cross(C.clone().sub(A)).normalize();if((A.y+B.y+C.y)/3>belt&&Math.abs(n.y)<.8)continue;out.push(A.x,A.y,A.z,B.x,B.y,B.z,C.x,C.y,C.z)}
+   const pg=new THREE.BufferGeometry();pg.setAttribute("position",new THREE.Float32BufferAttribute(out,3));pg.computeVertexNormals();const pm=new THREE.Mesh(pg);
+   const g=new THREE.DecalGeometry(pm,new THREE.Vector3(c.x,bb.max.y,c.z),new THREE.Euler(-PI/2,0,0),new THREE.Vector3(s.x*.9,s.z*1.05,s.y*2.2));pg.dispose();
+   if(g.attributes.position.count){const m=new THREE.Mesh(g,dmat(t));m.renderOrder=2;car.add(m);DEC.push(m)}}}
  if(L.num){const t=numTex(L.num,L.nc);for(const sd of[0,1])add(t,...side(sd,0,.42,s.y*.5));add(t,...side(2,0,.5,s.x*.45))}
- for(const k of L.stk){if(k.ci!==undefined&&!CUS.some(q=>q.id===k.ci))continue;const[p,r,z]=side(k.sd,k.u,k.v,s.y*.55*k.s,k.r);add(k.ci!==undefined?cusTex(k.ci):stkTex(k.i),p,r,z)}
+ for(const k of L.stk){if(k.ci!==undefined?!CUS.some(q=>q.id===k.ci):STK[k.i].hide)continue;const[p,r,z]=side(k.sd,k.u,k.v,s.y*.55*k.s,k.r);add(k.ci!==undefined?cusTex(k.ci):stkTex(k.i),p,r,z)}
  car.position.copy(P);car.rotation.copy(R);car.updateMatrixWorld(true)}
 
+// Focos de estudio: de noche, mientras el editor está abierto, tres focos iluminan el coche (siempre están en la escena con
+// intensidad 0 para que no se recompilen los materiales al encenderlos)
+const STUDIO=[0,1,2].map(()=>{const l=new THREE.SpotLight(0xfff6ea,0,30,.55,.6,1);sc.add(l,l.target);return l});
+function studio(){const on=state==="liv"&&NF>.12;STUDIO.forEach((l,i)=>{l.intensity=on?NF*(i===2?.45:.75):0;if(!on)return;const a=h+[.9,-2.2,PI][i],d=[5.5,5.5,6.5][i];
+ l.position.set(px+Math.sin(a)*d,[4.5,4,6][i],pz+Math.cos(a)*d);l.target.position.set(px,.6,pz);l.target.updateMatrixWorld()})}
 // --- Editor ---
 let livK=0,livSel=-1,livPrev="cars",livA=.6;
 function openLiv(){livPrev=state;state="liv";livK=carK;car.position.set(px,bodyY,pz);car.rotation.set(0,h,0);$("ov").hidden=false;$("ov").classList.add("liv");$("carsP").hidden=$("mapP").hidden=$("setP").hidden=true;$("livP").hidden=false;hudVis(false);$("touch").hidden=true;drawLiv()}
@@ -99,11 +114,12 @@ function drawLiv(){const P=$("livP"),L=LIV[livK];P.innerHTML="<h1>Calcomanías</
  sec("Packs");r=row();PACKS.forEach(p=>btn(r,p.n,false,()=>{LIV[livK]=Object.assign(LIVDEF(),JSON.parse(JSON.stringify(p.o)));saveLiv();buildCar(livK);drawLiv()}));btn(r,"Quitar todo",false,()=>{LIV[livK]=LIVDEF();saveLiv();buildCar(livK);drawLiv()});
  sec("Color de carrocería");sw(row(),L.c===undefined?CARS[livK].c:L.c,c=>livSet({c:c===undefined?CARS[livK].c:c}));
  sec("Llantas");sw(row(),L.wc,c=>{LIV[livK].wc=c;saveLiv();buildCar(livK)},true);
+ sec("Neumáticos");sw(row(),L.tc,c=>{LIV[livK].tc=c;saveLiv();buildCar(livK)},true);
  sec("Cristales tintados");r=row();[[0,"Sin tintar"],[.35,"Claro"],[.65,"Oscuro"],[.9,"Muy oscuro"]].forEach(([v,t])=>btn(r,t,L.tint===v,()=>{livSet({tint:v});drawLiv()}));
  sec("Franjas");r=row();STRIPES.forEach((t,i)=>btn(r,t,L.st===i,()=>{livSet({st:i});drawLiv()}));if(L.st)sw(row(),L.sc,c=>livSet({sc:c}));
  sec("Dorsal (número de carreras)");r=row();const ni=document.createElement("input");ni.type="number";ni.min=0;ni.max=99;ni.value=L.num||"";ni.placeholder="Sin número";ni.oninput=()=>livSet({num:Math.max(0,Math.min(99,+ni.value||0))});r.appendChild(ni);if(L.num)sw(row(),L.nc,c=>livSet({nc:c}));
- sec("Pegatinas");{const p=document.createElement("p");p.style.cssText="font-size:11px;margin:0 0 6px";p.textContent="Las 12 primeras están dibujadas para el juego. Personaje Hachi: HachiStudio (CC0). Chica anime redonda: «Anime Girl» de Niabot (CC BY 3.0).";P.appendChild(p)}
- const g=document.createElement("div");g.className="stkg";STK.forEach((s,i)=>{const b=document.createElement("button");b.title=s.n;const cv=document.createElement("canvas");cv.width=cv.height=64;const x=cv.getContext("2d");x.scale(.25,.25);s.d(x);b.appendChild(cv);
+ sec("Pegatinas");{const p=document.createElement("p");p.style.cssText="font-size:11px;margin:0 0 6px";p.textContent="Las 11 primeras están dibujadas para el juego. Personaje Hachi: HachiStudio (CC0). Chica anime redonda: «Anime Girl» de Niabot (CC BY 3.0).";P.appendChild(p)}
+ const g=document.createElement("div");g.className="stkg";STK.forEach((s,i)=>{if(s.hide)return;const b=document.createElement("button");b.title=s.n;const cv=document.createElement("canvas");cv.width=cv.height=64;const x=cv.getContext("2d");x.scale(.25,.25);s.d(x);b.appendChild(cv);
   b.onclick=()=>{L.stk.push({i,sd:0,u:0,v:.5,s:1,r:0});livSel=L.stk.length-1;saveLiv();applyDecals();drawLiv()};g.appendChild(b)});P.appendChild(g);
  // Mis imágenes: subir desde el ordenador o el móvil, ponerlas y borrarlas
  sec("Mis imágenes");{const g2=document.createElement("div");g2.className="stkg";for(const c of CUS){const w=document.createElement("div");w.className="cusw";const b=document.createElement("button");b.title=c.n;const im=document.createElement("img");im.src=c.url;b.appendChild(im);
@@ -113,7 +129,9 @@ function drawLiv(){const P=$("livP"),L=LIV[livK];P.innerHTML="<h1>Calcomanías</
   const fi=document.createElement("input");fi.type="file";fi.accept="image/*";fi.hidden=true;fi.onchange=()=>{const f=fi.files[0];if(f)addCus(f,id=>{L.stk.push({i:0,ci:id,sd:0,u:0,v:.5,s:1,r:0});livSel=L.stk.length-1;saveLiv();applyDecals();drawLiv()})};
   const ub=document.createElement("button");ub.className="b g";ub.textContent="📷 Subir imagen";ub.onclick=()=>fi.click();P.appendChild(fi);P.appendChild(ub);
   const p=document.createElement("p");p.style.cssText="font-size:11px;margin:6px 0 0";p.textContent="Tus imágenes se guardan solo en este navegador. Las PNG con fondo transparente quedan mejor.";P.appendChild(p)}
- L.stk.forEach((k,j)=>{const d=document.createElement("div");d.className="stki"+(j===livSel?" on":"");d.innerHTML=`<b>${j+1}. ${stkName(k)}</b>`;d.onclick=e=>{if(e.target===d||e.target.tagName==="B"){livSel=j;drawLiv()}};P.appendChild(d);
+ L.stk.forEach((k,j)=>{if(k.ci===undefined&&STK[k.i].hide)return;const d=document.createElement("div");d.className="stki"+(j===livSel?" on":"");d.innerHTML=`<b>${j+1}. ${stkName(k)}</b>`;d.onclick=e=>{if(e.target===d||e.target.tagName==="B"){livSel=j===livSel?-1:j;drawLiv()}};P.appendChild(d);
+  // × para quitar la pegatina directamente desde la lista
+  const x=document.createElement("button");x.className="cusx stkx";x.textContent="×";x.title="Quitar pegatina";x.onclick=e=>{e.stopPropagation();L.stk.splice(j,1);livSel=-1;saveLiv();applyDecals();drawLiv()};d.appendChild(x);
   if(j!==livSel)return;const rr=document.createElement("div");rr.className="lrow";SIDES.forEach((t,q)=>btn(rr,t,k.sd===q,()=>{k.sd=q;saveLiv();applyDecals();drawLiv()}));d.appendChild(rr);
   for(const[key,t,mn,mx,st]of[["u","Delante / detrás",-1,1,.05],["v","Altura",.1,.9,.02],["s","Tamaño",.3,2.5,.05],["r","Giro",-3.14,3.14,.05]]){const q=document.createElement("label");q.className="lsl";q.innerHTML=`<span>${t}</span><input type="range" min="${mn}" max="${mx}" step="${st}" value="${k[key]||0}">`;
    q.querySelector("input").oninput=e=>{k[key]=+e.target.value;saveLiv();applyDecals()};d.appendChild(q)}
