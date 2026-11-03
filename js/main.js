@@ -30,8 +30,7 @@ function loop(n){requestAnimationFrame(loop);const dt=Math.min(.05,(n-last)/1e3)
    clipCam();cam.lookAt(LK)}
   else if(mode<2){const d=(mode?13:8)+sp*.04;cam.position.set(px-fx*d,(mode?5:3.2)+sp*.012+bodyY,pz-fz*d);LK.set(px+fx*6,1.2+bodyY,pz+fz*6);clipCam();cam.lookAt(LK)}
   else if(mode==2){cam.position.set(px+hx*1.5,1.1+bodyY,pz+hz*1.5);cam.lookAt(px+hx*20,1.2+bodyY,pz+hz*20)}
-  else if(mode==3){cam.position.set(px+hx*.1-Math.cos(h)*.38,cur.ey+bodyY,pz+hz*.1+Math.sin(h)*.38);cam.lookAt(px+hx*20,cur.ey+bodyY,pz+hz*20)}
-  else{cam.up.set(fx,0,fz);cam.position.set(px,75,pz);cam.lookAt(px,0,pz);fv=55}
+  else{cam.position.set(px+hx*.1-Math.cos(h)*.38,cur.ey+bodyY,pz+hz*.1+Math.sin(h)*.38);cam.lookAt(px+hx*20,cur.ey+bodyY,pz+hz*20)}
   cam.fov=fv;cam.updateProjectionMatrix();mini()}
  else{audio(true);t0+=dt*.1;sc.fog.far=FOGF;sc.fog.near=FOGF*.2;
   if(spawned){cam.position.set(px+Math.sin(t0)*220,90,pz+Math.cos(t0)*220);cam.lookAt(px,20,pz)}else{cam.position.set(TX+Math.sin(t0)*420,140,TZ+Math.cos(t0)*420);cam.lookAt(TX,110,TZ)}}

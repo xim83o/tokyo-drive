@@ -50,7 +50,7 @@ function buildMarkings(){const wa=[],ya=[],done=new Set();
   if(g1.mt===undefined){g1.mt=9;for(const q of g1.inc.concat(g1.out))g1.mt=Math.min(g1.mt,q.t)}
   if(g1.cl>=0||g1.r>0&&L.t>g1.mt){const sl=len-g1.r+.3;for(let o=L.o?-hw+.3:0;o<hw-.3;o+=.5){const A=at(L,sl,o),B=at(L,sl,Math.min(hw-.3,o+.5));if(onlyRoad(A[0],A[1],L.ri,.1)&&onlyRoad(B[0],B[1],L.ri,.1))quad(wa,A[0],A[1],B[0],B[1],.22,.016)}}
   if(g1.cl>=0&&!L.internal&&len-g1.r>5){const a0=len-g1.r+1.2,a1=a0+4;for(let o=-hw+.6;o<hw-.4;o+=.9){const A=at(L,a0,o),B=at(L,a1,o);if(ok(L,A,B))quad(wa,A[0],A[1],B[0],B[1],.22,.016)}}}
- const mm=c=>new THREE.MeshLambertMaterial({color:c,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-6});
+ const mm=c=>beamMat(new THREE.MeshLambertMaterial({color:c,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-6}));
  if(wa.length)mkMeshZ(wa,mm(0xe2e2dc),0,1);if(ya.length)mkMeshZ(ya,mm(0xe0b020),0,1)}
 // Ciclo de 24 s por grupo de cruces: un eje 9 s verde + 2 s ámbar, luego el otro
 function lightSt(L){const t=(TT+CLU[GN[L.to].cl].off+(L.grp?12:0))%24;return t<9?"g":t<11?"y":"r"}
@@ -75,9 +75,9 @@ function mkNpc(){const g=new THREE.Group(),t=Math.floor(Math.random()*3),w=1.75,
  // Faros y pilotos (se encienden de noche, ver env.js)
  if(!NM.head){NM.head=new THREE.MeshLambertMaterial({color:0xfff4d0,emissive:0xfff0c8,emissiveIntensity:.2});NM.tail=new THREE.MeshLambertMaterial({color:0xaa1010,emissive:0xff1a1a,emissiveIntensity:.25})}
  for(const sx of[-1,1]){const hm=new THREE.Mesh(new THREE.BoxGeometry(.3,.12,.05),NM.head);hm.position.set(sx*w*.32,.3+bh*.7,l/2);g.add(hm);const tm=new THREE.Mesh(new THREE.BoxGeometry(.3,.12,.05),NM.tail);tm.position.set(sx*w*.32,.3+bh*.7,-l/2);g.add(tm)}
- g.traverse(o=>{if(o.isMesh)o.castShadow=true});
+ g.traverse(o=>{if(o.isMesh)o.castShadow=true});g.add(blob(w,l));
  return{g,x:-9999,z:-9999,h:0,v:0,vt:12,m:[1000,1300,1700][t],l,hp:.85+Math.random()*.3,si:0}}
-function npcRst(n){n.tr=null;n.nx=null;n.ox=n.oz=0;n.dead=false;n.mode=0;n.wreck=false;n.uns=0;n.vx=n.vz=n.sp=0;n.wb=0;n.pw=0;n.stun=0;n.sw=0;n.ign=0;n.k=.85+Math.random()*.2}
+function npcRst(n){n.tr=null;n.nx=null;n.ox=n.oz=0;n.dead=false;n.exit=false;n.mode=0;n.wreck=false;n.uns=0;n.vx=n.vz=n.sp=0;n.wb=0;n.pw=0;n.stun=0;n.sw=0;n.ign=0;n.k=.85+Math.random()*.2}
 function npcPlace(n){for(let t=0;t<30;t++){const L=LANES[Math.floor(Math.random()*LANES.length)];if(L.s1-L.s0<10||(L.t===4&&Math.random()<.75))continue;
   const s=L.s0+Math.random()*(L.s1-L.s0),[x,z,a]=lanePos(L,s),d=Math.hypot(x-px,z-pz);if(d<110||d>320)continue;
   if(NPC.some(o=>o!==n&&o.lane===L&&Math.abs(o.s-s)<12))continue;n.lane=L;n.s=s;n.si=0;n.x=x;n.z=z;n.h=a;n.v=Math.min(L.vmax,10);return}
@@ -102,7 +102,7 @@ function hitNpc(n,dv,nx,nz,along){const fx=Math.sin(n.h),fz=Math.cos(n.h);let dl
  n.vx=ux+fx*dl-fz*dr;n.vz=uz+fz*dl+fx*dr;along=Math.max(-2.4,Math.min(2.4,along));
  let sp=(n.mode?n.sp:0)-along*lat*dv*.09*(kmh<20?.3:1)+(kmh>=20?(Math.random()-.5)*dv*(kmh>=60?.15:.1):0);
  if(kmh>=60)sp=Math.sign(sp||1)*Math.max(Math.abs(sp),dv*.12);n.sp=Math.max(-3.5,Math.min(3.5,sp));
- if(kmh>=60)n.wreck=true;n.stunT=kmh>=20?3:0;n.mode=1;n.v=0;n.tr=null;n.nx=null}
+ if(kmh>=60)n.wreck=true;n.stunT=kmh>=20?3:0;n.mode=1;n.v=0;n.tr=null;n.nx=null;n.exit=false}
 function knock(n,dt){n.x+=n.vx*dt;n.z+=n.vz*dt;n.h+=n.sp*dt;
  // Rozamiento de neumáticos: de lado frena mucho (~1 g), hacia delante algo menos (el conductor frena)
  const s=Math.hypot(n.vx,n.vz),fx=Math.sin(n.h),fz=Math.cos(n.h),fw=n.wreck?1.3:1;let l=n.vx*fx+n.vz*fz,r=-n.vx*fz+n.vz*fx;
@@ -127,6 +127,9 @@ function npcs(dt){if(!LANES.length)return;TT+=dt;const k2=Math.floor(TT*2);if(k2
   if(n.wreck){SPH.center.set(n.x,1,n.z);const seen=Math.hypot(n.x-px,n.z-pz)<200&&FR.intersectsSphere(SPH);n.uns=seen?0:n.uns+dt;if(n.uns>20){npcRst(n);npcPlace(n);continue}}
   if(n.mode===1)knock(n,dt);
   else if(n.mode===2){n.stun-=dt;if(n.stun<=0)rejoin(n)}
+  // Calle que sale del mapa: sigue recto, se pierde en la niebla del borde y reaparece en otra calle
+  else if(n.exit){n.v=Math.min(n.v+3*dt,14);n.x+=Math.sin(n.h)*n.v*dt;n.z+=Math.cos(n.h)*n.v*dt;
+   if(Math.min(n.x,n.z,W-n.x,W-n.z)<-60){npcRst(n);n.lane=null;continue}}
   else{const L=n.lane,fx=Math.sin(n.h),fz=Math.cos(n.h);let vt=Math.min(L.vmax*n.k,n.tr?n.tr.vt:99),blk=null;
    // Coche de delante (mismo carril o el siguiente) y jugador
    const chk=(ox,oz,ov,o)=>{const dx=ox-n.x,dz=oz-n.z,f=dx*fx+dz*fz,s=Math.abs(dx*fz-dz*fx);if(f>0&&f<18&&s<2.2){const lim=f<6?0:ov+(f-6)*.8;if(lim<vt){vt=lim;blk=o}}};
@@ -141,7 +144,9 @@ function npcs(dt){if(!LANES.length)return;TT+=dt;const k2=Math.floor(TT*2);if(k2
     if(T.t>=1){n.tr=null;n.lane=n.nx;n.nx=null;n.s=n.lane.s0;n.si=0}else{const[x,z]=bez(T.P,T.t),[x2,z2]=bez(T.P,Math.min(1,T.t+.05));n.x=x;n.z=z;n.h=Math.atan2(x2-x,z2-z)}}
    if(!n.tr){const L2=n.lane,d=L2.s1-n.s;if(!n.nx&&d<45&&!n.dead){n.nx=pickNext(L2);if(!n.nx)n.dead=true}
     // Calle de sentido único sin salida (borde del mapa): se para al final y desaparece solo cuando no se ve
-    if(n.dead){vt=Math.min(vt,Math.max(0,d-2)*.8);SPH.center.set(n.x,1,n.z);n.uns=FR.intersectsSphere(SPH)&&Math.hypot(n.x-px,n.z-pz)<250?0:n.uns+dt;if(n.uns>1.5){npcRst(n);n.lane=null;continue}}
+    const ex=lanePos(L2,L2.s1),edge=Math.min(ex[0],ex[1],W-ex[0],W-ex[1])<40;
+    if(n.dead&&edge){if(d<1.5){n.exit=true;continue}}
+    else if(n.dead){vt=Math.min(vt,Math.max(0,d-2)*.8);SPH.center.set(n.x,1,n.z);n.uns=FR.intersectsSphere(SPH)&&Math.hypot(n.x-px,n.z-pz)<250?0:n.uns+dt;if(n.uns>1.5){npcRst(n);n.lane=null;continue}}
     // Semáforo o cruce sin semáforo ocupado: frenada progresiva hasta quedarse con el morro en la línea
     const g=GN[L2.to],room=d-n.l/2-.5;let stop=false;if(n.ign>0)n.ign-=dt;
     if(g.r>0&&d<60){if(g.cl>=0&&!L2.internal){const st=lightSt(L2);stop=st==="r"||(st==="y"&&room>n.v*n.v/12)}

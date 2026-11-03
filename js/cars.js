@@ -11,7 +11,7 @@ const LOOK=[
  {bh:.42,ch:.36,cl:.36,cz:-.02,cw:.78,wg:2,rc:0x222222,ey:1.05,rr:.37},
  {bh:.52,ch:.44,cl:.4,cz:-.1,cw:.84,wg:3,rc:0xe6b800,ey:1.15,rr:.36}];
 function buildCar(k){cur=CARS[k];const o=LOOK[k];cur.ey=o.ey;if(car)sc.remove(car);car=new THREE.Group();car.rotation.order="YXZ";
- const {w,l}=cur,y0=.26,bt=y0+o.bh,G=0x15222f,cc=cur.c,
+ const {w,l}=cur,y0=.2,bt=y0+o.bh,G=0x15222f,cc=cur.c,
  bx=(a,b,c,col,x,y,z,em)=>{const m=new THREE.Mesh(new THREE.BoxGeometry(a,b,c),new THREE.MeshLambertMaterial({color:col,emissive:em||0}));m.position.set(x,y,z);car.add(m);return m};
  bx(w,o.bh,l,cc,0,y0+o.bh/2,0);
  const cw=w*o.cw,cl=l*o.cl,cz=o.cz*l;
@@ -28,5 +28,10 @@ function buildCar(k){cur=CARS[k];const o=LOOK[k];cur.ey=o.ey;if(car)sc.remove(ca
  const dm=new THREE.MeshLambertMaterial({color:0x15171d});intG=new THREE.Group();car.add(intG);
  const db=new THREE.Mesh(new THREE.BoxGeometry(w*.8,.2,.4),dm);db.position.set(0,o.ey-.25,.85);intG.add(db);
  const wgp=new THREE.Group();wgp.position.set(-w*.2,o.ey-.2,.6);wgp.rotation.x=-.9;whl=new THREE.Mesh(new THREE.TorusGeometry(.17,.02,6,16),dm);wgp.add(whl);intG.add(wgp);intG.visible=false;
- car.traverse(m=>{if(m.isMesh)m.castShadow=true});sc.add(car)}
+ car.traverse(m=>{if(m.isMesh)m.castShadow=true});car.add(blob(w,l));sc.add(car)}
+// Sombra de contacto bajo el coche (oscurece el suelo justo debajo, así no parece que flote aunque no haya sombras del sol)
+let BLOBM=null;
+function blob(w,l){if(!BLOBM)BLOBM=new THREE.MeshBasicMaterial({map:canvasTex(128,128,(g,W2,H2)=>{const gr=g.createRadialGradient(64,64,10,64,64,64);gr.addColorStop(0,"rgba(0,0,0,.85)");gr.addColorStop(.55,"rgba(0,0,0,.6)");gr.addColorStop(1,"rgba(0,0,0,0)");g.fillStyle=gr;g.fillRect(0,0,W2,H2)}),
+  transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-4,polygonOffsetUnits:-4});
+ const m=new THREE.Mesh(new THREE.PlaneGeometry(w*1.35,l*1.2).rotateX(-PI/2),BLOBM);m.position.y=.025;m.renderOrder=1;return m}
 buildCar(0);

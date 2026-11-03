@@ -1,6 +1,6 @@
 // Entrada: teclado, mando y táctil (touchIn viene de touch.js)
 const keys={};let prev=[];
-function act(a){initAudio();if(state!=="play")return;if(a==="map")show("map");else if(a==="cars")show("cars");else if(a==="cam")mode=(mode+1)%5}
+function act(a){initAudio();if(state!=="play")return;if(a==="map")show("map");else if(a==="cars")show("cars");else if(a==="cam")mode=(mode+1)%4}
 addEventListener("keydown",e=>{keys[e.code]=1;keyAct=1;initAudio();if(e.code==="KeyN"&&!e.repeat)setMute(!mute);if(e.code==="KeyT"&&!e.repeat)setNpc(npcLvl+1);if(e.code==="Space")e.preventDefault();if(e.repeat)return;
  if(e.code==="Escape"&&spawned&&state!=="play")resume();
  if(e.code==="KeyM")act("map");if(e.code==="KeyC")act("cars");if(e.code==="KeyV")act("cam")});

@@ -35,6 +35,15 @@ const SKYCUBE=(()=>{const f=[];for(let i=0;i<6;i++){const c=document.createEleme
  return new THREE.CubeTexture(f)})();SKYCUBE.needsUpdate=true;
 // Faros del jugador: a la altura del parachoques, apuntando a la calzada (no a las copas de los árboles)
 const HL=new THREE.SpotLight(0xfff2d8,0,75,.5,.75,1.2);sc.add(HL,HL.target);
+// Haz de los faros dibujado píxel a píxel en el suelo, la calzada y las marcas viales (el suelo tiene triángulos muy grandes y
+// la luz normal solo se calcula en sus esquinas, así que el foco casi no se notaba en el asfalto)
+const HLU={uHLP:{value:new THREE.Vector2()},uHLD:{value:new THREE.Vector2(0,1)},uHLI:{value:0}};
+function beamMat(m){const prev=m.onBeforeCompile;m.onBeforeCompile=sh=>{if(prev)prev(sh);Object.assign(sh.uniforms,HLU);
+ sh.vertexShader=sh.vertexShader.replace("#include <common>","#include <common>\nvarying vec3 vHW;").replace("#include <begin_vertex>","#include <begin_vertex>\nvHW=(modelMatrix*vec4(transformed,1.)).xyz;");
+ sh.fragmentShader=sh.fragmentShader.replace("#include <common>","#include <common>\nuniform vec2 uHLP,uHLD;uniform float uHLI;varying vec3 vHW;").replace("#include <aomap_fragment>",`#include <aomap_fragment>
+ if(uHLI>0.){vec2 d=vHW.xz-uHLP;float a=dot(d,uHLD),lat=abs(d.x*uHLD.y-d.y*uHLD.x),w=1.2+max(a,0.)*.24;
+  float b=(1.-smoothstep(w*.35,w,lat))*smoothstep(1.,9.,a)*(1.-smoothstep(26.,55.,a));reflectedLight.directDiffuse+=diffuseColor.rgb*vec3(1.,.95,.85)*b*uHLI;}`)};
+ const k=m.customProgramCacheKey;m.customProgramCacheKey=()=>(k?k.call(m):"")+"beam";return m}
 // Luz real de las farolas más cercanas (cuántas depende de la calidad)
 const LPL=[];let lampT=0;
 function setLampLights(n){while(LPL.length<n){const l=new THREE.PointLight(0xffd29a,0,26,2);sc.add(l);LPL.push(l)}while(LPL.length>n)sc.remove(LPL.pop())}
@@ -75,7 +84,8 @@ function envUpdate(dt){HOUR=hourNow();const e=Math.sin((HOUR-6)/12*PI),day=Math.
  if(NM.head)NM.head.emissiveIntensity=.2+NF*1.8;if(NM.tail)NM.tail.emissiveIntensity=.25+NF*1.3;
  if(towerMat)towerMat.emissive.copy(PAL.tw).multiplyScalar(NF*.55);for(const m of NM.ledT)m.color.setScalar(.75+NF*.25);
  if(ROADMAT){ROADMAT.specular.setScalar(.05+WEA.wet*.75);ROADMAT.shininess=30+WEA.wet*70;ROADMAT.color.setScalar(1-WEA.wet*.35)}
- HL.intensity=NF>.2?NF*7:0;if(car){const fx=Math.sin(h),fz=Math.cos(h),f=cur.l/2+.3;HL.position.set(px+fx*f,.8+bodyY,pz+fz*f);HL.target.position.set(px+fx*26,0,pz+fz*26);HL.target.updateMatrixWorld()}
+ HL.intensity=NF>.2?NF*7:0;if(car){const fx=Math.sin(h),fz=Math.cos(h),f=cur.l/2+.3;HL.position.set(px+fx*f,.8+bodyY,pz+fz*f);HL.target.position.set(px+fx*26,0,pz+fz*26);HL.target.updateMatrixWorld();
+  HLU.uHLP.value.set(px+fx*f,pz+fz*f);HLU.uHLD.value.set(fx,fz);HLU.uHLI.value=NF>.2&&spawned?NF*1.4:0}
  // Farolas más cercanas al jugador con luz de verdad (se reparten cada 0,3 s) y detalle cercano de los edificios
  lampT+=dt;const doL=lampT>.3;if(doL){lampT=0;lodUpdate()}if(doL&&LPL.length&&LAMPS.length){const tx=px,tz=pz,best=[];for(let i=0;i<LAMPS.length;i+=3){const d=(LAMPS[i]-tx)**2+(LAMPS[i+2]-tz)**2;if(best.length<LPL.length||d<best[best.length-1][0]){best.push([d,i]);best.sort((a,b)=>a[0]-b[0]);if(best.length>LPL.length)best.pop()}}
   LPL.forEach((l,k)=>{const b=best[k];if(b)l.position.set(LAMPS[b[1]],LAMPS[b[1]+1],LAMPS[b[1]+2])})}
