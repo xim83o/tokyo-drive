@@ -155,13 +155,15 @@ function rejoin(n){let best=null,bd=49,bs=0;for(const L of LANES){const p=L.p;fo
  const[x,z]=lanePos(best,n.s);n.ox=n.x-x;n.oz=n.z-z}
 const FR=new THREE.Frustum(),FM=new THREE.Matrix4(),SPH=new THREE.Sphere(new THREE.Vector3(),3);
 function npcs(dt){if(!LANES.length)return;TT+=dt;const k2=Math.floor(TT*2);if(k2!==lastLt){lastLt=k2;lamps2()}
- const cnt=NCNT[npcLvl];while(NPC.length<cnt){const o=mkNpc();npcRst(o);sc.add(o.g);NPC.push(o)}
+ const cnt=SCN?Math.max(NCNT[npcLvl],SCN.cars.length):NCNT[npcLvl];while(NPC.length<cnt){const o=mkNpc();npcRst(o);sc.add(o.g);NPC.push(o)}
  NPC.forEach((n,k)=>{n.g.visible=k<cnt&&!!n.lane});FR.setFromProjectionMatrix(FM.multiplyMatrices(cam.projectionMatrix,cam.matrixWorldInverse));
  for(const g of GN){g.busy=0;if(g.apr)g.apr.length=0;else g.apr=[]}
  // Coches que se acercan a cada cruce (a menos de 22 m), para las normas de prioridad
  for(let k=0;k<cnt;k++){const n=NPC[k];if(n.tr&&!n.mode)GN[n.tr.node].busy++;else if(n.lane&&!n.mode&&!n.exit&&n.lane.s1-n.s<22)GN[n.lane.to].apr.push(n)}
  for(let k=0;k<cnt;k++){const n=NPC[k];
-  if(!n.lane||Math.hypot(n.x-px,n.z-pz)>380){npcRst(n);npcPlace(n);if(!n.lane)continue}
+  // Simulador de situaciones (dev.js): solo se mueven los coches de la situación
+  if(SCN&&!SCN.cars.includes(n)){n.g.visible=false;continue}
+  if(!n.lane||Math.hypot(n.x-px,n.z-pz)>380){if(SCN)continue;npcRst(n);npcPlace(n);if(!n.lane)continue}
   if(n.wreck){SPH.center.set(n.x,1,n.z);const seen=Math.hypot(n.x-px,n.z-pz)<200&&FR.intersectsSphere(SPH);n.uns=seen?0:n.uns+dt;if(n.uns>20){npcRst(n);npcPlace(n);continue}}
   if(n.mode===1)knock(n,dt);
   else if(n.mode===2){n.stun-=dt;if(n.stun<=0)rejoin(n)}

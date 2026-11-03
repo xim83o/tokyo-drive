@@ -8,7 +8,7 @@ function keyName(c){if(!c)return"—";const m={Space:"Espacio",Escape:"Esc",Arro
 function openSettings(){if(state!=="set")setPrev=state;state="set";$("ov").hidden=false;$("carsP").hidden=$("mapP").hidden=true;$("setP").hidden=false;hudVis(false);$("touch").hidden=true;drawSettings()}
 function closeSettings(){rebind=null;$("setP").hidden=true;saveEnv();if(setPrev==="play")resume();else show(setPrev)}
 function drawSettings(){const P=$("setP");P.innerHTML=`<h1>${T("Ajustes")}</h1>`;
- const tabs=[["gfx","Gráficos"],["time","Hora y clima"],["snd","Sonido"],["trf","Tráfico"],["scr","Pantalla"],["lang","Idioma"]];if(!MOBILE)tabs.push(["keys","Teclas"]);
+ const tabs=[["gfx","Gráficos"],["time","Hora y clima"],["snd","Sonido"],["trf","Tráfico"],["scr","Pantalla"],["lang","Idioma"]];if(!MOBILE)tabs.push(["keys","Teclas"]);if(typeof DEV!=="undefined"&&DEV)tabs.push(["dev","Desarrollador"]);
  const tb=document.createElement("div");tb.className="stabs";tabs.forEach(([k,t])=>{const b=document.createElement("button");b.textContent=T(t);b.className=k===setTab?"on":"";b.onclick=()=>{setTab=k;rebind=null;drawSettings()};tb.appendChild(b)});P.appendChild(tb);
  const box=document.createElement("div");box.id="envUI";P.appendChild(box);
  const note=t=>{const p=document.createElement("p");p.textContent=T(t);box.appendChild(p)};
@@ -34,12 +34,13 @@ function drawSettings(){const P=$("setP");P.innerHTML=`<h1>${T("Ajustes")}</h1>`
   {const b=document.createElement("button");b.className="b g";b.textContent="📻 "+T("Siguiente emisora");b.onclick=()=>{initAudio();if(!RADIO.on)radioToggle();else radioNext(1)};box.appendChild(b)}
   note("La radio usa emisoras en directo de radio-browser.info: necesita internet y la música (y los anuncios) son los que pongan ellas.")}
  else if(setTab==="trf"){row("Tráfico",NLAB.map((t,i)=>[i,t]),()=>npcLvl,v=>setNpc(v));note("Más coches hace la ciudad más viva, pero pide más al ordenador o al móvil.");
-  if(spawned&&!MOBILE){const b=document.createElement("button");b.className="b g";b.textContent="👁 "+T("Modo espectador");b.onclick=startSpec;box.appendChild(b);note("Cámara libre para mirar el tráfico: WASD mover, Q/E bajar y subir, flechas o arrastrar para girar, Mayús para ir rápido, Esc para volver.")}}
+}
  else if(setTab==="scr"){row("Velocidad en",[["kmh","km/h"],["mph","mph"]],()=>ENV.units,v=>ENV.units=v);
   row("Minimapa",[[1,"Sí"],[0,"No"]],()=>ENV.hud.mini,v=>ENV.hud.mini=v);row("Velocímetro",[[1,"Sí"],[0,"No"]],()=>ENV.hud.speed,v=>ENV.hud.speed=v);
   if(!MOBILE)row("Ayuda de teclas",[[1,"Sí"],[0,"No"]],()=>ENV.hud.help,v=>ENV.hud.help=v);
   note("El HUD es todo lo que se dibuja encima de la imagen mientras conduces: velocímetro, minimapa y textos de ayuda. Quítalo para hacer capturas o conducir sin nada en pantalla.")}
  else if(setTab==="lang")row("Idioma",LANGS,()=>LANG,v=>{setLang(v);drawSettings()});
+ else if(setTab==="dev"){note("Herramientas solo para ti (en el enlace del móvil y en Netlify no aparecen).");if(!spawned)note("Elige primero un coche para usarlas.");else{[["👁 Modo espectador",startSpec,"Cámara libre: WASD mover, Q/E bajar y subir, flechas o arrastrar para girar, Mayús rápido, Esc para volver."],["🗺 Vista de la ciudad",startCity,"Todo el tráfico desde arriba a x1-x10 con contadores de atascos y solapes."],["🧪 Prueba automática",devTest,"Simula 5 minutos y da el informe."],["🚦 Simulador de situaciones",()=>{DV.scn=null;devScnUI()},"Elige un cruce, pon coches, qué hace cada uno, y se recrea."]].forEach(([t,f,d])=>{const b=document.createElement("button");b.className="b g";b.textContent=t;b.onclick=f;box.appendChild(b);note(d)})}}
  else if(setTab==="keys"){note("Haz clic en una tecla y pulsa la nueva. Cada acción admite dos teclas. El mando funciona siempre igual.");
   const g=document.createElement("div");g.className="keys";for(const[a,t]of ACTS){const s=document.createElement("span");s.textContent=T(t);g.appendChild(s);
    for(const k of[0,1]){const b=document.createElement("button");b.textContent=keyName(ENV.keys[a][k]);
