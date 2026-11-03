@@ -4,7 +4,10 @@
 // rl: régimen máximo del motor (rpm), cambia el tono del sonido
 const CARS=[{n:"Kei Sport",c:0xf5b800,vm:44.4,ac:4.7,gr:8.5,dr:.6,w:1.7,l:3.6,m:850,rl:8500},{n:"Coupé GT",c:0xe5173f,vm:75,ac:7.3,gr:7.5,dr:1,w:1.9,l:4.4,m:1450,rl:7000},{n:"Hypercar",c:0x2a6cff,vm:97.2,ac:11,gr:6.5,dr:1.2,w:2,l:4.6,m:1400,rl:8500},{n:"Drift Spec",c:0xf2f2f2,vm:66.7,ac:6.2,gr:7.5,dr:1.5,w:1.85,l:4.4,m:1300,rl:7800}];
 const t100=c=>c.vm/c.ac*Math.atanh(27.78/c.vm);
-let cur=CARS[0],car=null,intG=null,whl=null;
+let cur=CARS[0],car=null,intG=null,whl=null,WSH=null;
+// Lienzo de las gotas del parabrisas (lo dibuja weather.js)
+const DCV=document.createElement("canvas");DCV.width=512;DCV.height=320;const DTEX=new THREE.CanvasTexture(DCV);
+const WSM=new THREE.MeshBasicMaterial({map:DTEX,transparent:true,depthWrite:false,fog:false,side:THREE.DoubleSide});
 const LOOK=[
  {bh:.8,ch:.75,cl:.62,cz:-.04,cw:.92,wg:0,rc:0xcccccc,ey:1.5,rr:.32},
  {bh:.5,ch:.42,cl:.42,cz:-.08,cw:.86,wg:1,rc:0xd8d8d8,ey:1.2,rr:.36},
@@ -27,6 +30,11 @@ function buildCar(k){cur=CARS[k];const o=LOOK[k];cur.ey=o.ey;if(car)sc.remove(ca
   const g2=new THREE.CylinderGeometry(o.rr*.62,o.rr*.62,.34,10);g2.rotateZ(PI/2);const r=new THREE.Mesh(g2,new THREE.MeshLambertMaterial({color:o.rc}));r.position.copy(t.position);car.add(r)}
  const dm=new THREE.MeshLambertMaterial({color:0x15171d});intG=new THREE.Group();car.add(intG);
  const db=new THREE.Mesh(new THREE.BoxGeometry(w*.8,.2,.4),dm);db.position.set(0,o.ey-.25,.85);intG.add(db);
+ // Parabrisas visto desde dentro: montantes, borde del techo y cristal donde caen las gotas de lluvia (weather.js)
+ {const ey=o.ey,L=Math.hypot(.4,.47),ang=-Math.atan2(.4,.47),y=ey+.065,z=.42,pm=new THREE.MeshLambertMaterial({color:0x1b1d22});
+  WSH=new THREE.Mesh(new THREE.PlaneGeometry(w*.9,L),WSM);WSH.position.set(0,y,z);WSH.rotation.x=ang;WSH.renderOrder=3;WSH.visible=false;intG.add(WSH);
+  for(const s of[-1,1]){const p=new THREE.Mesh(new THREE.BoxGeometry(.08,L+.04,.08),pm);p.position.set(s*w*.46,y,z);p.rotation.x=ang;intG.add(p)}
+  const hd=new THREE.Mesh(new THREE.BoxGeometry(w*.96,.1,.14),pm);hd.position.set(0,ey+.31,.2);intG.add(hd)}
  const wgp=new THREE.Group();wgp.position.set(-w*.2,o.ey-.2,.6);wgp.rotation.x=-.9;whl=new THREE.Mesh(new THREE.TorusGeometry(.17,.02,6,16),dm);wgp.add(whl);intG.add(wgp);intG.visible=false;
  car.traverse(m=>{if(m.isMesh)m.castShadow=true});car.add(blob(w,l));sc.add(car)}
 // Sombra de contacto bajo el coche (oscurece el suelo justo debajo, así no parece que flote aunque no haya sombras del sol)
