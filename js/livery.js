@@ -75,7 +75,17 @@ function applyDecals(){if(!car||!carBody||!THREE.DecalGeometry)return;for(const 
  // Proyectar con el coche en el origen (las calcomanías quedan en coordenadas del coche)
  const P=car.position.clone(),R=car.rotation.clone();car.position.set(0,0,0);car.rotation.set(0,0,0);car.updateMatrixWorld(true);
  const bb=new THREE.Box3().setFromObject(carBody),c=bb.getCenter(new THREE.Vector3()),s=bb.getSize(new THREE.Vector3());
- const add=(tex,pos,rot,size)=>{const g=new THREE.DecalGeometry(carBody,pos,rot,size);if(!g.attributes.position.count)return;const m=new THREE.Mesh(g,dmat(tex));m.renderOrder=2;car.add(m);DEC.push(m)};
+ // Todas las calcomanías se proyectan sobre una copia de la carrocería sin los cristales. Los cristales se reconocen por su color de
+ // la paleta: el que más ocupa entre las caras inclinadas o verticales de la parte alta (parabrisas, luneta y ventanillas)
+ const src=carBody.geometry.index?carBody.geometry.toNonIndexed():carBody.geometry,p=src.attributes.position,uv=src.attributes.uv,belt=bb.min.y+s.y*.5,TR=[],AC={};
+ {const A=new THREE.Vector3(),B=new THREE.Vector3(),C=new THREE.Vector3(),n=new THREE.Vector3();
+  for(let i=0;i<p.count;i+=3){A.fromBufferAttribute(p,i).applyMatrix4(carBody.matrixWorld);B.fromBufferAttribute(p,i+1).applyMatrix4(carBody.matrixWorld);C.fromBufferAttribute(p,i+2).applyMatrix4(carBody.matrixWorld);
+   n.subVectors(B,A).cross(C.clone().sub(A));const ar=n.length();n.normalize();const cell=Math.floor((uv.getX(i)+uv.getX(i+1)+uv.getX(i+2))/3*8)+","+Math.floor((uv.getY(i)+uv.getY(i+1)+uv.getY(i+2))/3*4);
+   if((A.y+B.y+C.y)/3>belt&&Math.abs(n.y)<.8)AC[cell]=(AC[cell]||0)+ar;TR.push([A.toArray(),B.toArray(),C.toArray(),cell])}}
+ let glass=null,gv=0;for(const k in AC)if(AC[k]>gv&&k!==MODELS[cur.f].cell+",1"){gv=AC[k];glass=k}
+ const out=[];for(const[a,b,c2,cell]of TR)if(cell!==glass)out.push(...a,...b,...c2);
+ const pg=new THREE.BufferGeometry();pg.setAttribute("position",new THREE.Float32BufferAttribute(out,3));pg.computeVertexNormals();const pm=new THREE.Mesh(pg);
+ const add=(tex,pos,rot,size)=>{const g=new THREE.DecalGeometry(pm,pos,rot,size);if(!g.attributes.position.count)return;const m=new THREE.Mesh(g,dmat(tex));m.renderOrder=2;car.add(m);DEC.push(m)};
  // El lado izquierdo del coche es +x (el coche mira hacia +z); el giro de cada proyección hace que los textos se lean desde fuera
  const side=(sd,u,v,sz,rz)=>{rz=rz||0;if(sd<2){const x=sd?bb.min.x:bb.max.x;return[new THREE.Vector3(x,bb.min.y+s.y*v,c.z+u*s.z*.45),new THREE.Euler(0,sd?-PI/2:PI/2,rz),new THREE.Vector3(sz,sz,s.x*.8)]}
   // Capó: se lee desde delante del coche (mirando hacia fuera)
@@ -83,14 +93,7 @@ function applyDecals(){if(!car||!carBody||!THREE.DecalGeometry)return;for(const 
   if(sd===3)return[new THREE.Vector3(c.x,bb.max.y,c.z+u*s.z*.2),new THREE.Euler(-PI/2,0,PI+rz),new THREE.Vector3(sz,sz,s.y*.6)];
   return[new THREE.Vector3(c.x+u*s.x*.3,bb.min.y+s.y*v,bb.min.z),new THREE.Euler(0,PI,rz),new THREE.Vector3(sz,sz,s.z*.5)]};
  if(L.st){const t=stripeTex(L.st,L.sc);if(L.st===3)for(const sd of[0,1])add(t,new THREE.Vector3(sd?bb.max.x:bb.min.x,bb.min.y+s.y*.42,c.z),new THREE.Euler(0,sd?PI/2:-PI/2,PI/2),new THREE.Vector3(s.y*1.2,s.z*1.05,s.x*.8));
-  else{// Por capó, techo y maletero, cortadas en los cristales: se proyectan sobre una copia de la carrocería sin las caras
-   // inclinadas o verticales de la parte alta (parabrisas, luneta y ventanillas)
-   const src=carBody.geometry.index?carBody.geometry.toNonIndexed():carBody.geometry,p=src.attributes.position,out=[],belt=bb.min.y+s.y*.5,A=new THREE.Vector3(),B=new THREE.Vector3(),C=new THREE.Vector3(),n=new THREE.Vector3();
-   for(let i=0;i<p.count;i+=3){A.fromBufferAttribute(p,i).applyMatrix4(carBody.matrixWorld);B.fromBufferAttribute(p,i+1).applyMatrix4(carBody.matrixWorld);C.fromBufferAttribute(p,i+2).applyMatrix4(carBody.matrixWorld);
-    n.subVectors(B,A).cross(C.clone().sub(A)).normalize();if((A.y+B.y+C.y)/3>belt&&Math.abs(n.y)<.8)continue;out.push(A.x,A.y,A.z,B.x,B.y,B.z,C.x,C.y,C.z)}
-   const pg=new THREE.BufferGeometry();pg.setAttribute("position",new THREE.Float32BufferAttribute(out,3));pg.computeVertexNormals();const pm=new THREE.Mesh(pg);
-   const g=new THREE.DecalGeometry(pm,new THREE.Vector3(c.x,bb.max.y,c.z),new THREE.Euler(-PI/2,0,0),new THREE.Vector3(s.x*.9,s.z*1.05,s.y*2.2));pg.dispose();
-   if(g.attributes.position.count){const m=new THREE.Mesh(g,dmat(t));m.renderOrder=2;car.add(m);DEC.push(m)}}}
+  else add(t,new THREE.Vector3(c.x,bb.max.y,c.z),new THREE.Euler(-PI/2,0,0),new THREE.Vector3(s.x*.9,s.z*1.05,s.y*2.2))}
  if(L.num){const t=numTex(L.num,L.nc);for(const sd of[0,1])add(t,...side(sd,0,.42,s.y*.5));add(t,...side(2,0,.5,s.x*.45))}
  for(const k of L.stk){if(k.ci!==undefined?!CUS.some(q=>q.id===k.ci):STK[k.i].hide)continue;const[p,r,z]=side(k.sd,k.u,k.v,s.y*.55*k.s,k.r);add(k.ci!==undefined?cusTex(k.ci):stkTex(k.i),p,r,z)}
  car.position.copy(P);car.rotation.copy(R);car.updateMatrixWorld(true)}

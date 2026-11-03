@@ -49,14 +49,18 @@ function loadCars(){if(!THREE.GLTFLoader)return Promise.resolve();const L=new TH
 // Copia del modelo escalada al largo pedido (un poco más bajo que el original, que es de estilo juguete), con la pintura elegida
 function modelInst(n,len,col,flat,tint){const M=MODELS[n],s=M.s.clone(true),sz=M.bb.getSize(new THREE.Vector3()),k=len/sz.z,mat=paintMat(col===undefined?-1:M.cell,col,tint);
  s.scale.set(k,k*.88,k);const wh=[];let body=null;s.traverse(o=>{if(o.isMesh){o.material=mat;o.castShadow=!flat;o.receiveShadow=!flat;if(o.name.startsWith("body"))body=o}if(o.name.startsWith("wheel")){o.rotation.order="YXZ";wh.push({o,f:o.name.includes("front")})}});
- return{s,w:sz.x*k,h:sz.y*k*.88,wh,body,k}}
+ // Morro y cola reales a la altura de los faros (para pegar las luces a la carrocería, no al largo teórico)
+ const H=sz.y*k*.88,W=sz.x*k;let fz=-1e9,rz=1e9;if(body){s.updateMatrixWorld(true);const p=body.geometry.attributes.position,v=new THREE.Vector3();
+  for(let i=0;i<p.count;i++){v.fromBufferAttribute(p,i).applyMatrix4(body.matrixWorld);if(v.y>H*.3&&v.y<H*.55&&Math.abs(v.x)>W*.2){fz=Math.max(fz,v.z);rz=Math.min(rz,v.z)}}}
+ if(fz<-1e8){fz=len/2;rz=-len/2}
+ return{s,w:W,h:H,wh,body,k,fz,rz}}
 // Luces del coche: faros (blancos) y pilotos (rojos) que se encienden de noche (env.js usa NM.head y NM.tail)
-function carLights(g,w,h,l){if(!NM.head){NM.head=new THREE.MeshLambertMaterial({color:0xfff4d0,emissive:0xfff0c8,emissiveIntensity:.2});NM.tail=new THREE.MeshLambertMaterial({color:0xaa1010,emissive:0xff1a1a,emissiveIntensity:.25})}
- for(const sx of[-1,1]){const hm=new THREE.Mesh(new THREE.BoxGeometry(w*.16,h*.07,.04),NM.head);hm.position.set(sx*w*.32,h*.42,l/2+.01);g.add(hm);const tm=new THREE.Mesh(new THREE.BoxGeometry(w*.18,h*.07,.04),NM.tail);tm.position.set(sx*w*.33,h*.45,-l/2-.01);g.add(tm)}}
+function carLights(g,w,h,l,fz,rz){if(fz===undefined){fz=l/2;rz=-l/2}if(!NM.head){NM.head=new THREE.MeshLambertMaterial({color:0xfff4d0,emissive:0xfff0c8,emissiveIntensity:.2});NM.tail=new THREE.MeshLambertMaterial({color:0xaa1010,emissive:0xff1a1a,emissiveIntensity:.25})}
+ for(const sx of[-1,1]){const hm=new THREE.Mesh(new THREE.BoxGeometry(w*.16,h*.07,.04),NM.head);hm.position.set(sx*w*.32,h*.42,fz+.01);g.add(hm);const tm=new THREE.Mesh(new THREE.BoxGeometry(w*.18,h*.07,.04),NM.tail);tm.position.set(sx*w*.33,h*.45,rz-.01);g.add(tm)}}
 
 function buildCar(k){carK=k;cur=CARS[k];if(car)sc.remove(car);car=new THREE.Group();car.rotation.order="YXZ";WHEELS.length=0;carBody=null;
  const {w,l}=cur;let h=1.3;
- if(MODELS[cur.f]&&CMAP){const m=modelInst(cur.f,l,carPaint(k),false,typeof LIV!=="undefined"&&LIV[k]?LIV[k].tint:0);car.add(m.s);h=m.h;carBody=m.body;for(const q of m.wh)WHEELS.push(q);cur.wr=.3*m.k;carLights(car,m.w,h,l)}
+ if(MODELS[cur.f]&&CMAP){const m=modelInst(cur.f,l,carPaint(k),false,typeof LIV!=="undefined"&&LIV[k]?LIV[k].tint:0);car.add(m.s);h=m.h;carBody=m.body;for(const q of m.wh)WHEELS.push(q);cur.wr=.3*m.k;carLights(car,m.w,h,l,m.fz,m.rz)}
  else{// Mientras cargan los modelos: coche sencillo de cajas
   const bx=(a,b,c,col,x,y,z)=>{const m=new THREE.Mesh(new THREE.BoxGeometry(a,b,c),new THREE.MeshLambertMaterial({color:col}));m.position.set(x,y,z);car.add(m);return m};
   bx(w,.55,l,cur.c,0,.5,0);bx(w*.85,.45,l*.45,0x15222f,0,1,-.1*l)}

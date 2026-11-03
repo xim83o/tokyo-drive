@@ -69,7 +69,7 @@ const LCOL={g:new THREE.Color(0x20e0a0),y:new THREE.Color(0xffb000),r:new THREE.
 function lamps2(){if(!LM)return;LIT.forEach((L,i)=>{const st=lightSt(L);LM.setColorAt(i*3,st==="g"?LCOL.g:LCOL.off);LM.setColorAt(i*3+1,st==="y"?LCOL.y:LCOL.off);LM.setColorAt(i*3+2,st==="r"?LCOL.r:LCOL.off)});LM.instanceColor.needsUpdate=true}
 // --- Coches NPC. mode: 0 conduce · 1 desplazado por un choque · 2 parado tras el choque. wreck: siniestrado ---
 function mkNpc(){if(CMAP){let r=Math.random()*NPCK.reduce((a,k)=>a+k.p,0),K=NPCK[0];for(const k of NPCK){r-=k.p;if(r<=0){K=k;break}}
-  if(MODELS[K.f]){const g=new THREE.Group(),m=modelInst(K.f,K.l,K.paint?NCOL[Math.floor(Math.random()*NCOL.length)]:undefined);g.add(m.s);carLights(g,m.w,m.h,K.l);g.add(blob(m.w,K.l));
+  if(MODELS[K.f]){const g=new THREE.Group(),m=modelInst(K.f,K.l,K.paint?NCOL[Math.floor(Math.random()*NCOL.length)]:undefined);g.add(m.s);carLights(g,m.w,m.h,K.l,m.fz,m.rz);g.add(blob(m.w,K.l));
    return{g,x:-9999,z:-9999,h:0,v:0,vt:12,m:K.m,l:K.l,w:m.w,hp:.85+Math.random()*.3,si:0}}}
  const g=new THREE.Group(),t=Math.floor(Math.random()*3),w=1.75,l=[3.6,4.3,4.8][t],bh=[.75,.6,.95][t],c=NCOL[Math.floor(Math.random()*NCOL.length)];
  const bx=(a,b,d,col,x,y,z)=>{const m=new THREE.Mesh(new THREE.BoxGeometry(a,b,d),new THREE.MeshLambertMaterial({color:col}));m.position.set(x,y,z);g.add(m)};
@@ -146,6 +146,10 @@ function npcs(dt){if(!LANES.length)return;TT+=dt;const k2=Math.floor(TT*2);if(k2
    // Si lleva más de 2,5 s parado dentro de un cruce, termina de cruzar para no bloquearlo
    n.trw=n.tr&&n.v<.3?(n.trw||0)+dt:0;if(n.trw>2.5)n.gh=3;if(n.gh>0)n.gh-=dt;
    if(!(n.gh>0))for(let q=0;q<cnt;q++){const o=NPC[q];if(q===k||!o.lane)continue;if(o.mode||Math.sin(o.h)*fx+Math.cos(o.h)*fz>.5)chk(o.x,o.z,o.mode?0:o.v,o)}
+   // Cualquier coche (aunque cruce o venga de frente) pegado delante: se para para no atravesarlo. Si los dos se tienen delante,
+   // pasa el de número más bajo (así no se bloquean ni se meten uno dentro del otro)
+   for(let q=0;q<cnt;q++){if(q===k)continue;const o=NPC[q];if(!o.lane||o.mode)continue;const dx=o.x-n.x,dz=o.z-n.z,f=dx*fx+dz*fz;if(f<=0||f>5.5||Math.abs(dx*fz-dz*fx)>2.3)continue;
+    const ofx=Math.sin(o.h),ofz=Math.cos(o.h),f2=-dx*ofx-dz*ofz,mut=f2>0&&f2<5.5&&Math.abs(-dx*ofz+dz*ofx)<2.3;if(!mut||k>q){vt=0;blk=o}}
    n.wb=blk&&blk!=="P"&&blk.mode&&n.v<.5?n.wb+dt:0;if(n.wb>4){n.wb=0;if(L.rev){n.lane=L.rev;n.s=Math.max(L.rev.s0,L.len-n.s);n.si=0;n.tr=null;n.nx=null}}
    if(blk==="P"){if(n.v>6&&n.v-vt>4)honk(n);n.pw=n.v<.3?n.pw+dt:0;if(n.pw>4){honk(n);n.pw=0}}else n.pw=0;
    if(n.tr){const T=n.tr;T.t+=n.v*dt/T.len;

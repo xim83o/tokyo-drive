@@ -198,7 +198,8 @@ function buildCanal(){if(!MAP.rivers.length)return;const wa=[],wl=[],rl=[],gi=[]
     vq(wl,x0,z0,x1,z1,WY-.6,road?-.45:CURB);if(!road)vq(rl,x0,z0,x1,z1,CURB,CURB+1.1)}
    // Autopista elevada: tablero de 13 m a 12 m de altura, pretiles y pilares en el centro del cauce
    quad(hd,ax,az,bx,bz,6.5,12);quad(hs,ax,az,bx,bz,6.5,11.2);for(const s of[-1,1]){const x0=ax+lx*6.5*s,z0=az+lz*6.5*s,x1=bx+lx*6.5*s,z1=bz+lz*6.5*s;vq(hw,x0,z0,x1,z1,11.2,13.1)}
-   for(let t=16;t<L;t+=34)pil.push([ax+(bx-ax)*t/L,0,az+(bz-az)*t/L,Math.atan2(bx-ax,bz-az)])}}
+   // (ningún pilar sobre una calle: en las curvas del canal puede coincidir con un puente)
+   for(let t=16;t<L;t+=34){const x=ax+(bx-ax)*t/L,z=az+(bz-az)*t/L;if([[0,0],[3,0],[-3,0],[0,3],[0,-3]].every(([u,v])=>roadAt(x+u,z+v)<0))pil.push([x,0,z,Math.atan2(bx-ax,bz-az)])}}}
  // Puentes: tramos de calle por encima del agua
  for(let k=0;k<RSG.length;k+=6){const ax=RSG[k],az=RSG[k+1],bx=RSG[k+2],bz=RSG[k+3],w2=RSG[k+4],L=Math.hypot(bx-ax,bz-az)||1,lx=(bz-az)/L,lz=-(bx-ax)/L,n=Math.ceil(L);
   for(let i=0;i<n;i++){const x0=ax+(bx-ax)*i/n,z0=az+(bz-az)*i/n,x1=ax+(bx-ax)*(i+1)/n,z1=az+(bz-az)*(i+1)/n;if(riverD((x0+x1)/2,(z0+z1)/2)>.5)continue;
