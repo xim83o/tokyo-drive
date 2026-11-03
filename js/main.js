@@ -41,4 +41,4 @@ function loop(n){requestAnimationFrame(loop);const dt=Math.min(.05,(n-last)/1e3)
   else if(spawned){cam.position.set(px+Math.sin(t0)*220,90,pz+Math.cos(t0)*220);cam.lookAt(px,20,pz)}else{cam.position.set(TX+Math.sin(t0)*420,140,TZ+Math.cos(t0)*420);cam.lookAt(TX,110,TZ)}}
  envUpdate(dt);studio();seasonTick(dt);if(typeof weather==="function")weather(dt);renderFrame()}
 loop(last);
-Promise.all([loadWorld(),loadCars()]).then(()=>{initTraffic();seasonInit();applyQuality();ld.hidden=true}).catch(e=>{console.error(e);ld.textContent="No se pudo cargar el mapa. Ábrelo con jugar.bat (necesita el servidor local)."});
+Promise.all([loadWorld(),loadCars()]).then(()=>{initTraffic();seasonInit();applyQuality();ld.hidden=true}).catch(e=>{console.error(e);ld.textContent=T("No se pudo cargar el mapa. Ábrelo con jugar.bat (necesita el servidor local).")});

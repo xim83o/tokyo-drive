@@ -49,8 +49,8 @@ const CUST={};
 function cusTex(id){if(CUST[id])return CUST[id];const c=CUS.find(q=>q.id===id),t=canvasTex(256,256,()=>{});CUST[id]=t;if(c){const im=new Image();im.onload=()=>{t.image.getContext("2d").drawImage(im,0,0,256,256);t.needsUpdate=true};im.src=c.url}return t}
 function addCus(file,done){const rd2=new FileReader();rd2.onload=()=>{const im=new Image();im.onload=()=>{const cv=document.createElement("canvas");cv.width=cv.height=256;const g=cv.getContext("2d"),k=Math.min(256/im.width,256/im.height),w=im.width*k,h=im.height*k;
   g.drawImage(im,128-w/2,128-h/2,w,h);let url=cv.toDataURL("image/webp",.9);if(!url.startsWith("data:image/webp"))url=cv.toDataURL("image/png");
-  const id=Date.now();CUS.push({id,url,n:file.name.replace(/\.[^.]+$/,"").slice(0,24)});if(!saveCus()){CUS.pop();alert("No queda espacio para más imágenes: borra alguna.");return}done(id)};im.onerror=()=>alert("No se pudo leer esa imagen.");im.src=rd2.result};rd2.readAsDataURL(file)}
-const stkName=k=>k.ci!==undefined?((CUS.find(q=>q.id===k.ci)||{}).n||"Mi imagen"):STK[k.i].n;
+  const id=Date.now();CUS.push({id,url,n:file.name.replace(/\.[^.]+$/,"").slice(0,24)});if(!saveCus()){CUS.pop();alert(T("No queda espacio para más imágenes: borra alguna."));return}done(id)};im.onerror=()=>alert(T("No se pudo leer esa imagen."));im.src=rd2.result};rd2.readAsDataURL(file)}
+const stkName=k=>k.ci!==undefined?((CUS.find(q=>q.id===k.ci)||{}).n||T("Mi imagen")):T(STK[k.i].n);
 // Al cargar una imagen se redibujan sus pegatinas (texturas ya creadas y miniaturas del editor)
 for(const src of new Set(STK.filter(s=>s.src).map(s=>s.src))){const im=new Image();IMGS[src]=im;im.onload=()=>{STK.forEach((s,i)=>{if(s.src!==src||!STKT[i])return;const c=STKT[i].image,g=c.getContext("2d");g.clearRect(0,0,256,256);s.d(g);STKT[i].needsUpdate=true});if(state==="liv")drawLiv()};im.src=src}
 // Franjas: 0 ninguna · 1 central · 2 doble · 3 lateral · 4 diagonal
@@ -138,9 +138,9 @@ let livK=0,livSel=-1,livPrev="cars",livA=.6;
 function openLiv(){livPrev=state;state="liv";livK=carK;if(livBg==="dealer")buildShowroom();$("ov").hidden=false;$("ov").classList.add("liv");$("carsP").hidden=$("mapP").hidden=$("setP").hidden=true;$("livP").hidden=false;hudVis(false);$("touch").hidden=true;drawLiv()}
 function closeLiv(){saveLiv();$("livP").hidden=true;$("ov").classList.remove("liv");if(livPrev==="play")resume();else show("cars")}
 function livSet(o){Object.assign(LIV[livK],o);saveLiv();if(livK!==carK||o.c!==undefined||o.tint!==undefined)buildCar(livK);else applyDecals()}
-function drawLiv(){const P=$("livP"),L=LIV[livK];P.innerHTML="<h1>Calcomanías</h1>";
- const sec=t=>{const h=document.createElement("h3");h.textContent=t;P.appendChild(h)},row=()=>{const r=document.createElement("div");r.className="lrow";P.appendChild(r);return r};
- const btn=(r,t,on,f,st)=>{const b=document.createElement("button");b.textContent=t;if(on)b.className="on";if(st)b.style.cssText=st;b.onclick=f;r.appendChild(b);return b};
+function drawLiv(){const P=$("livP"),L=LIV[livK];P.innerHTML=`<h1>${T("Calcomanías")}</h1>`;
+ const sec=t=>{const h=document.createElement("h3");h.textContent=T(t);P.appendChild(h)},row=()=>{const r=document.createElement("div");r.className="lrow";P.appendChild(r);return r};
+ const btn=(r,t,on,f,st)=>{const b=document.createElement("button");b.textContent=T(t);if(on)b.className="on";if(st)b.style.cssText=st;b.onclick=f;r.appendChild(b);return b};
  const sw=(r,cur2,f,allowNone)=>{if(allowNone)btn(r,"Original",cur2===undefined,()=>f(undefined));for(const c of PAL8)btn(r,"",cur2===c,()=>f(c),`background:#${c.toString(16).padStart(6,"0")};width:26px;height:26px;padding:0;border-radius:13px`);
   const i=document.createElement("input");i.type="color";i.value="#"+((cur2===undefined?0xffffff:cur2).toString(16).padStart(6,"0"));i.oninput=()=>f(parseInt(i.value.slice(1),16));r.appendChild(i)};
  let r=row();CARS.forEach((c,i)=>btn(r,c.n,i===livK,()=>{livK=i;livSel=-1;buildCar(i);drawLiv()}));
@@ -151,26 +151,26 @@ function drawLiv(){const P=$("livP"),L=LIV[livK];P.innerHTML="<h1>Calcomanías</
  sec("Neumáticos");sw(row(),L.tc,c=>{LIV[livK].tc=c;saveLiv();buildCar(livK)},true);
  sec("Cristales tintados");r=row();[[0,"Sin tintar"],[.35,"Claro"],[.65,"Oscuro"],[.9,"Muy oscuro"]].forEach(([v,t])=>btn(r,t,L.tint===v,()=>{livSet({tint:v});drawLiv()}));
  sec("Franjas");r=row();STRIPES.forEach((t,i)=>btn(r,t,L.st===i,()=>{livSet({st:i});drawLiv()}));if(L.st)sw(row(),L.sc,c=>livSet({sc:c}));
- sec("Dorsal (número de carreras)");r=row();const ni=document.createElement("input");ni.type="number";ni.min=0;ni.max=99;ni.value=L.num||"";ni.placeholder="Sin número";ni.oninput=()=>livSet({num:Math.max(0,Math.min(99,+ni.value||0))});r.appendChild(ni);if(L.num)sw(row(),L.nc,c=>livSet({nc:c}));
- sec("Pegatinas");{const p=document.createElement("p");p.style.cssText="font-size:11px;margin:0 0 6px";p.textContent="Las 11 primeras están dibujadas para el juego. Personaje Hachi: HachiStudio (CC0). Chica anime redonda: «Anime Girl» de Niabot (CC BY 3.0).";P.appendChild(p)}
- const g=document.createElement("div");g.className="stkg";STK.forEach((s,i)=>{if(s.hide)return;const b=document.createElement("button");b.title=s.n;const cv=document.createElement("canvas");cv.width=cv.height=64;const x=cv.getContext("2d");x.scale(.25,.25);s.d(x);b.appendChild(cv);
+ sec("Dorsal (número de carreras)");r=row();const ni=document.createElement("input");ni.type="number";ni.min=0;ni.max=99;ni.value=L.num||"";ni.placeholder=T("Sin número");ni.oninput=()=>livSet({num:Math.max(0,Math.min(99,+ni.value||0))});r.appendChild(ni);if(L.num)sw(row(),L.nc,c=>livSet({nc:c}));
+ sec("Pegatinas");{const p=document.createElement("p");p.style.cssText="font-size:11px;margin:0 0 6px";p.textContent=T("Las 11 primeras están dibujadas para el juego. Personaje Hachi: HachiStudio (CC0). Chica anime redonda: «Anime Girl» de Niabot (CC BY 3.0).");P.appendChild(p)}
+ const g=document.createElement("div");g.className="stkg";STK.forEach((s,i)=>{if(s.hide)return;const b=document.createElement("button");b.title=T(s.n);const cv=document.createElement("canvas");cv.width=cv.height=64;const x=cv.getContext("2d");x.scale(.25,.25);s.d(x);b.appendChild(cv);
   b.onclick=()=>{L.stk.push({i,sd:0,u:0,v:.5,s:1,r:0});livSel=L.stk.length-1;saveLiv();applyDecals();drawLiv()};g.appendChild(b)});P.appendChild(g);
  // Mis imágenes: subir desde el ordenador o el móvil, ponerlas y borrarlas
  sec("Mis imágenes");{const g2=document.createElement("div");g2.className="stkg";for(const c of CUS){const w=document.createElement("div");w.className="cusw";const b=document.createElement("button");b.title=c.n;const im=document.createElement("img");im.src=c.url;b.appendChild(im);
    b.onclick=()=>{L.stk.push({i:0,ci:c.id,sd:0,u:0,v:.5,s:1,r:0});livSel=L.stk.length-1;saveLiv();applyDecals();drawLiv()};
-   const x=document.createElement("button");x.className="cusx";x.textContent="×";x.title="Borrar imagen";x.onclick=()=>{if(!confirm("¿Borrar esta imagen?"))return;CUS=CUS.filter(q=>q.id!==c.id);saveCus();for(const q of LIV)q.stk=q.stk.filter(s=>s.ci!==c.id);saveLiv();livSel=-1;applyDecals();drawLiv()};
+   const x=document.createElement("button");x.className="cusx";x.textContent="×";x.title=T("Borrar imagen");x.onclick=()=>{if(!confirm(T("¿Borrar esta imagen?")))return;CUS=CUS.filter(q=>q.id!==c.id);saveCus();for(const q of LIV)q.stk=q.stk.filter(s=>s.ci!==c.id);saveLiv();livSel=-1;applyDecals();drawLiv()};
    w.appendChild(b);w.appendChild(x);g2.appendChild(w)}P.appendChild(g2);
   const fi=document.createElement("input");fi.type="file";fi.accept="image/*";fi.hidden=true;fi.onchange=()=>{const f=fi.files[0];if(f)addCus(f,id=>{L.stk.push({i:0,ci:id,sd:0,u:0,v:.5,s:1,r:0});livSel=L.stk.length-1;saveLiv();applyDecals();drawLiv()})};
-  const ub=document.createElement("button");ub.className="b g";ub.textContent="📷 Subir imagen";ub.onclick=()=>fi.click();P.appendChild(fi);P.appendChild(ub);
-  const p=document.createElement("p");p.style.cssText="font-size:11px;margin:6px 0 0";p.textContent="Tus imágenes se guardan solo en este navegador. Las PNG con fondo transparente quedan mejor.";P.appendChild(p)}
+  const ub=document.createElement("button");ub.className="b g";ub.textContent=T("📷 Subir imagen");ub.onclick=()=>fi.click();P.appendChild(fi);P.appendChild(ub);
+  const p=document.createElement("p");p.style.cssText="font-size:11px;margin:6px 0 0";p.textContent=T("Tus imágenes se guardan solo en este navegador. Las PNG con fondo transparente quedan mejor.");P.appendChild(p)}
  L.stk.forEach((k,j)=>{if(k.ci===undefined&&STK[k.i].hide)return;const d=document.createElement("div");d.className="stki"+(j===livSel?" on":"");d.innerHTML=`<b>${j+1}. ${stkName(k)}</b>`;d.onclick=e=>{if(e.target===d||e.target.tagName==="B"){livSel=j===livSel?-1:j;drawLiv()}};P.appendChild(d);
   // × para quitar la pegatina directamente desde la lista
-  const x=document.createElement("button");x.className="cusx stkx";x.textContent="×";x.title="Quitar pegatina";x.onclick=e=>{e.stopPropagation();L.stk.splice(j,1);livSel=-1;saveLiv();applyDecals();drawLiv()};d.appendChild(x);
+  const x=document.createElement("button");x.className="cusx stkx";x.textContent="×";x.title=T("Quitar pegatina");x.onclick=e=>{e.stopPropagation();L.stk.splice(j,1);livSel=-1;saveLiv();applyDecals();drawLiv()};d.appendChild(x);
   if(j!==livSel)return;const rr=document.createElement("div");rr.className="lrow";SIDES.forEach((t,q)=>btn(rr,t,k.sd===q,()=>{k.sd=q;saveLiv();applyDecals();drawLiv()}));d.appendChild(rr);
-  for(const[key,t,mn,mx,st]of[["u","Delante / detrás",-1,1,.05],["v","Altura",.1,.9,.02],["s","Tamaño",.3,2.5,.05],["r","Giro",-3.14,3.14,.05]]){const q=document.createElement("label");q.className="lsl";q.innerHTML=`<span>${t}</span><input type="range" min="${mn}" max="${mx}" step="${st}" value="${k[key]||0}">`;
+  for(const[key,t,mn,mx,st]of[["u","Delante / detrás",-1,1,.05],["v","Altura",.1,.9,.02],["s","Tamaño",.3,2.5,.05],["r","Giro",-3.14,3.14,.05]]){const q=document.createElement("label");q.className="lsl";q.innerHTML=`<span>${T(t)}</span><input type="range" min="${mn}" max="${mx}" step="${st}" value="${k[key]||0}">`;
    q.querySelector("input").oninput=e=>{k[key]=+e.target.value;saveLiv();applyDecals()};d.appendChild(q)}
-  const del=document.createElement("button");del.className="b g";del.textContent="Quitar pegatina";del.onclick=()=>{L.stk.splice(j,1);livSel=-1;saveLiv();applyDecals();drawLiv()};d.appendChild(del)});
- const ok=document.createElement("button");ok.className="b";ok.textContent="Listo";ok.onclick=closeLiv;P.appendChild(ok)}
+  const del=document.createElement("button");del.className="b g";del.textContent=T("Quitar pegatina");del.onclick=()=>{L.stk.splice(j,1);livSel=-1;saveLiv();applyDecals();drawLiv()};d.appendChild(del)});
+ const ok=document.createElement("button");ok.className="b";ok.textContent=T("Listo");ok.onclick=closeLiv;P.appendChild(ok)}
 // Girar la vista del coche arrastrando sobre la imagen mientras el editor está abierto
 {let dx=null;$("c").addEventListener("pointerdown",e=>{if(state==="liv")dx=e.clientX});addEventListener("pointermove",e=>{if(state==="liv"&&dx!==null){livA-=(e.clientX-dx)*.01;dx=e.clientX}});addEventListener("pointerup",()=>dx=null)}
-{const b=document.createElement("button");b.className="b g";b.textContent="🎨 Calcomanías";b.onclick=()=>{if(!ready)return;if(!spawned){buildCar(carK);spawnC();spawned=true}openLiv()};$("carsP").appendChild(b)}
+{const b=document.createElement("button");b.className="b g";b.dataset.i18n="🎨 Calcomanías";b.textContent=T("🎨 Calcomanías");b.onclick=()=>{if(!ready)return;if(!spawned){buildCar(carK);spawnC();spawned=true}openLiv()};$("carsP").appendChild(b)}

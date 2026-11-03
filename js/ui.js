@@ -6,13 +6,16 @@ function nearestRoad(x,z,flip){let best=0,bd=1e18;for(let k=0;k<RSG.length;k+=6)
  if(!r.o&&flip){ux=-ux;uz=-uz}const off=r.o?Math.max(0,hw-1.9):hw/2;return{x:_cx+uz*off,z:_cz-ux*off,h:Math.atan2(ux,uz)}}
 function spawnAt(q){px=q.x;pz=q.z;h=camH=q.h;vx=vz=0;bodyY=bodyV=0;WY.fill(0)}
 function spawnC(){const a=Math.random()*PI*2,r=150+Math.random()*350;spawnAt(nearestRoad(TX+Math.sin(a)*r,TZ+Math.cos(a)*r,Math.random()<.5))}
-const ld=document.createElement("p");ld.textContent="Cargando el mapa de Tokio…";$("carsP").insertBefore(ld,$("tabs"));
-CARS.forEach((c,i)=>{const d=document.createElement("button");d.className="cd";const t=t100(c);
- d.innerHTML=`<div class="sw" style="background:#${c.c.toString(16).padStart(6,"0")}"></div><b>${c.n}</b><small>Máx. ${Math.round(c.vm*3.6)} km/h · 0-100 en ${t.toFixed(1)} s</small><div class="bar"><u style="width:${Math.min(1,2.2/t)*100}%"></u></div><small>Aceleración</small>`;
- d.onclick=()=>{if(!ready)return;buildCar(i);goFull();if(!spawned){spawnC();spawned=true}resume()};d.dataset.cat=CAT[i];$("cards").appendChild(d)});
+const ld=document.createElement("p");ld.dataset.i18n="Cargando el mapa de Tokio…";ld.textContent=T(ld.dataset.i18n);$("carsP").insertBefore(ld,$("tabs"));
 const tb=$("tabs");tb.style.cssText="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:12px";
-["Todos",...CAT].forEach(n=>{const b=document.createElement("button");b.textContent=n;b.style.cssText="padding:6px 14px;border:0;border-radius:16px;font:600 13px system-ui;cursor:pointer;color:inherit;background:rgba(128,128,128,.25)";
- b.onclick=()=>{for(const x of tb.children){x.style.background="rgba(128,128,128,.25)";x.style.color="inherit"}b.style.background="var(--ac)";b.style.color="#fff";for(const c of $("cards").children)c.hidden=n!=="Todos"&&c.dataset.cat!==n};tb.appendChild(b)});tb.firstChild.click();
+// Fichas de coche y pestañas de categoría (se rehacen al cambiar de idioma)
+function buildCards(){$("cards").innerHTML="";tb.innerHTML="";
+ CARS.forEach((c,i)=>{const d=document.createElement("button");d.className="cd";const t=t100(c),U=ENV.units==="mph",v=Math.round(c.vm*3.6*(U?.6214:1));
+  d.innerHTML=`<div class="sw" style="background:#${c.c.toString(16).padStart(6,"0")}"></div><b>${c.n}</b><small>${T("Máx.")} ${v} ${U?"mph":"km/h"} · ${T("0-100 en")} ${t.toFixed(1)} s</small><div class="bar"><u style="width:${Math.min(1,2.2/t)*100}%"></u></div><small>${T("Aceleración")}</small>`;
+  d.onclick=()=>{if(!ready)return;buildCar(i);goFull();if(!spawned){spawnC();spawned=true}resume()};d.dataset.cat=CAT[i];$("cards").appendChild(d)});
+ ["Todos",...CAT].forEach(n=>{const b=document.createElement("button");b.textContent=T(n);b.style.cssText="padding:6px 14px;border:0;border-radius:16px;font:600 13px system-ui;cursor:pointer;color:inherit;background:rgba(128,128,128,.25)";
+  b.onclick=()=>{for(const x of tb.children){x.style.background="rgba(128,128,128,.25)";x.style.color="inherit"}b.style.background="var(--ac)";b.style.color="#fff";for(const c of $("cards").children)c.hidden=n!=="Todos"&&c.dataset.cat!==n};tb.appendChild(b)});tb.firstChild.click()}
+buildCards();applyI18n();
 function show(w){state=w;$("ov").hidden=false;$("carsP").hidden=w!=="cars";$("mapP").hidden=w!=="map";$("setP").hidden=true;$("livP").hidden=true;$("ov").classList.remove("liv");if(w==="map"){pend=null;$("ok").disabled=true;mapV={z:1,x:W/2,z0:W/2};drawMap()}
  hudVis(false);$("touch").hidden=true}
 function resume(){state="play";$("ov").hidden=true;hudVis(true);$("touch").hidden=!MOBILE}
@@ -25,12 +28,12 @@ const mapS=()=>640*mapV.z/W,mapO=()=>[mapV.x-W/2/mapV.z,mapV.z0-W/2/mapV.z];
 function mapClamp(){const h=W/2/mapV.z;mapV.x=Math.max(h,Math.min(W-h,mapV.x));mapV.z0=Math.max(h,Math.min(W-h,mapV.z0))}
 function mapZoom(d,cx,cz){const z=Math.max(1,Math.min(8,mapV.z*(d>0?1.5:1/1.5)));if(cx!==undefined){const k=1-mapV.z/z;mapV.x+=(cx-mapV.x)*k;mapV.z0+=(cz-mapV.z0)*k}mapV.z=z;mapClamp();drawMap()}
 // Lugares importantes con nombre en el mapa
-function landmarks(){if(LMK||!ready)return LMK;LMK=[{x:TX,z:TZ,n:"Torre de Tokio",c:"#ff5a3c"}];const T=MAP.buildings.filter(b=>b.k===1||b.k===3);
- if(T.length){let x=0,z=0,n=0;for(const b of T)for(let i=0;i<b.p.length;i+=2){x+=b.p[i];z+=b.p[i+1];n++}LMK.push({x:x/n,z:z/n,n:"Templo Zojoji",c:"#e2553f"})}
+function landmarks(){if(LMK||!ready)return LMK;LMK=[{x:TX,z:TZ,n:T("Torre de Tokio"),c:"#ff5a3c"}];const T=MAP.buildings.filter(b=>b.k===1||b.k===3);
+ if(T.length){let x=0,z=0,n=0;for(const b of T)for(let i=0;i<b.p.length;i+=2){x+=b.p[i];z+=b.p[i+1];n++}LMK.push({x:x/n,z:z/n,n:T("Templo Zojoji"),c:"#e2553f"})}
  const ft=MAP.buildings.find(b=>b.k===2);if(ft)LMK.push({x:TX,z:TZ+34,n:"FootTown",c:"#f2f2ef",s:1});
- if(DEALER)LMK.push({x:DEALER.bx,z:DEALER.bz,n:"🎨 Concesionario",c:"#29d3ff"});
+ if(DEALER)LMK.push({x:DEALER.bx,z:DEALER.bz,n:T("🎨 Concesionario"),c:"#29d3ff"});
  const big=MAP.green.filter(g=>g.k!==2).map(g=>{let a=0,x=0,z=0;const R=g.p;for(let i=0;i<R.length;i+=2){x+=R[i];z+=R[i+1]}const n=R.length/2;for(let i=0,j=R.length-2;i<R.length;j=i,i+=2)a+=R[j]*R[i+1]-R[i]*R[j+1];return{x:x/n,z:z/n,a:Math.abs(a)/2}}).filter(g=>g.a>20000).sort((a,b)=>b.a-a.a).slice(0,4);
- for(const g of big)if(!LMK.some(l=>Math.hypot(l.x-g.x,l.z-g.z)<150))LMK.push({x:g.x,z:g.z,n:"Parque",c:"#8fd18a",s:1});return LMK}
+ for(const g of big)if(!LMK.some(l=>Math.hypot(l.x-g.x,l.z-g.z)<150))LMK.push({x:g.x,z:g.z,n:T("Parque"),c:"#8fd18a",s:1});return LMK}
 function drawMap(){const S=mapS(),[ox,oz]=mapO();mx.setTransform(1,0,0,1,0,0);mx.fillStyle="#1c1f26";mx.fillRect(0,0,640,640);
  mx.setTransform(S,0,0,S,-ox*S,-oz*S);if(mapImg)mx.drawImage(mapImg,0,0);mx.setTransform(1,0,0,1,0,0);
  const P=(x,z)=>[(x-ox)*S,(z-oz)*S];mx.textAlign="center";mx.textBaseline="bottom";

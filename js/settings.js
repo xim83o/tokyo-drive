@@ -4,18 +4,18 @@ let rebind=null,setPrev="cars",setTab="gfx";
 const ACTS=[["up","Acelerar"],["down","Frenar / marcha atrás"],["left","Girar a la izquierda"],["right","Girar a la derecha"],["hb","Freno de mano"],["cam","Cambiar cámara"],["map","Mapa"],["cars","Coches"],["snd","Silenciar sonido"],["trf","Cambiar tráfico"],["set","Ajustes"]];
 const KEYDEF=JSON.parse(JSON.stringify(ENV.keys));
 function keyName(c){if(!c)return"—";const m={Space:"Espacio",Escape:"Esc",ArrowUp:"↑",ArrowDown:"↓",ArrowLeft:"←",ArrowRight:"→",ShiftLeft:"Mayús izq.",ShiftRight:"Mayús der.",ControlLeft:"Ctrl izq.",ControlRight:"Ctrl der.",Enter:"Intro",Tab:"Tab",Backspace:"Borrar"};
- return m[c]||c.replace(/^Key/,"").replace(/^Digit/,"").replace(/^Numpad/,"Num ")}
+ return(m[c]?T(m[c]):0)||c.replace(/^Key/,"").replace(/^Digit/,"").replace(/^Numpad/,"Num ")}
 function openSettings(){if(state!=="set")setPrev=state;state="set";$("ov").hidden=false;$("carsP").hidden=$("mapP").hidden=true;$("setP").hidden=false;hudVis(false);$("touch").hidden=true;drawSettings()}
 function closeSettings(){rebind=null;$("setP").hidden=true;saveEnv();if(setPrev==="play")resume();else show(setPrev)}
-function drawSettings(){const P=$("setP");P.innerHTML="<h1>Ajustes</h1>";
+function drawSettings(){const P=$("setP");P.innerHTML=`<h1>${T("Ajustes")}</h1>`;
  const tabs=[["gfx","Gráficos"],["time","Hora y clima"],["snd","Sonido"],["trf","Tráfico"],["scr","Pantalla"]];if(!MOBILE)tabs.push(["keys","Teclas"]);
- const tb=document.createElement("div");tb.className="stabs";tabs.forEach(([k,t])=>{const b=document.createElement("button");b.textContent=t;b.className=k===setTab?"on":"";b.onclick=()=>{setTab=k;rebind=null;drawSettings()};tb.appendChild(b)});P.appendChild(tb);
+ const tb=document.createElement("div");tb.className="stabs";tabs.forEach(([k,t])=>{const b=document.createElement("button");b.textContent=T(t);b.className=k===setTab?"on":"";b.onclick=()=>{setTab=k;rebind=null;drawSettings()};tb.appendChild(b)});P.appendChild(tb);
  const box=document.createElement("div");box.id="envUI";P.appendChild(box);
- const note=t=>{const p=document.createElement("p");p.textContent=t;box.appendChild(p)};
- const row=(label,opts,get,set)=>{const r=document.createElement("div");r.className="opt";r.innerHTML=`<span>${label}</span>`;opts.forEach(([v,t])=>{const b=document.createElement("button");b.textContent=t;b.className=String(get())===String(v)?"on":"";
+ const note=t=>{const p=document.createElement("p");p.textContent=T(t);box.appendChild(p)};
+ const row=(label,opts,get,set)=>{const r=document.createElement("div");r.className="opt";r.innerHTML=`<span>${T(label)}</span>`;opts.forEach(([v,t])=>{const b=document.createElement("button");b.textContent=T(t);b.className=String(get())===String(v)?"on":"";
   b.onclick=()=>{set(v);saveEnv();for(const x of r.querySelectorAll("button"))x.className="";b.className="on"};r.appendChild(b)});box.appendChild(r);return r};
  const env=(label,opts,key,cb)=>row(label,opts,()=>ENV[key],v=>{ENV[key]=v;cb&&cb()});
- const slider=(label,key)=>{const r=document.createElement("div");r.className="opt";r.innerHTML=`<span>${label}</span><input type="range" min="0" max="100" step="5" value="${Math.round(ENV.vol[key]*100)}"><b>${Math.round(ENV.vol[key]*100)}%</b>`;
+ const slider=(label,key)=>{const r=document.createElement("div");r.className="opt";r.innerHTML=`<span>${T(label)}</span><input type="range" min="0" max="100" step="5" value="${Math.round(ENV.vol[key]*100)}"><b>${Math.round(ENV.vol[key]*100)}%</b>`;
   const i=r.querySelector("input"),o=r.querySelector("b");i.oninput=()=>{ENV.vol[key]=i.value/100;o.textContent=i.value+"%";setVol();saveEnv()};box.appendChild(r)};
  const aq=()=>{if(ready)applyQuality()};
  if(setTab==="gfx"){env("Calidad",[["auto","Auto"],[0,"Baja"],[1,"Media"],[2,"Alta"],[3,"Ultra"]],"q",aq);
@@ -33,16 +33,17 @@ function drawSettings(){const P=$("setP");P.innerHTML="<h1>Ajustes</h1>";
  else if(setTab==="trf"){row("Tráfico",NLAB.map((t,i)=>[i,t]),()=>npcLvl,v=>setNpc(v));note("Más coches hace la ciudad más viva, pero pide más al ordenador o al móvil.")}
  else if(setTab==="scr"){row("Velocidad en",[["kmh","km/h"],["mph","mph"]],()=>ENV.units,v=>ENV.units=v);
   row("Minimapa",[[1,"Sí"],[0,"No"]],()=>ENV.hud.mini,v=>ENV.hud.mini=v);row("Velocímetro",[[1,"Sí"],[0,"No"]],()=>ENV.hud.speed,v=>ENV.hud.speed=v);
+  row("Idioma",LANGS,()=>LANG,v=>{setLang(v);drawSettings()});
   if(!MOBILE)row("Ayuda de teclas",[[1,"Sí"],[0,"No"]],()=>ENV.hud.help,v=>ENV.hud.help=v);
   note("El HUD es todo lo que se dibuja encima de la imagen mientras conduces: velocímetro, minimapa y textos de ayuda. Quítalo para hacer capturas o conducir sin nada en pantalla.")}
  else if(setTab==="keys"){note("Haz clic en una tecla y pulsa la nueva. Cada acción admite dos teclas. El mando funciona siempre igual.");
-  const g=document.createElement("div");g.className="keys";for(const[a,t]of ACTS){const s=document.createElement("span");s.textContent=t;g.appendChild(s);
+  const g=document.createElement("div");g.className="keys";for(const[a,t]of ACTS){const s=document.createElement("span");s.textContent=T(t);g.appendChild(s);
    for(const k of[0,1]){const b=document.createElement("button");b.textContent=keyName(ENV.keys[a][k]);
-    b.onclick=()=>{for(const x of g.querySelectorAll("button"))x.classList.remove("on");b.classList.add("on");b.textContent="Pulsa una tecla…";
+    b.onclick=()=>{for(const x of g.querySelectorAll("button"))x.classList.remove("on");b.classList.add("on");b.textContent=T("Pulsa una tecla…");
      rebind=code=>{rebind=null;if(code==="Escape"&&a!=="set"){drawSettings();return}
       for(const q in ENV.keys)for(const j of[0,1])if(ENV.keys[q][j]===code)ENV.keys[q][j]="";ENV.keys[a][k]=code;if(!ENV.keys.set[0]&&!ENV.keys.set[1])ENV.keys.set[0]="Escape";saveEnv();drawSettings()}};g.appendChild(b)}}
-  box.appendChild(g);const r=document.createElement("button");r.className="b g";r.textContent="Restablecer teclas";r.onclick=()=>{ENV.keys=JSON.parse(JSON.stringify(KEYDEF));saveEnv();drawSettings()};box.appendChild(r)}
- const ok=document.createElement("button");ok.className="b";ok.textContent="Volver";ok.onclick=closeSettings;P.appendChild(ok)}
+  box.appendChild(g);const r=document.createElement("button");r.className="b g";r.textContent=T("Restablecer teclas");r.onclick=()=>{ENV.keys=JSON.parse(JSON.stringify(KEYDEF));saveEnv();drawSettings()};box.appendChild(r)}
+ const ok=document.createElement("button");ok.className="b";ok.textContent=T("Volver");ok.onclick=closeSettings;P.appendChild(ok)}
 setNpc(npcLvl);
 // Botón de ajustes en el menú de coches
-{const b=document.createElement("button");b.className="b g";b.textContent="⚙️ Ajustes";b.onclick=()=>act("set");$("carsP").appendChild(b)}
+{const b=document.createElement("button");b.className="b g";b.dataset.i18n="⚙️ Ajustes";b.textContent=T("⚙️ Ajustes");b.onclick=()=>act("set");$("carsP").appendChild(b)}

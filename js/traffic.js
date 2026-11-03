@@ -2,7 +2,7 @@
 // cruces reales de OSM, ceder el paso, giros suaves, choques con desplazamiento según velocidad y masa, y claxon moderado
 const NPC=[],NCOL=[0xd9d9d9,0x333a45,0x9b2d2d,0x2d5a9b,0xc9c24a,0x3d7d4e,0x7a7a7a,0xffffff];
 let npcLvl=ENV.npc,TT=0,lastLt=-1,hornT=0;const NCNT=[0,8,20,40],NLAB=["Sin tráfico","Poco","Medio","Mucho"],BD=3.5,SPD=[15,13.5,12,10.5,8];
-function setNpc(v){npcLvl=((v%4)+4)%4;ENV.npc=npcLvl;saveEnv();$("trf").textContent="🚗 "+NLAB[npcLvl]}
+function setNpc(v){npcLvl=((v%4)+4)%4;ENV.npc=npcLvl;saveEnv();$("trf").textContent="🚗 "+T(NLAB[npcLvl])}
 setNpc(npcLvl);
 // --- Grafo: nodos (cruces y extremos de calle) y carriles dirigidos ---
 const GN=[],LANES=[],CLU=[];
