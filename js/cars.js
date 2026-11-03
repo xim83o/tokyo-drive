@@ -33,21 +33,30 @@ const WMAT=new Map();
 function wheelMat(f,rim,tire){const key=f+"|"+rim+"|"+tire;if(WMAT.has(key))return WMAT.get(key);const cv=document.createElement("canvas");cv.width=cv.height=512;const g=cv.getContext("2d");g.drawImage(CMAP,0,0);
  for(const q of MODELS[f].wc){if(q.l<.35){if(tire!==undefined)recolor(g,q.c,q.r,tire)}else if(rim!==undefined)recolor(g,q.c,q.r,rim)}
  const t=new THREE.CanvasTexture(cv);t.flipY=false;const m=new THREE.MeshPhongMaterial({map:t,shininess:70,specular:0x333333});WMAT.set(key,m);return m}
+// Casillas de la carrocería: cristales (la que más ocupa entre las caras inclinadas o verticales de la parte alta) y bajos (la que
+// más ocupa en la parte baja: parachoques y faldones grises), sin contar la de la pintura. Devuelve "columna,fila"
+function bodyCells(scene,paint){const A={},B={};let H=0;scene.updateMatrixWorld(true);scene.traverse(o=>{if(o.isMesh&&o.name.startsWith("body")){o.geometry.computeBoundingBox();H=Math.max(H,o.geometry.boundingBox.max.y+o.position.y)}});
+ scene.traverse(o=>{if(!o.isMesh||!o.name.startsWith("body"))return;const g=o.geometry.index?o.geometry.toNonIndexed():o.geometry,p=g.attributes.position,uv=g.attributes.uv,a=new THREE.Vector3(),b=new THREE.Vector3(),c=new THREE.Vector3(),n=new THREE.Vector3();
+  for(let i=0;i<p.count;i+=3){a.fromBufferAttribute(p,i).applyMatrix4(o.matrixWorld);b.fromBufferAttribute(p,i+1).applyMatrix4(o.matrixWorld);c.fromBufferAttribute(p,i+2).applyMatrix4(o.matrixWorld);n.subVectors(b,a).cross(c.clone().sub(a));const ar=n.length();n.normalize();
+   const k=Math.floor((uv.getX(i)+uv.getX(i+1)+uv.getX(i+2))/3*8)+","+Math.floor((uv.getY(i)+uv.getY(i+1)+uv.getY(i+2))/3*4);if(k===paint+",1")continue;const y=(a.y+b.y+c.y)/3;
+   if(y>H*.55&&Math.abs(n.y)<.8)A[k]=(A[k]||0)+ar;if(y<H*.4)B[k]=(B[k]||0)+ar}});
+ const top=O=>{let best=null,bv=0;for(const k in O)if(O[k]>bv){bv=O[k];best=k}return best};const glass=top(A);if(glass)delete B[glass];return{glass,trim:top(B)}}
 const PTEX=new Map();
-// tint: tintado de los cristales (0-1); los cristales usan la primera casilla de la paleta
-function paintTex(cell,col,tint){const key=cell+"|"+col+"|"+(tint||0);if(PTEX.has(key))return PTEX.get(key);const cv=document.createElement("canvas");cv.width=cv.height=512;const g=cv.getContext("2d");g.drawImage(CMAP,0,0);
- if(tint>0){g.fillStyle=`rgba(8,12,18,${tint*.85})`;g.fillRect(0,0,64,128)}
- if(cell>=0&&col!==undefined){const d=g.getImageData(cell*64,128,64,128),q=d.data,c=new THREE.Color(col);let m=0;for(let i=0;i<q.length;i+=4)m+=q[i]*.3+q[i+1]*.59+q[i+2]*.11;m/=q.length/4;
-  for(let i=0;i<q.length;i+=4){const l=(q[i]*.3+q[i+1]*.59+q[i+2]*.11)/m;q[i]=Math.min(255,c.r*255*l);q[i+1]=Math.min(255,c.g*255*l);q[i+2]=Math.min(255,c.b*255*l)}g.putImageData(d,cell*64,128)}
+// Textura de la paleta con la pintura (col), y opcionalmente el color del cristal (gc), su tintado (tint 0-1) y el de los bajos (bc)
+function paintTex(n,col,o){o=o||{};const M=MODELS[n],key=n+"|"+col+"|"+(o.tint||0)+"|"+o.gc+"|"+o.bc;if(PTEX.has(key))return PTEX.get(key);const cv=document.createElement("canvas");cv.width=cv.height=512;const g=cv.getContext("2d");g.drawImage(CMAP,0,0);
+ const cell=s=>s.split(",").map(Number);
+ if(col!==undefined&&M.cell>=0)recolor(g,M.cell,1,col);
+ if(M.trim&&o.bc!==undefined){const[c,r]=cell(M.trim);recolor(g,c,r,o.bc)}
+ if(M.glass){const[c,r]=cell(M.glass);if(o.gc!==undefined)recolor(g,c,r,o.gc);if(o.tint>0){g.fillStyle=`rgba(6,9,14,${o.tint*.85})`;g.fillRect(c*64,r*128,64,128)}}
  const t=new THREE.CanvasTexture(cv);t.flipY=false;t.anisotropy=4;PTEX.set(key,t);return t}
 const PMAT=new Map();
-function paintMat(cell,col,tint){const key=cell+"|"+col+"|"+(tint||0);if(!PMAT.has(key))PMAT.set(key,new THREE.MeshPhongMaterial({map:paintTex(cell,col,tint),shininess:60,specular:0x2a2a2a}));return PMAT.get(key)}
+function paintMat(n,col,o){o=o||{};const key=n+"|"+col+"|"+(o.tint||0)+"|"+o.gc+"|"+o.bc;if(!PMAT.has(key))PMAT.set(key,new THREE.MeshPhongMaterial({map:paintTex(n,col,o),shininess:60,specular:0x2a2a2a}));return PMAT.get(key)}
 function loadCars(){if(!THREE.GLTFLoader)return Promise.resolve();const L=new THREE.GLTFLoader(),names=[...new Set([...CARS.map(c=>c.f),...NPCK.map(k=>k.f)])];
  return new Promise(ok=>{const im=new Image();im.onload=()=>{CMAP=im;ok()};im.onerror=()=>ok();im.src="models/cars/Textures/colormap.png"})
-  .then(()=>Promise.all(names.map(n=>L.loadAsync(`models/cars/${n}.json`).then(g=>{const s=g.scene,bb=new THREE.Box3().setFromObject(s);MODELS[n]={s,bb,cell:paintCell(s),wc:CMAP?wheelCells(s):[]}}).catch(e=>console.warn("Modelo",n,e)))))
+  .then(()=>Promise.all(names.map(n=>L.loadAsync(`models/cars/${n}.json`).then(g=>{const s=g.scene,bb=new THREE.Box3().setFromObject(s);const cell=paintCell(s);MODELS[n]=Object.assign({s,bb,cell,wc:CMAP?wheelCells(s):[]},bodyCells(s,cell))}).catch(e=>console.warn("Modelo",n,e)))))
   .then(()=>{if(CMAP&&MODELS[cur.f])buildCar(carK)})}
 // Copia del modelo escalada al largo pedido (un poco más bajo que el original, que es de estilo juguete), con la pintura elegida
-function modelInst(n,len,col,flat,tint){const M=MODELS[n],s=M.s.clone(true),sz=M.bb.getSize(new THREE.Vector3()),k=len/sz.z,mat=paintMat(col===undefined?-1:M.cell,col,tint);
+function modelInst(n,len,col,flat,opt){const M=MODELS[n],s=M.s.clone(true),sz=M.bb.getSize(new THREE.Vector3()),k=len/sz.z,mat=paintMat(n,col,opt);
  s.scale.set(k,k*.88,k);const wh=[];let body=null;s.traverse(o=>{if(o.isMesh){o.material=mat;o.castShadow=!flat;o.receiveShadow=!flat;if(o.name.startsWith("body"))body=o}if(o.name.startsWith("wheel")){o.rotation.order="YXZ";wh.push({o,f:o.name.includes("front")})}});
  // Morro y cola reales a la altura de los faros (para pegar las luces a la carrocería, no al largo teórico)
  const H=sz.y*k*.88,W=sz.x*k;let fz=-1e9,rz=1e9;if(body){s.updateMatrixWorld(true);const p=body.geometry.attributes.position,v=new THREE.Vector3();
@@ -60,7 +69,7 @@ function carLights(g,w,h,l,fz,rz){if(fz===undefined){fz=l/2;rz=-l/2}if(!NM.head)
 
 function buildCar(k){carK=k;cur=CARS[k];if(car)sc.remove(car);car=new THREE.Group();car.rotation.order="YXZ";WHEELS.length=0;carBody=null;
  const {w,l}=cur;let h=1.3;
- if(MODELS[cur.f]&&CMAP){const m=modelInst(cur.f,l,carPaint(k),false,typeof LIV!=="undefined"&&LIV[k]?LIV[k].tint:0);car.add(m.s);h=m.h;carBody=m.body;for(const q of m.wh)WHEELS.push(q);cur.wr=.3*m.k;carLights(car,m.w,h,l,m.fz,m.rz)}
+ if(MODELS[cur.f]&&CMAP){const L=typeof LIV!=="undefined"&&LIV[k]?LIV[k]:{},m=modelInst(cur.f,l,carPaint(k),false,{tint:L.tint||0,gc:L.gc,bc:L.bc});car.add(m.s);h=m.h;carBody=m.body;for(const q of m.wh)WHEELS.push(q);cur.wr=.3*m.k;carLights(car,m.w,h,l,m.fz,m.rz)}
  else{// Mientras cargan los modelos: coche sencillo de cajas
   const bx=(a,b,c,col,x,y,z)=>{const m=new THREE.Mesh(new THREE.BoxGeometry(a,b,c),new THREE.MeshLambertMaterial({color:col}));m.position.set(x,y,z);car.add(m);return m};
   bx(w,.55,l,cur.c,0,.5,0);bx(w*.85,.45,l*.45,0x15222f,0,1,-.1*l)}

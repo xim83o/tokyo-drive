@@ -32,5 +32,5 @@ function mini(){const s=MZ,c=95;mc.setTransform(1,0,0,1,0,0);mc.clearRect(0,0,19
   mc.fillStyle="#ffb000";const nr=110*1.15/MZ;for(const n of NPC)if(n.g.visible&&Math.abs(n.x-px)<nr&&Math.abs(n.z-pz)<nr){mc.beginPath();mc.arc(n.x,n.z,2.2,0,7);mc.fill()}}
  mc.restore();mc.setTransform(1,0,0,1,0,0);
  // Concesionario: icono en su sitio o, si está lejos, en el borde del minimapa señalando hacia dónde está
- if(DEALER){const dx=DEALER.bx-px,dz=DEALER.bz-pz;let x=a*dx+cc*dz,y=b*dx+d*dz;const r=Math.hypot(x,y);if(r>80){x*=80/r;y*=80/r}
-  mc.fillStyle="#29d3ff";mc.strokeStyle="#fff";mc.lineWidth=2;mc.beginPath();mc.arc(c+x,c+y,9,0,7);mc.fill();mc.stroke();mc.font="11px system-ui";mc.textAlign="center";mc.textBaseline="middle";mc.fillText("🎨",c+x,c+y+1)}mc.fillStyle="#e5173f";mc.strokeStyle="#fff";mc.lineWidth=2;mc.beginPath();mc.moveTo(c,c-11);mc.lineTo(c+8,c+9);mc.lineTo(c-8,c+9);mc.closePath();mc.fill();mc.stroke()}
+ if(DEALER){const dx=DEALER.bx-px,dz=DEALER.bz-pz;let x=a*dx+cc*dz,y=b*dx+d*dz;const r=Math.hypot(x,y);if(r>76){x*=76/r;y*=76/r}
+  mc.fillStyle="#29d3ff";mc.strokeStyle="#fff";mc.lineWidth=3;mc.beginPath();mc.arc(c+x,c+y,13,0,7);mc.fill();mc.stroke();mc.font="15px system-ui";mc.textAlign="center";mc.textBaseline="middle";mc.fillText("🎨",c+x,c+y+1)}mc.fillStyle="#e5173f";mc.strokeStyle="#fff";mc.lineWidth=2;mc.beginPath();mc.moveTo(c,c-11);mc.lineTo(c+8,c+9);mc.lineTo(c-8,c+9);mc.closePath();mc.fill();mc.stroke()}

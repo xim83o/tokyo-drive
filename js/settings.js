@@ -8,7 +8,7 @@ function keyName(c){if(!c)return"—";const m={Space:"Espacio",Escape:"Esc",Arro
 function openSettings(){if(state!=="set")setPrev=state;state="set";$("ov").hidden=false;$("carsP").hidden=$("mapP").hidden=true;$("setP").hidden=false;hudVis(false);$("touch").hidden=true;drawSettings()}
 function closeSettings(){rebind=null;$("setP").hidden=true;saveEnv();if(setPrev==="play")resume();else show(setPrev)}
 function drawSettings(){const P=$("setP");P.innerHTML=`<h1>${T("Ajustes")}</h1>`;
- const tabs=[["gfx","Gráficos"],["time","Hora y clima"],["snd","Sonido"],["trf","Tráfico"],["scr","Pantalla"]];if(!MOBILE)tabs.push(["keys","Teclas"]);
+ const tabs=[["gfx","Gráficos"],["time","Hora y clima"],["snd","Sonido"],["trf","Tráfico"],["scr","Pantalla"],["lang","Idioma"]];if(!MOBILE)tabs.push(["keys","Teclas"]);
  const tb=document.createElement("div");tb.className="stabs";tabs.forEach(([k,t])=>{const b=document.createElement("button");b.textContent=T(t);b.className=k===setTab?"on":"";b.onclick=()=>{setTab=k;rebind=null;drawSettings()};tb.appendChild(b)});P.appendChild(tb);
  const box=document.createElement("div");box.id="envUI";P.appendChild(box);
  const note=t=>{const p=document.createElement("p");p.textContent=T(t);box.appendChild(p)};
@@ -36,9 +36,9 @@ function drawSettings(){const P=$("setP");P.innerHTML=`<h1>${T("Ajustes")}</h1>`
  else if(setTab==="trf"){row("Tráfico",NLAB.map((t,i)=>[i,t]),()=>npcLvl,v=>setNpc(v));note("Más coches hace la ciudad más viva, pero pide más al ordenador o al móvil.")}
  else if(setTab==="scr"){row("Velocidad en",[["kmh","km/h"],["mph","mph"]],()=>ENV.units,v=>ENV.units=v);
   row("Minimapa",[[1,"Sí"],[0,"No"]],()=>ENV.hud.mini,v=>ENV.hud.mini=v);row("Velocímetro",[[1,"Sí"],[0,"No"]],()=>ENV.hud.speed,v=>ENV.hud.speed=v);
-  row("Idioma",LANGS,()=>LANG,v=>{setLang(v);drawSettings()});
   if(!MOBILE)row("Ayuda de teclas",[[1,"Sí"],[0,"No"]],()=>ENV.hud.help,v=>ENV.hud.help=v);
   note("El HUD es todo lo que se dibuja encima de la imagen mientras conduces: velocímetro, minimapa y textos de ayuda. Quítalo para hacer capturas o conducir sin nada en pantalla.")}
+ else if(setTab==="lang")row("Idioma",LANGS,()=>LANG,v=>{setLang(v);drawSettings()});
  else if(setTab==="keys"){note("Haz clic en una tecla y pulsa la nueva. Cada acción admite dos teclas. El mando funciona siempre igual.");
   const g=document.createElement("div");g.className="keys";for(const[a,t]of ACTS){const s=document.createElement("span");s.textContent=T(t);g.appendChild(s);
    for(const k of[0,1]){const b=document.createElement("button");b.textContent=keyName(ENV.keys[a][k]);

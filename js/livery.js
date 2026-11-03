@@ -82,8 +82,9 @@ function applyDecals(){if(!car||!carBody||!THREE.DecalGeometry)return;for(const 
   for(let i=0;i<p.count;i+=3){A.fromBufferAttribute(p,i).applyMatrix4(carBody.matrixWorld);B.fromBufferAttribute(p,i+1).applyMatrix4(carBody.matrixWorld);C.fromBufferAttribute(p,i+2).applyMatrix4(carBody.matrixWorld);
    n.subVectors(B,A).cross(C.clone().sub(A));const ar=n.length();n.normalize();const cell=Math.floor((uv.getX(i)+uv.getX(i+1)+uv.getX(i+2))/3*8)+","+Math.floor((uv.getY(i)+uv.getY(i+1)+uv.getY(i+2))/3*4);
    if((A.y+B.y+C.y)/3>belt&&Math.abs(n.y)<.8)AC[cell]=(AC[cell]||0)+ar;TR.push([A.toArray(),B.toArray(),C.toArray(),cell])}}
- let glass=null,gv=0;for(const k in AC)if(AC[k]>gv&&k!==MODELS[cur.f].cell+",1"){gv=AC[k];glass=k}
- const out=[];for(const[a,b,c2,cell]of TR)if(cell!==glass)out.push(...a,...b,...c2);
+ // Fuera también la parte gris de abajo (parachoques y bajos); las dos casillas las calcula bodyCells al cargar el modelo
+ const MD=MODELS[cur.f],glass=MD.glass,trim=MD.trim;
+ const out=[];for(const[a,b,c2,cell]of TR)if(cell!==glass&&cell!==trim)out.push(...a,...b,...c2);
  const pg=new THREE.BufferGeometry();pg.setAttribute("position",new THREE.Float32BufferAttribute(out,3));pg.computeVertexNormals();const pm=new THREE.Mesh(pg);
  const add=(tex,pos,rot,size)=>{const g=new THREE.DecalGeometry(pm,pos,rot,size);if(!g.attributes.position.count)return;const m=new THREE.Mesh(g,dmat(tex));m.renderOrder=2;car.add(m);DEC.push(m)};
  // El lado izquierdo del coche es +x (el coche mira hacia +z); el giro de cada proyección hace que los textos se lean desde fuera
@@ -123,7 +124,11 @@ function buildShowroom(){if(SHOW)return;const g=new THREE.Group();g.position.set
 function buildDealer(){if(!DEALER||DMK)return;DMK=new THREE.Group();DMK.position.set(DEALER.x,.06,DEALER.z);
  DMK.add(new THREE.Mesh(new THREE.RingGeometry(2.6,3.2,48).rotateX(-PI/2),new THREE.MeshBasicMaterial({color:0x29d3ff,transparent:true,opacity:.85,blending:THREE.AdditiveBlending,depthWrite:false})));
  const ic=canvasTex(128,128,(c)=>{c.font="84px system-ui";c.textAlign="center";c.textBaseline="middle";c.fillText("🎨",64,70)});DMK.add(new THREE.Mesh(new THREE.PlaneGeometry(2.4,2.4).rotateX(-PI/2),new THREE.MeshBasicMaterial({map:ic,transparent:true,depthWrite:false})));
- sc.add(DMK);const s=new THREE.Mesh(new THREE.PlaneGeometry(14,2.2),new THREE.MeshLambertMaterial({map:logoTex(1024,160),emissiveMap:logoTex(1024,160),emissive:0xffffff,emissiveIntensity:.3,side:THREE.DoubleSide}));
+ sc.add(DMK);
+ // Haz de luz azul vertical sobre el edificio: se ve desde lejos por encima de los tejados
+ const bm=new THREE.Mesh(new THREE.CylinderGeometry(1.4,1.4,160,16,1,true),new THREE.MeshBasicMaterial({color:0x29d3ff,transparent:true,opacity:.35,blending:THREE.AdditiveBlending,depthWrite:false,fog:false,side:THREE.DoubleSide}));
+ bm.position.set(DEALER.bx,80,DEALER.bz);sc.add(bm);DMK.userData.beam=bm;
+ const s=new THREE.Mesh(new THREE.PlaneGeometry(14,2.2),new THREE.MeshLambertMaterial({map:logoTex(1024,160),emissiveMap:logoTex(1024,160),emissive:0xffffff,emissiveIntensity:.3,side:THREE.DoubleSide}));
  // En el borde del tejado que da a la calle (desde el centro del edificio hacia la marca, hasta salir de él)
  const dx=DEALER.x-DEALER.bx,dz=DEALER.z-DEALER.bz,l=Math.hypot(dx,dz)||1;let t=0;while(t<l&&inBuilding(DEALER.bx+dx/l*(t+1),DEALER.bz+dz/l*(t+1)))t++;
  NM.sign.push(s.material);s.position.set(DEALER.bx+dx/l*Math.max(0,t-.6),11.2,DEALER.bz+dz/l*Math.max(0,t-.6));s.rotation.y=Math.atan2(dx,dz);sc.add(s)}
@@ -142,7 +147,7 @@ function studio(){dealerTick();const dl=dealerOn();if(SHOW)SHOW.visible=dl;if(st
 let livK=0,livSel=-1,livPrev="cars",livA=.6;
 function openLiv(){livPrev=state;state="liv";livK=carK;if(livBg==="dealer")buildShowroom();$("ov").hidden=false;$("ov").classList.add("liv");$("carsP").hidden=$("mapP").hidden=$("setP").hidden=true;$("livP").hidden=false;hudVis(false);$("touch").hidden=true;drawLiv()}
 function closeLiv(){saveLiv();$("livP").hidden=true;$("ov").classList.remove("liv");if(livPrev==="play")resume();else show("cars")}
-function livSet(o){Object.assign(LIV[livK],o);saveLiv();if(livK!==carK||o.c!==undefined||o.tint!==undefined)buildCar(livK);else applyDecals()}
+function livSet(o){Object.assign(LIV[livK],o);saveLiv();if(livK!==carK||"c" in o||"tint" in o||"gc" in o||"bc" in o)buildCar(livK);else applyDecals()}
 function drawLiv(){const P=$("livP"),L=LIV[livK];P.innerHTML=`<h1>${T("Calcomanías")}</h1>`;
  const sec=t=>{const h=document.createElement("h3");h.textContent=T(t);P.appendChild(h)},row=()=>{const r=document.createElement("div");r.className="lrow";P.appendChild(r);return r};
  const btn=(r,t,on,f,st)=>{const b=document.createElement("button");b.textContent=T(t);if(on)b.className="on";if(st)b.style.cssText=st;b.onclick=f;r.appendChild(b);return b};
@@ -155,6 +160,8 @@ function drawLiv(){const P=$("livP"),L=LIV[livK];P.innerHTML=`<h1>${T("Calcoman�
  sec("Llantas");sw(row(),L.wc,c=>{LIV[livK].wc=c;saveLiv();buildCar(livK)},true);
  sec("Neumáticos");sw(row(),L.tc,c=>{LIV[livK].tc=c;saveLiv();buildCar(livK)},true);
  sec("Cristales tintados");r=row();[[0,"Sin tintar"],[.35,"Claro"],[.65,"Oscuro"],[.9,"Muy oscuro"]].forEach(([v,t])=>btn(r,t,L.tint===v,()=>{livSet({tint:v});drawLiv()}));
+ sec("Color del cristal");r=row();[[undefined,"Original"],[0x7fb2e6,"Azulado"],[0x7fd6a8,"Verde"],[0x5a5e66,"Ahumado"],[0xe6c46a,"Dorado"]].forEach(([v,t])=>btn(r,t,L.gc===v,()=>{livSet({gc:v});drawLiv()}));
+ sec("Parachoques y bajos");sw(row(),L.bc,c=>{livSet({bc:c});drawLiv()},true);
  sec("Franjas");r=row();STRIPES.forEach((t,i)=>btn(r,t,L.st===i,()=>{livSet({st:i});drawLiv()}));if(L.st)sw(row(),L.sc,c=>livSet({sc:c}));
  sec("Dorsal (número de carreras)");r=row();const ni=document.createElement("input");ni.type="number";ni.min=0;ni.max=99;ni.value=L.num||"";ni.placeholder=T("Sin número");ni.oninput=()=>livSet({num:Math.max(0,Math.min(99,+ni.value||0))});r.appendChild(ni);if(L.num)sw(row(),L.nc,c=>livSet({nc:c}));
  sec("Pegatinas");{const p=document.createElement("p");p.style.cssText="font-size:11px;margin:0 0 6px";p.textContent=T("Las 11 primeras están dibujadas para el juego. Personaje Hachi: HachiStudio (CC0). Chica anime redonda: «Anime Girl» de Niabot (CC BY 3.0).");P.appendChild(p)}
