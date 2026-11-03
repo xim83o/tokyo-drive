@@ -37,7 +37,9 @@ function landmarks(){if(LMK||!ready)return LMK;LMK=[{x:TX,z:TZ,n:T("Torre de Tok
 function drawMap(){const S=mapS(),[ox,oz]=mapO();mx.setTransform(1,0,0,1,0,0);mx.fillStyle="#1c1f26";mx.fillRect(0,0,640,640);
  mx.setTransform(S,0,0,S,-ox*S,-oz*S);if(mapImg)mx.drawImage(mapImg,0,0);mx.setTransform(1,0,0,1,0,0);
  const P=(x,z)=>[(x-ox)*S,(z-oz)*S];mx.textAlign="center";mx.textBaseline="bottom";
- for(const l of landmarks()||[]){if(l.s&&mapV.z<2)continue;const[x,y]=P(l.x,l.z);mx.font=`600 ${l.s?11:13}px system-ui`;mx.lineWidth=3;mx.strokeStyle="rgba(0,0,0,.8)";mx.strokeText(l.n,x,y-(l.s?2:16));mx.fillStyle=l.c;mx.fillText(l.n,x,y-(l.s?2:16))}
+ // Lugares: un círculo de su color; el nombre solo aparece al pasar el ratón por encima (o al tocarlo en el móvil)
+ for(const l of landmarks()||[]){if(l.n.includes("🎨"))continue;const[x,y]=P(l.x,l.z);mx.fillStyle=l.c;mx.strokeStyle="#fff";mx.lineWidth=2;mx.beginPath();mx.arc(x,y,l.s?6:8,0,7);mx.fill();mx.stroke()}
+ if(mHov){const[x,y]=P(mHov.x,mHov.z);mx.font="600 13px system-ui";const w=mx.measureText(mHov.n).width+14;mx.fillStyle="rgba(0,0,0,.8)";mx.fillRect(x-w/2,y-36,w,22);mx.fillStyle=mHov.c;mx.textBaseline="middle";mx.fillText(mHov.n,x,y-25);mx.textBaseline="bottom"}
  // Concesionario: círculo azul con 🎨
  if(DEALER){const[x,y]=P(DEALER.bx,DEALER.bz);mx.fillStyle="#29d3ff";mx.strokeStyle="#fff";mx.lineWidth=3;mx.beginPath();mx.arc(x,y,12,0,7);mx.fill();mx.stroke();mx.font="14px system-ui";mx.textBaseline="middle";mx.fillText("🎨",x,y+1);mx.textBaseline="bottom"}
  // Tu coche (cochecito de su color) y, si has elegido otro sitio, la marca de donde aparecerás
@@ -45,7 +47,12 @@ function drawMap(){const S=mapS(),[ox,oz]=mapO();mx.setTransform(1,0,0,1,0,0);mx
  if(pend){const[x,y]=P(pend.x,pend.z),[x2,y2]=P(pend.x+Math.sin(pend.h)*40,pend.z+Math.cos(pend.h)*40);mx.fillStyle="#fff";mx.strokeStyle="#e5173f";mx.lineWidth=3;mx.beginPath();mx.arc(x,y,7,0,7);mx.fill();mx.stroke();
   mx.beginPath();mx.moveTo(x,y);mx.lineTo(x2,y2);mx.stroke()}}
 // Arrastrar para mover el mapa (con el dedo o el ratón); la rueda o el pellizco hacen zoom
-let mDrag=null,mMoved=false;const mPts=new Map();
+let mDrag=null,mMoved=false,mHov=null;const mPts=new Map();
+// Lugar bajo el puntero (a menos de 14 px en pantalla)
+function mapHit(e){const r=mp.getBoundingClientRect(),S=mapS(),[ox,oz]=mapO(),k=640/r.width,sx=(e.clientX-r.left)*k,sy=(e.clientY-r.top)*k;let best=null,bd=14;
+ for(const l of landmarks()||[]){const d=Math.hypot((l.x-ox)*S-sx,(l.z-oz)*S-sy);if(d<bd){bd=d;best=l}}return best}
+mp.addEventListener("mousemove",e=>{if(mPts.size)return;const l=mapHit(e);if(l!==mHov){mHov=l;drawMap()}});
+mp.addEventListener("mouseleave",()=>{if(mHov){mHov=null;drawMap()}});
 const mWorld=e=>{const r=mp.getBoundingClientRect(),S=mapS(),[ox,oz]=mapO();return[ox+(e.clientX-r.left)/r.width*640/S,oz+(e.clientY-r.top)/r.height*640/S]};
 mp.addEventListener("pointerdown",e=>{mPts.set(e.pointerId,[e.clientX,e.clientY]);mDrag=[e.clientX,e.clientY];mMoved=false;mp.setPointerCapture(e.pointerId)});
 mp.addEventListener("pointermove",e=>{if(!mPts.has(e.pointerId))return;const r=mp.getBoundingClientRect(),k=640/r.width/mapS();
@@ -56,7 +63,7 @@ mp.addEventListener("pointermove",e=>{if(!mPts.has(e.pointerId))return;const r=m
 const mUp=e=>{mPts.delete(e.pointerId)};mp.addEventListener("pointerup",mUp);mp.addEventListener("pointercancel",mUp);
 mp.addEventListener("wheel",e=>{e.preventDefault();const[x,z]=mWorld(e);mapZoom(-Math.sign(e.deltaY),x,z)},{passive:false});
 // Clic en el mapa: aparece en la calle más cercana; otro clic en el mismo sitio cambia el sentido
-mp.onclick=e=>{if(!ready||mMoved)return;const[x,z]=mWorld(e),same=pend&&Math.hypot(pend.cx-x,pend.cz-z)<15/mapV.z;
+mp.onclick=e=>{if(!ready||mMoved)return;if(MOBILE){const l=mapHit(e);if(l){mHov=l;drawMap();return}}const[x,z]=mWorld(e),same=pend&&Math.hypot(pend.cx-x,pend.cz-z)<15/mapV.z;
  const fl=same?!pend.f:false;pend=nearestRoad(x,z,fl);pend.cx=x;pend.cz=z;pend.f=fl;$("ok").disabled=false;drawMap()};
 $("ok").onclick=()=>{if(!pend)return;spawnAt(pend);spawned=true;resume()};
 $("cancel").onclick=()=>spawned?resume():show("cars");

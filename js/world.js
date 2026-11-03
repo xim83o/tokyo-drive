@@ -139,10 +139,10 @@ async function loadWorld(){
  for(let x=0;x<W;x+=20)for(let z=0;z<W;z+=20){if(riverD(x+10,z+10)<14.2)continue;flatTri(ra,-.03,x,z,x+20,z+20,x+20,z);flatTri(ra,-.03,x,z,x,z+20,x+20,z+20)}
  // Colisión del canal: los dos bordes (no el cauce entero), salvo donde pasa una calle por encima (puentes)
  for(const r of MAP.rivers){const p=r.p,hw=r.w/2;for(let i=2;i<p.length;i+=2){const ax=p[i-2],az=p[i-1],bx=p[i],bz=p[i+1],L=Math.hypot(bx-ax,bz-az)||1,lx=(bz-az)/L*hw,lz=-(bx-ax)/L*hw,n=Math.ceil(L/2);
-  // (solo se abre donde la calle cruza de verdad: también hay calzada 3 m hacia dentro del cauce; si una calle va pegada al
+  // (solo se abre donde la calle cruza de verdad: también hay calzada 3 y 6,5 m hacia dentro del cauce (hasta el centro); si una calle va pegada al
   // borde, el borde sigue cerrado)
   for(const s of[-1,1])for(let k=0;k<n;k++){const x0=ax+(bx-ax)*k/n+lx*s,z0=az+(bz-az)*k/n+lz*s,x1=ax+(bx-ax)*(k+1)/n+lx*s,z1=az+(bz-az)*(k+1)/n+lz*s,mx=(x0+x1)/2,mz=(z0+z1)/2;
-   if(!(roadAt(mx,mz)>=0&&roadAt(mx-lx*s*3/hw,mz-lz*s*3/hw)>=0))addEdge(x0,z0,x1,z1)}}}
+   if(!(roadAt(mx,mz)>=0&&roadAt(mx-lx*s*3/hw,mz-lz*s*3/hw)>=0&&roadAt(mx-lx*s*6.5/hw,mz-lz*s*6.5/hw)>=0))addEdge(x0,z0,x1,z1)}}}
  const asph=canvasTex(256,256,(g,w,h)=>{g.fillStyle="#3a3c42";g.fillRect(0,0,w,h);const r=rng(5);for(let i=0;i<9000;i++){const v=44+r()*44|0;g.fillStyle=`rgb(${v},${v},${v+3})`;g.fillRect(r()*w,r()*h,1+r()*1.6,1+r()*1.6)}
   g.globalAlpha=.08;for(let i=0;i<30;i++){g.fillStyle=r()<.5?"#000":"#888";g.beginPath();g.ellipse(r()*w,r()*h,8+r()*30,4+r()*14,r()*PI,0,7);g.fill()}g.globalAlpha=1},true);
  ROADMAT=beamMat(new THREE.MeshPhongMaterial({map:asph,specularMap:puddleTex(),specular:0x000000,shininess:70,lightMap:LIGHTMAP,lightMapIntensity:0}));
@@ -220,7 +220,7 @@ function buildCanal(){if(!MAP.rivers.length)return;const wa=[],wl=[],rl=[],gi=[]
  const vq=(a,x0,z0,x1,z1,y0,y1)=>a.push(x0,y0,z0,x1,y0,z1,x1,y1,z1,x0,y0,z0,x1,y1,z1,x0,y1,z0);
  for(const r of MAP.rivers){const p=r.p,h2=r.w/2;ribbon(wa,p,h2+.3,WY);
   for(let i=2;i<p.length;i+=2){const ax=p[i-2],az=p[i-1],bx=p[i],bz=p[i+1],L=Math.hypot(bx-ax,bz-az)||1,lx=(bz-az)/L,lz=-(bx-ax)/L,n=Math.ceil(L/2);
-   for(const s of[-1,1])for(let k=0;k<n;k++){const x0=ax+(bx-ax)*k/n+lx*h2*s,z0=az+(bz-az)*k/n+lz*h2*s,x1=ax+(bx-ax)*(k+1)/n+lx*h2*s,z1=az+(bz-az)*(k+1)/n+lz*h2*s,road=roadAt((x0+x1)/2,(z0+z1)/2)>=0&&roadAt((x0+x1)/2-lx*s*3,(z0+z1)/2-lz*s*3)>=0;
+   for(const s of[-1,1])for(let k=0;k<n;k++){const x0=ax+(bx-ax)*k/n+lx*h2*s,z0=az+(bz-az)*k/n+lz*h2*s,x1=ax+(bx-ax)*(k+1)/n+lx*h2*s,z1=az+(bz-az)*(k+1)/n+lz*h2*s,road=roadAt((x0+x1)/2,(z0+z1)/2)>=0&&roadAt((x0+x1)/2-lx*s*3,(z0+z1)/2-lz*s*3)>=0&&roadAt((x0+x1)/2-lx*s*6.5,(z0+z1)/2-lz*s*6.5)>=0;
     vq(wl,x0,z0,x1,z1,WY-.6,road?-.45:CURB);if(!road)vq(rl,x0,z0,x1,z1,CURB,CURB+1.1)}
    // Autopista elevada: tablero de 13 m a 12 m de altura, pretiles y pilares en el centro del cauce
    quad(hd,ax,az,bx,bz,6.5,12);quad(hs,ax,az,bx,bz,6.5,11.2);for(const s of[-1,1]){const x0=ax+lx*6.5*s,z0=az+lz*6.5*s,x1=bx+lx*6.5*s,z1=bz+lz*6.5*s;vq(hw,x0,z0,x1,z1,11.2,13.1)}
@@ -228,7 +228,11 @@ function buildCanal(){if(!MAP.rivers.length)return;const wa=[],wl=[],rl=[],gi=[]
    for(let t=16;t<L;t+=34){const x=ax+(bx-ax)*t/L,z=az+(bz-az)*t/L;if([[0,0],[3,0],[-3,0],[0,3],[0,-3]].every(([u,v])=>roadAt(x+u,z+v)<0))pil.push([x,0,z,Math.atan2(bx-ax,bz-az)])}}}
  // Puentes: tramos de calle por encima del agua
  for(let k=0;k<RSG.length;k+=6){const ax=RSG[k],az=RSG[k+1],bx=RSG[k+2],bz=RSG[k+3],w2=RSG[k+4],L=Math.hypot(bx-ax,bz-az)||1,lx=(bz-az)/L,lz=-(bx-ax)/L,n=Math.ceil(L);
-  for(let i=0;i<n;i++){const x0=ax+(bx-ax)*i/n,z0=az+(bz-az)*i/n,x1=ax+(bx-ax)*(i+1)/n,z1=az+(bz-az)*(i+1)/n;if(riverD((x0+x1)/2,(z0+z1)/2)>.5)continue;
+  // Solo es puente si la calle cruza el canal (no si va paralela al borde, que pondría barrera a un lado de toda la calle). Los
+  // pretiles siguen 2 m más allá del agua para cerrar las esquinas donde el canal hace curva
+  for(let i=0;i<n;i++){const x0=ax+(bx-ax)*i/n,z0=az+(bz-az)*i/n,x1=ax+(bx-ax)*(i+1)/n,z1=az+(bz-az)*(i+1)/n,mx=(x0+x1)/2,mz=(z0+z1)/2;if(riverD(mx,mz)>2)continue;
+   let rdx=0,rdz=0,bd=1e9;for(const r of MAP.rivers){const p=r.p;for(let q=2;q<p.length;q+=2){const d=segD2(mx,mz,p[q-2],p[q-1],p[q],p[q+1]);if(d<bd){bd=d;const l=Math.hypot(p[q]-p[q-2],p[q+1]-p[q-1])||1;rdx=(p[q]-p[q-2])/l;rdz=(p[q+1]-p[q-1])/l}}}
+   if(Math.abs(rdx*(bx-ax)/L+rdz*(bz-az)/L)>.8)continue;
    quad(gi,x0,z0,x1,z1,w2+.3,-.9);for(const s of[-1,1]){const ex0=x0+lx*(w2+.3)*s,ez0=z0+lz*(w2+.3)*s,ex1=x1+lx*(w2+.3)*s,ez1=z1+lz*(w2+.3)*s;vq(gi,ex0,ez0,ex1,ez1,-.9,.9);addEdge(ex0,ez0,ex1,ez1)}}}
  const conc=new THREE.MeshLambertMaterial({color:0x8e9094,side:THREE.DoubleSide});
  WATERM=new THREE.MeshPhongMaterial({color:0x1f3d4c,specular:0x9fb4c4,shininess:110,envMap:SKYCUBE,reflectivity:.5,lightMap:LIGHTMAP,lightMapIntensity:0});

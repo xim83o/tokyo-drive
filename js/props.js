@@ -17,8 +17,9 @@ const BARE=["#6b5a4a","#5e5044","#7a6a58","#544a40"];
 const TPAL=[[["#9fd36b","#8cc45a","#b3e07a","#7fb850"],["#ffc4dc","#ffb3d1","#ffd6e6","#f7a8c8","#ffe4ee"],["#2f5a34","#3a6a3c","#264c2b","#43703f"]],
  [["#4f9a3a","#3f8a33","#5fae45","#468f3a"],["#4e8a3e","#3f7a35","#5f9a45","#3f7a3a","#4f8a3f"],["#2f5a34","#3a6a3c","#264c2b","#43703f"]],
  [["#f2cf3a","#e3b21f","#f7dc5a","#c9a227","#d8be3c"],["#c8402a","#e0662e","#b8341f","#e88a2a","#d65a24"],["#2f5a34","#3a6a3c","#264c2b","#43703f"]],
- [BARE,BARE,["#2b4f31","#33593a","#24452a","#3b633c"]]];
-const TBASE=[["#5f8f3a","#e89ab8","#1e3d22"],["#2f6a28","#2f5a2a","#1e3d22"],["#a88a1e","#8a2a1a","#1e3d22"],["#4a3e34","#4a3e34","#1a3620"]];
+ [BARE,["#2f4f2c","#365a32","#284526","#3d6136"],["#2b4f31","#33593a","#24452a","#3b633c"]]];
+// (en invierno los de copa redonda hacen de árbol de hoja perenne, verde oscuro y con nieve encima; los ginkgos se quedan sin hojas)
+const TBASE=[["#5f8f3a","#e89ab8","#1e3d22"],["#2f6a28","#2f5a2a","#1e3d22"],["#a88a1e","#8a2a1a","#1e3d22"],["#4a3e34","#1e3a1e","#1a3620"]];
 function treeGeo(sp,se){if(se===undefined)se=seasonNow();const r=rng(31+sp*7),parts=[],col=(g,cs)=>{const n=g.attributes.position.count,a=new Float32Array(n*3),c=new THREE.Color();for(let i=0;i<n;i++){c.set(cs[(r()*cs.length)|0]);c.offsetHSL(0,0,(r()-.5)*.06);a[i*3]=c.r;a[i*3+1]=c.g;a[i*3+2]=c.b}g.setAttribute("color",new THREE.BufferAttribute(a,3));return g};
  const lump=(rad,x,y,z,sx,sy,cs)=>{const g=new THREE.IcosahedronGeometry(rad,0).toNonIndexed(),p=g.attributes.position;for(let i=0;i<p.count;i++){const k=.82+r()*.32;p.setXYZ(i,p.getX(i)*k*sx+x,p.getY(i)*k*sy+y,p.getZ(i)*k*sx+z)}g.computeVertexNormals();parts.push(col(g,cs))};
  const trunk=(h,r0)=>{const g=new THREE.CylinderGeometry(r0*.65,r0,h,7).toNonIndexed();g.translate(0,h/2,0);parts.push(col(g,["#5a4332","#4d392b","#634a37"]))};
@@ -67,8 +68,18 @@ function placeParked(){if(!PARK.length)return;const ln=[],sg=[],r=rng(77);
      addCirc(x+P.ux*1.1,z+P.uz*1.1,.95);addCirc(x-P.ux*1.1,z-P.uz*1.1,.95)}}
   else sg.push([P.x+lx*(P.pw+.8),CURB,P.z+lz*(P.pw+.8),Math.atan2(-P.ux,-P.uz)])}
  if(ln.length)mkMesh(ln,new THREE.MeshLambertMaterial({color:0xf2f2f2,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-6}));
- if(sg.length){const t=canvasTex(64,64,g=>{g.fillStyle="#1d4fa0";g.fillRect(0,0,64,64);g.strokeStyle="#fff";g.lineWidth=3;g.strokeRect(3,3,58,58);g.fillStyle="#fff";g.fillRect(28,22,8,32);g.fillRect(14,14,36,8);g.font="bold 10px 'Yu Gothic',sans-serif";g.textAlign="center";g.fillText("行き止まり",32,62)});
-  inst(new THREE.CylinderGeometry(.04,.04,2.4,6).translate(0,1.2,0),new THREE.MeshLambertMaterial({color:0x9aa0a8}),sg,0);inst(new THREE.PlaneGeometry(.6,.6).translate(0,2.55,.05),new THREE.MeshLambertMaterial({map:t,side:THREE.DoubleSide}),sg,0);for(const s of sg)addCirc(s[0],s[2],.1)}}
+ deadSigns(sg)}
+// Señal japonesa de calle sin salida (行き止まり): poste y placa azul con la "T" blanca
+let DEADT=null;
+function deadSigns(sg){if(!sg.length)return;if(!DEADT)DEADT=canvasTex(64,64,g=>{g.fillStyle="#1d4fa0";g.fillRect(0,0,64,64);g.strokeStyle="#fff";g.lineWidth=3;g.strokeRect(3,3,58,58);g.fillStyle="#fff";g.fillRect(28,22,8,30);g.fillRect(14,14,36,8);g.font="bold 10px 'Yu Gothic',sans-serif";g.textAlign="center";g.fillText("行き止まり",32,62)});
+ inst(new THREE.CylinderGeometry(.04,.04,2.4,6).translate(0,1.2,0),new THREE.MeshLambertMaterial({color:0x9aa0a8}),sg,0);inst(new THREE.PlaneGeometry(.6,.6).translate(0,2.55,.05),new THREE.MeshLambertMaterial({map:DEADT,side:THREE.DoubleSide}),sg,0);for(const s of sg)addCirc(s[0],s[2],.1)}
+// Señales a la entrada de cada calle que acaba en callejón (carriles "trampa" de traffic.js): en la acera de la izquierda, mirando
+// a los coches que van a entrar
+function placeDeadSigns(){if(typeof markTraps!=="function"||!LANES.length)return;if(!TRAPS)markTraps();const sg=[],done=new Set();
+ for(const L of LANES){if(!L.trap||L.internal||done.has(L.ri))continue;if(!GN[L.from].out.some(q=>!q.trap&&q!==L))continue;
+  const[x,z,a]=lanePos(L,Math.min(L.s1,L.s0+4)),lx=Math.cos(a),lz=-Math.sin(a),d=L.w/2-Math.abs(L.off)+.9,sx=x+lx*d,sz=z+lz*d;
+  if(roadAt(sx,sz)>=0||inBuilding(sx,sz))continue;done.add(L.ri);sg.push([sx,CURB,sz,a+PI])}
+ deadSigns(sg)}
 function decorate(){const tr=[],lp=[],sg=[],vm=[],up=[],wires=[],rnd=rng(11),TMAX=MOBILE?1800:3500;
  // Solo sobre acera dibujada (no en franjas estrechas entre calles), fuera de edificios y obstáculos
  const free=(x,z,m)=>x>5&&z>5&&x<W-5&&z<W-5&&roadAt(x,z)<0&&groundD(x,z)>m+.25&&!blockedAt(x,z,m);

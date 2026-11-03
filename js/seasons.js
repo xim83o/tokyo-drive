@@ -1,6 +1,6 @@
 // Estaciones del año (fecha real de Japón o elegida en Ajustes → Hora y clima):
 // primavera: cerezos en flor y pétalos cayendo · verano: todo verde, más sol, calima y farolillos rojos en las tiendas ·
-// otoño: ginkgos amarillos, arces rojos y hojas en el suelo · invierno: árboles sin hojas, nieve en vez de lluvia que se acumula en
+// otoño: ginkgos amarillos, arces rojos y hojas en el suelo · invierno: ginkgos sin hojas y árboles de hoja perenne con nieve, nieve en vez de lluvia que se acumula en
 // suelos y tejados (menos agarre) y luces de Navidad en los árboles de las avenidas
 let SEASON=-1,SNOWACC=0,SEAFOG=1;const SNOWU={uSnow:{value:0}},SEAS=["Primavera","Verano","Otoño","Invierno"];
 // Nieve sobre las caras que miran hacia arriba (k: cuánto se cubre ese material)
@@ -29,7 +29,7 @@ function partBox(n,col,size,opa){const p=new Float32Array(n*3);for(let i=0;i<n;i
  const g=new THREE.BufferGeometry();g.setAttribute("position",new THREE.BufferAttribute(p,3));const t=canvasTex(32,32,(c)=>{const gr=c.createRadialGradient(16,16,0,16,16,16);gr.addColorStop(0,"rgba(255,255,255,1)");gr.addColorStop(.5,"rgba(255,255,255,.8)");gr.addColorStop(1,"rgba(255,255,255,0)");c.fillStyle=gr;c.fillRect(0,0,32,32)});
  const m=new THREE.Points(g,new THREE.PointsMaterial({color:col,size,map:t,transparent:true,opacity:opa,depthWrite:false}));m.frustumCulled=false;m.visible=false;sc.add(m);return m}
 function seasonInit(){
- for(const[m,k]of[[GROUNDMAT,1],[ROADMAT,.55],[TREEG.tm,.8],[ROOFM,1],[TREEH[2]&&TREEH[2].lm,.9]])if(m)snowMat(m,k);if(GROUNDMAT)seasonGround(GROUNDMAT);
+ for(const[m,k]of[[GROUNDMAT,1],[ROADMAT,.55],[TREEG.tm,.8],[ROOFM,1],[TREEH[2]&&TREEH[2].lm,.9],[TREEH[1]&&TREEH[1].lm,.85]])if(m)snowMat(m,k);if(GROUNDMAT)seasonGround(GROUNDMAT);
  SNOWP=partBox(2600,0xffffff,.16,.9);PETP=partBox(420,0xffb7d0,.22,.95);
  // Hojas caídas bajo los árboles (otoño)
  {const L=[],r=rng(9),cols=[0xe8b52a,0xd8642a,0xc23a24,0xf0cf4a,0xb07a2a];for(const t of TREES){if(t.s===2||L.length>12000)continue;for(let k=0;k<3;k++){const a=r()*PI*2,d=.6+r()*2.4,x=t.e[0]+Math.cos(a)*d,z=t.e[2]+Math.sin(a)*d;if(groundD(x,z)>.3)L.push([x,CURB+.02+r()*.01,z,r()*PI,1,1,cols[(r()*cols.length)|0]])}}
@@ -49,7 +49,7 @@ function seasonInit(){
 const TGEO={};
 function seasonApply(se){if(se===SEASON||!TREES.length)return;SEASON=se;
  for(let sp=0;sp<3;sp++){const key=sp+"_"+se;if(!TGEO[key])TGEO[key]=treeGeo(sp,se);for(const m of new Set(TREES.filter(t=>t.s===sp).map(t=>t.m))){const bs=m.geometry.boundingSphere,g=TGEO[key].clone();g.boundingSphere=bs.clone();m.geometry.dispose();m.geometry=g}
-  const H=TREEH[sp];if(H){H.lm.map=H.dm.map=leafTex(sp,se);H.l.visible=!(se===3&&sp<2)}}
+  const H=TREEH[sp];if(H){H.lm.map=H.dm.map=leafTex(sp,se);H.l.visible=!(se===3&&sp===0)}}
  SEAFOG=se===1?.82:1;if(se!==3)SNOWACC=0;
  SEASK=SEASL[se];SEAU.uGrass.value.fromArray(SEASK.grass);SEAU.uPetal.value=SEASK.pet;SEAU.uFrost.value=SEASK.fr}
 // Cada imagen: estación actual, nieve que cae y se acumula, pétalos, adornos según la hora

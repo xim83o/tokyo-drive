@@ -86,7 +86,14 @@ function npcPlace(n){for(let t=0;t<30;t++){const L=LANES[Math.floor(Math.random(
   if(NPC.some(o=>o!==n&&o.lane===L&&Math.abs(o.s-s)<12))continue;n.lane=L;n.s=s;n.si=0;n.x=x;n.z=z;n.h=a;n.v=Math.min(L.vmax,10);return}
  n.x=n.z=-9999;n.lane=null}
 // Elige el siguiente carril al llegar a un cruce (sin dar la vuelta salvo en calles sin salida)
-function pickNext(L){const o=GN[L.to].out.filter(q=>q!==L.rev);if(!o.length)return L.rev;
+// Carriles "trampa": los que llevan a una calle sin salida (directamente o porque todas sus salidas son trampas). Los del borde del
+// mapa no cuentan (por ahí los coches salen del mapa). Se calcula una vez, repitiendo hasta que no cambia nada
+let TRAPS=false;
+function markTraps(){TRAPS=true;const edge=L=>{const e=lanePos(L,L.s1);return Math.min(e[0],e[1],W-e[0],W-e[1])<40};let ch=true;
+ while(ch){ch=false;for(const L of LANES){if(L.trap||edge(L))continue;const o=GN[L.to].out.filter(q=>q!==L.rev);if(o.every(q=>q.trap)){L.trap=true;ch=true}}}}
+function pickNext(L){if(!TRAPS)markTraps();let o=GN[L.to].out.filter(q=>q!==L.rev);if(!o.length)return L.rev;
+ // Como si leyeran la señal de calle sin salida: si hay otra opción, no se meten
+ const ok=o.filter(q=>!q.trap);if(ok.length)o=ok;
  const n=L.p.length,a0=Math.atan2(L.p[n-2]-L.p[n-4],L.p[n-1]-L.p[n-3]);
  const w=o.map(q=>{const d=Math.abs(ad(Math.atan2(q.p[2]-q.p[0],q.p[3]-q.p[1]),a0));return(d<.5?3:d<2.3?1:.3)*(q.t===4&&L.t<4?.3:1)});let r=Math.random()*w.reduce((a,b)=>a+b);
  for(let i=0;i<o.length;i++){r-=w[i];if(r<=0)return o[i]}return o[0]}
