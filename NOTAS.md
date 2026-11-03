@@ -57,6 +57,10 @@ Pedido por el usuario (todo con permiso ya dado; descargas permitidas: partes de
 - [x] Radio (radio.js): radio-browser.info, solo https, botón 📻 / ⏭ / tecla R, país, estilo y volumen en Ajustes → Sonido. Sin comprobar si el enlace del móvil permite conectarse a las emisoras.
 - Guardado para más adelante: contrarrelojes y radares, modo foto, autopista Shuto conducible.
 
+## Pendiente de arreglar (avisado por el usuario, 2026-11-03 noche)
+- Un lago sale como asfalto en vez de agua: probablemente la capa de asfalto de debajo (casillas de 20 m en loadWorld) solo se salta el canal y no los estanques/lagos (MAP.water). Hacer que también se salte el agua.
+- En la esquina del mapa donde pone "Parque" quizá debería haber agua (comprobar si hay un polígono de agua o de bahía y si se dibuja).
+
 ## Pendiente / ideas
 - Autopista Shuto elevada.
 - Modelos 3D de coches libres (hypercar = hypercar, drift = estilo japonés…), pedir permiso por cada descarga.
