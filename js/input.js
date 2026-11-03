@@ -1,14 +1,18 @@
-// Entrada: teclado, mando y táctil (touchIn viene de touch.js)
+// Entrada: teclado (teclas configurables en Ajustes), mando y táctil (touchIn viene de touch.js)
 const keys={};let prev=[];
-function act(a){initAudio();if(state!=="play")return;if(a==="map")show("map");else if(a==="cars")show("cars");else if(a==="cam")mode=(mode+1)%4}
-addEventListener("keydown",e=>{keys[e.code]=1;keyAct=1;initAudio();if(e.code==="KeyN"&&!e.repeat)setMute(!mute);if(e.code==="KeyT"&&!e.repeat)setNpc(npcLvl+1);if(e.code==="Space")e.preventDefault();if(e.repeat)return;
- if(e.code==="Escape"&&spawned&&state!=="play")resume();
- if(e.code==="KeyM")act("map");if(e.code==="KeyC")act("cars");if(e.code==="KeyV")act("cam")});
+const K=a=>{const k=ENV.keys[a];return!!(keys[k[0]]||(k[1]&&keys[k[1]]))},isK=(a,code)=>ENV.keys[a].includes(code);
+function act(a){initAudio();if(a==="set"){if(state==="set")closeSettings();else if(state==="play"||state==="cars")openSettings();return}
+ if(state!=="play")return;if(a==="map")show("map");else if(a==="cars")show("cars");else if(a==="cam")mode=(mode+1)%4}
+addEventListener("keydown",e=>{if(rebind){e.preventDefault();rebind(e.code);return}
+ keys[e.code]=1;keyAct=1;initAudio();if(e.code==="Space"||e.code.startsWith("Arrow"))e.preventDefault();if(e.repeat)return;
+ if(isK("snd",e.code))setMute(!mute);if(isK("trf",e.code))setNpc(npcLvl+1);
+ if(isK("set",e.code)){if(state==="set"||state==="play")act("set");else if(spawned)resume();return}
+ if(isK("map",e.code))act("map");if(isK("cars",e.code))act("cars");if(isK("cam",e.code))act("cam")});
 addEventListener("keyup",e=>keys[e.code]=0);
-function input(){let t=keys.KeyW||keys.ArrowUp?1:0,b=keys.KeyS||keys.ArrowDown?1:0,s=(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0),hb=!!keys.Space;
+function input(){let t=K("up")?1:0,b=K("down")?1:0,s=(K("right")?1:0)-(K("left")?1:0),hb=K("hb");
  const g=[...(navigator.getGamepads?navigator.getGamepads():[])].find(x=>x);
  if(g){const ax=g.axes[0]||0;if(Math.abs(ax)>.12)s=ax;t=Math.max(t,g.buttons[7]?g.buttons[7].value:0);b=Math.max(b,g.buttons[6]?g.buttons[6].value:0);hb=hb||g.buttons[0].pressed;
   const p=g.buttons.map(x=>x.pressed),e=i=>p[i]&&!prev[i];
-  if(e(3))act("map");if(e(8))act("cars");if(e(2))act("cam");prev=p}
+  if(e(3))act("map");if(e(8))act("cars");if(e(2))act("cam");if(e(9))act("set");prev=p}
  if(touchIn.s)s=touchIn.s;t=Math.max(t,touchIn.t);b=Math.max(b,touchIn.b);hb=hb||!!touchIn.hb;
  return{t,b,s,hb}}

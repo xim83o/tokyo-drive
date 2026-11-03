@@ -170,5 +170,6 @@ function drawMapImg(){const c=document.createElement("canvas");c.width=c.height=
  g.fillStyle="#3a3d45";g.fillRect(0,0,W,W);g.fillStyle="#2f6b3a";for(const q of MAP.green)poly(q.p);
  g.fillStyle=g.strokeStyle="#2c5f8c";for(const R of MAP.water)poly(R);g.lineCap=g.lineJoin="round";for(const r of MAP.rivers)line(r.p,r.w);
  g.strokeStyle="#6b5a4a";for(const r of MAP.rails)line(r.p,3);g.strokeStyle="#9aa0ad";for(const r of MAP.roads)line(r.p,r.w);
- for(const b of MAP.buildings){g.fillStyle=b.k===1||b.k===3?"#9a3a2c":"#22242a";poly(b.p)}
- g.fillStyle="#e5173f";g.beginPath();g.moveTo(TX,TZ-30);g.lineTo(TX+26,TZ+18);g.lineTo(TX-26,TZ+18);g.fill();mapImg=c}
+ // Edificios: templos en rojo, FootTown en blanco y los rascacielos más claros cuanto más altos
+ for(const b of MAP.buildings){g.fillStyle=b.k===1||b.k===3?"#c2452f":b.k===2?"#e8e8e4":b.h>100?"#5a6170":b.h>50?"#3a3e48":"#22242a";poly(b.p)}
+ g.fillStyle="#ff4a2a";g.strokeStyle="#fff";g.lineWidth=4;g.beginPath();g.moveTo(TX,TZ-34);g.lineTo(TX+28,TZ+20);g.lineTo(TX-28,TZ+20);g.closePath();g.fill();g.stroke();mapImg=c}

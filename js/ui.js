@@ -13,16 +13,43 @@ CARS.forEach((c,i)=>{const d=document.createElement("button");d.className="cd";c
 const tb=$("tabs");tb.style.cssText="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:12px";
 ["Todos",...CAT].forEach(n=>{const b=document.createElement("button");b.textContent=n;b.style.cssText="padding:6px 14px;border:0;border-radius:16px;font:600 13px system-ui;cursor:pointer;color:inherit;background:rgba(128,128,128,.25)";
  b.onclick=()=>{for(const x of tb.children){x.style.background="rgba(128,128,128,.25)";x.style.color="inherit"}b.style.background="var(--ac)";b.style.color="#fff";for(const c of $("cards").children)c.hidden=n!=="Todos"&&c.dataset.cat!==n};tb.appendChild(b)});tb.firstChild.click();
-function show(w){state=w;$("ov").hidden=false;$("carsP").hidden=w!=="cars";$("mapP").hidden=w!=="map";if(w==="map"){pend=null;$("ok").disabled=true;drawMap()}
- for(const e of HUDS)$(e).hidden=true;$("touch").hidden=true}
-function resume(){state="play";$("ov").hidden=true;for(const e of HUDS)$(e).hidden=false;$("touch").hidden=!MOBILE}
+function show(w){state=w;$("ov").hidden=false;$("carsP").hidden=w!=="cars";$("mapP").hidden=w!=="map";$("setP").hidden=true;if(w==="map"){pend=null;$("ok").disabled=true;mapV={z:1,x:W/2,z0:W/2};drawMap()}
+ hudVis(false);$("touch").hidden=true}
+function resume(){state="play";$("ov").hidden=true;hudVis(true);$("touch").hidden=!MOBILE}
+// HUD (minimapa, velocímetro y ayuda): se puede quitar cada parte en Ajustes → Pantalla
+function hudVis(on){$("mini").hidden=!on||!ENV.hud.mini;$("hud").hidden=!on||!ENV.hud.speed;$("help").hidden=!on||!ENV.hud.help||MOBILE;$("mz").hidden=!on||!ENV.hud.mini}
 const mp=$("mp"),mx=mp.getContext("2d");
-function drawMap(){const S=640/W;mx.fillStyle="#1c1f26";mx.fillRect(0,0,640,640);if(mapImg)mx.drawImage(mapImg,0,0,640,640);
+// Vista del mapa grande: zoom (rueda, pellizco o botones + y −) y desplazamiento arrastrando
+let mapV={z:1,x:1200,z0:1200},LMK=null;
+const mapS=()=>640*mapV.z/W,mapO=()=>[mapV.x-W/2/mapV.z,mapV.z0-W/2/mapV.z];
+function mapClamp(){const h=W/2/mapV.z;mapV.x=Math.max(h,Math.min(W-h,mapV.x));mapV.z0=Math.max(h,Math.min(W-h,mapV.z0))}
+function mapZoom(d,cx,cz){const z=Math.max(1,Math.min(8,mapV.z*(d>0?1.5:1/1.5)));if(cx!==undefined){const k=1-mapV.z/z;mapV.x+=(cx-mapV.x)*k;mapV.z0+=(cz-mapV.z0)*k}mapV.z=z;mapClamp();drawMap()}
+// Lugares importantes con nombre en el mapa
+function landmarks(){if(LMK||!ready)return LMK;LMK=[{x:TX,z:TZ,n:"Torre de Tokio",c:"#ff5a3c"}];const T=MAP.buildings.filter(b=>b.k===1||b.k===3);
+ if(T.length){let x=0,z=0,n=0;for(const b of T)for(let i=0;i<b.p.length;i+=2){x+=b.p[i];z+=b.p[i+1];n++}LMK.push({x:x/n,z:z/n,n:"Templo Zojoji",c:"#e2553f"})}
+ const ft=MAP.buildings.find(b=>b.k===2);if(ft)LMK.push({x:TX,z:TZ+34,n:"FootTown",c:"#f2f2ef",s:1});
+ const big=MAP.green.filter(g=>g.k!==2).map(g=>{let a=0,x=0,z=0;const R=g.p;for(let i=0;i<R.length;i+=2){x+=R[i];z+=R[i+1]}const n=R.length/2;for(let i=0,j=R.length-2;i<R.length;j=i,i+=2)a+=R[j]*R[i+1]-R[i]*R[j+1];return{x:x/n,z:z/n,a:Math.abs(a)/2}}).filter(g=>g.a>20000).sort((a,b)=>b.a-a.a).slice(0,4);
+ for(const g of big)if(!LMK.some(l=>Math.hypot(l.x-g.x,l.z-g.z)<150))LMK.push({x:g.x,z:g.z,n:"Parque",c:"#8fd18a",s:1});return LMK}
+function drawMap(){const S=mapS(),[ox,oz]=mapO();mx.setTransform(1,0,0,1,0,0);mx.fillStyle="#1c1f26";mx.fillRect(0,0,640,640);
+ mx.setTransform(S,0,0,S,-ox*S,-oz*S);if(mapImg)mx.drawImage(mapImg,0,0);mx.setTransform(1,0,0,1,0,0);
+ const P=(x,z)=>[(x-ox)*S,(z-oz)*S];mx.textAlign="center";mx.textBaseline="bottom";
+ for(const l of landmarks()||[]){if(l.s&&mapV.z<2)continue;const[x,y]=P(l.x,l.z);mx.font=`600 ${l.s?11:13}px system-ui`;mx.lineWidth=3;mx.strokeStyle="rgba(0,0,0,.8)";mx.strokeText(l.n,x,y-(l.s?2:16));mx.fillStyle=l.c;mx.fillText(l.n,x,y-(l.s?2:16))}
  const q=pend||(spawned?{x:px,z:pz,h}:null);
- if(q){mx.fillStyle="#fff";mx.strokeStyle="#e5173f";mx.lineWidth=3;mx.beginPath();mx.arc(q.x*S,q.z*S,7,0,7);mx.fill();mx.stroke();
-  mx.beginPath();mx.moveTo(q.x*S,q.z*S);mx.lineTo((q.x+Math.sin(q.h)*40)*S,(q.z+Math.cos(q.h)*40)*S);mx.stroke()}}
+ if(q){const[x,y]=P(q.x,q.z),[x2,y2]=P(q.x+Math.sin(q.h)*40,q.z+Math.cos(q.h)*40);mx.fillStyle="#fff";mx.strokeStyle="#e5173f";mx.lineWidth=3;mx.beginPath();mx.arc(x,y,7,0,7);mx.fill();mx.stroke();
+  mx.beginPath();mx.moveTo(x,y);mx.lineTo(x2,y2);mx.stroke()}}
+// Arrastrar para mover el mapa (con el dedo o el ratón); la rueda o el pellizco hacen zoom
+let mDrag=null,mMoved=false;const mPts=new Map();
+const mWorld=e=>{const r=mp.getBoundingClientRect(),S=mapS(),[ox,oz]=mapO();return[ox+(e.clientX-r.left)/r.width*640/S,oz+(e.clientY-r.top)/r.height*640/S]};
+mp.addEventListener("pointerdown",e=>{mPts.set(e.pointerId,[e.clientX,e.clientY]);mDrag=[e.clientX,e.clientY];mMoved=false;mp.setPointerCapture(e.pointerId)});
+mp.addEventListener("pointermove",e=>{if(!mPts.has(e.pointerId))return;const r=mp.getBoundingClientRect(),k=640/r.width/mapS();
+ if(mPts.size===2){const[a,b]=[...mPts.values()],d0=Math.hypot(a[0]-b[0],a[1]-b[1]);mPts.set(e.pointerId,[e.clientX,e.clientY]);const[c,d]=[...mPts.values()],d1=Math.hypot(c[0]-d[0],c[1]-d[1]);
+  if(d0>0){mapV.z=Math.max(1,Math.min(8,mapV.z*d1/d0));mapClamp();drawMap()}mMoved=true;return}
+ mPts.set(e.pointerId,[e.clientX,e.clientY]);const dx=e.clientX-mDrag[0],dy=e.clientY-mDrag[1];if(Math.abs(dx)+Math.abs(dy)>4)mMoved=true;
+ if(mMoved&&mapV.z>1){mapV.x-=dx*k;mapV.z0-=dy*k;mapClamp();drawMap()}mDrag=[e.clientX,e.clientY]});
+const mUp=e=>{mPts.delete(e.pointerId)};mp.addEventListener("pointerup",mUp);mp.addEventListener("pointercancel",mUp);
+mp.addEventListener("wheel",e=>{e.preventDefault();const[x,z]=mWorld(e);mapZoom(-Math.sign(e.deltaY),x,z)},{passive:false});
 // Clic en el mapa: aparece en la calle más cercana; otro clic en el mismo sitio cambia el sentido
-mp.onclick=e=>{if(!ready)return;const r=mp.getBoundingClientRect(),x=(e.clientX-r.left)/r.width*W,z=(e.clientY-r.top)/r.height*W,same=pend&&Math.hypot(pend.cx-x,pend.cz-z)<15;
+mp.onclick=e=>{if(!ready||mMoved)return;const[x,z]=mWorld(e),same=pend&&Math.hypot(pend.cx-x,pend.cz-z)<15/mapV.z;
  const fl=same?!pend.f:false;pend=nearestRoad(x,z,fl);pend.cx=x;pend.cz=z;pend.f=fl;$("ok").disabled=false;drawMap()};
 $("ok").onclick=()=>{if(!pend)return;spawnAt(pend);spawned=true;resume()};
 $("cancel").onclick=()=>spawned?resume():show("cars");

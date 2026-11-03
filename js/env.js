@@ -1,8 +1,11 @@
 // Ambiente: hora (real de Tokio, ciclo de día y noche o fija), cielo con nubes, sol, luna y estrellas, sol con sombras, niebla,
 // luces nocturnas (ventanas, farolas con luz real, letreros, Torre de Tokio, faros), postproceso (resplandor, suavizado de bordes,
 // color) y calidad gráfica. Las opciones se eligen en el menú de coches y se recuerdan. El clima (lluvia) lo maneja weather.js
-const ENV={mode:"cycle",cycle:15,q:"auto"},T0=performance.now()/1000;let FOGF=900,FOGQ=900,NF=0,HOUR=10;
-try{Object.assign(ENV,JSON.parse(localStorage.getItem("td-env")||"{}"))}catch(e){}
+// Ajustes guardados: hora, calidad y sus retoques (sombras, distancia, resplandor), volúmenes, unidades, HUD, teclas y tráfico
+const ENV={mode:"cycle",cycle:15,q:"auto",sh:"auto",far:1,bl:"auto",units:"kmh",npc:MOBILE?1:2,
+ vol:{m:.8,e:1,fx:1,rain:1,horn:1},hud:{mini:1,speed:1,help:1},
+ keys:{up:["KeyW","ArrowUp"],down:["KeyS","ArrowDown"],left:["KeyA","ArrowLeft"],right:["KeyD","ArrowRight"],hb:["Space",""],cam:["KeyV",""],map:["KeyM",""],cars:["KeyC",""],snd:["KeyN",""],trf:["KeyT",""],set:["Escape",""]}},T0=performance.now()/1000;let FOGF=900,FOGQ=900,NF=0,HOUR=10;
+try{const s=JSON.parse(localStorage.getItem("td-env")||"{}");for(const k in s){if(ENV[k]&&typeof ENV[k]==="object"&&!Array.isArray(ENV[k]))Object.assign(ENV[k],s[k]);else ENV[k]=s[k]}}catch(e){}
 function saveEnv(){try{localStorage.setItem("td-env",JSON.stringify(ENV))}catch(e){}}
 const QUAL=[{n:"Baja",pr:.75,sh:0,R:0,far:450,lights:0},{n:"Media",pr:1,sh:1024,R:110,far:650,lights:4},{n:"Alta",pr:1.25,sh:2048,R:160,far:900,lights:8},{n:"Ultra",pr:1.75,sh:4096,R:230,far:1200,lights:12}];
 const qLevel=()=>ENV.q==="auto"?(MOBILE?0:2):+ENV.q;
@@ -63,7 +66,7 @@ function setupPost(){if(!THREE.EffectComposer||composer)return;composer=new THRE
  bloom=new THREE.UnrealBloomPass(new THREE.Vector2(innerWidth,innerHeight),.5,.5,.8);composer.addPass(bloom);grade=new THREE.ShaderPass(GRADE);composer.addPass(grade);
  fxaa=new THREE.ShaderPass(THREE.FXAAShader);composer.addPass(fxaa);postSize()}
 function postSize(){if(!composer)return;const pr=rd.getPixelRatio();composer.setPixelRatio(pr);composer.setSize(innerWidth,innerHeight);fxaa.material.uniforms.resolution.value.set(1/(innerWidth*pr),1/(innerHeight*pr))}
-function renderFrame(){const lv=qLevel();if(composer&&lv>=1){bloom.enabled=lv>=2;bloom.strength=.1+NF*.7+WEA.wet*.1;bloom.threshold=.78-NF*.12;composer.render()}else rd.render(sc,cam)}
+function renderFrame(){const lv=qLevel(),bl=ENV.bl==="auto"?lv>=2:ENV.bl==="on";if(composer&&(lv>=1||bl)){bloom.enabled=bl;bloom.strength=.1+NF*.7+WEA.wet*.1;bloom.threshold=.78-NF*.12;composer.render()}else rd.render(sc,cam)}
 let ledT=0;
 function envUpdate(dt){HOUR=hourNow();const e=Math.sin((HOUR-6)/12*PI),day=Math.min(1,Math.max(0,(e+.06)/.32)),dusk=Math.max(0,1-Math.abs(e)/.28),rn=WEA.rain;NF=Math.min(1,1-day+rn*.25*day);
  _c.copy(PAL.nTop).lerp(PAL.dTop,day).lerp(PAL.kTop,dusk*.55).lerp(PAL.rain,rn*.6*day);SKYU.top.value.copy(_c);
@@ -95,16 +98,8 @@ function envUpdate(dt){HOUR=hourNow();const e=Math.sin((HOUR-6)/12*PI),day=Math.
  FOGF=FOGQ*(1-rn*.5)}
 let qApplied=-1;
 function applyQuality(){const lv=qLevel(),Q=QUAL[lv];rd.setPixelRatio(Math.max(.6,Math.min(Q.pr,Math.min(devicePixelRatio,2)*(lv===0?.75:1))));setupPost();
- const sh=Q.sh>0,relight=rd.shadowMap.enabled!==sh||LPL.length!==Q.lights||qApplied<0;setLampLights(Q.lights);
+ const sh=ENV.sh==="auto"?Q.sh>0:ENV.sh==="on",SM=Q.sh||1024,SR=Q.R||110,relight=rd.shadowMap.enabled!==sh||LPL.length!==Q.lights||qApplied<0;setLampLights(Q.lights);
  if(relight){rd.shadowMap.enabled=sh;rd.shadowMap.type=THREE.PCFSoftShadowMap;sc.traverse(o=>{if(o.material){(Array.isArray(o.material)?o.material:[o.material]).forEach(m=>m.needsUpdate=true)}})}
- sun.castShadow=sh;if(sh){if(sun.shadow.map){sun.shadow.map.dispose();sun.shadow.map=null}sun.shadow.mapSize.set(Q.sh,Q.sh);const c=sun.shadow.camera;c.left=c.bottom=-Q.R;c.right=c.top=Q.R;c.near=10;c.far=900;c.updateProjectionMatrix();sun.shadow.bias=-.0004;sun.shadow.normalBias=.04}
- FOGQ=Q.far;cam.far=Q.far+150;cam.updateProjectionMatrix();sc.traverse(o=>{if(o.userData.q!==undefined)o.visible=lv>=o.userData.q});qApplied=lv;resize()}
-// Opciones en el menú de coches: hora, clima y calidad
-function envUI(){const box=document.createElement("div");box.id="envUI";$("carsP").appendChild(box);
- const row=(label,opts,key,cb)=>{const r=document.createElement("div");r.className="opt";r.innerHTML=`<span>${label}</span>`;opts.forEach(([v,t])=>{const b=document.createElement("button");b.textContent=t;b.className=String(ENV[key])===String(v)?"on":"";
-  b.onclick=()=>{ENV[key]=v;saveEnv();for(const x of r.querySelectorAll("button"))x.className="";b.className="on";cb&&cb()};r.appendChild(b)});box.appendChild(r);return r};
- row("Hora",[["real","Tokio real"],["cycle","Día y noche"],["day","Siempre de día"],["night","Siempre de noche"]],"mode",()=>{cyc.hidden=ENV.mode!=="cycle"});
- const cyc=row("Un día dura",[[5,"5 min"],[10,"10 min"],[15,"15 min"],[30,"30 min"],[60,"60 min"]],"cycle");cyc.hidden=ENV.mode!=="cycle";
- if(ENV.wx===undefined)ENV.wx="auto";row("Clima",[["auto","Aleatorio"],["clear","Despejado"],["rain","Lluvia"],["storm","Tormenta"]],"wx");
- row("Calidad",[["auto","Auto"],[0,"Baja"],[1,"Media"],[2,"Alta"],[3,"Ultra"]],"q",()=>{if(ready)applyQuality()})}
-envUI();
+ sun.castShadow=sh;if(sh){if(sun.shadow.map){sun.shadow.map.dispose();sun.shadow.map=null}sun.shadow.mapSize.set(SM,SM);const c=sun.shadow.camera;c.left=c.bottom=-SR;c.right=c.top=SR;c.near=10;c.far=900;c.updateProjectionMatrix();sun.shadow.bias=-.0004;sun.shadow.normalBias=.04}
+ FOGQ=Q.far*ENV.far;cam.far=FOGQ+150;cam.updateProjectionMatrix();sc.traverse(o=>{if(o.userData.q!==undefined)o.visible=lv>=o.userData.q});qApplied=lv;resize()}
+if(ENV.wx===undefined)ENV.wx="auto";

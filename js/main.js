@@ -1,7 +1,7 @@
 // Bucle principal: física, cámaras, cinemáticas AFK, ambiente y render
 function resize(){rd.setSize(innerWidth,innerHeight,false);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();if(typeof postSize==="function")postSize()}
 addEventListener("resize",resize);resize();
-let last=performance.now(),t0=0;const LK=new THREE.Vector3();
+let last=performance.now(),t0=0,lastCin=false;const LK=new THREE.Vector3();
 // La cámara no atraviesa nada: edificios, árboles, postes, coches ni la Torre de Tokio. Si algo se interpone entre el coche
 // y la cámara, la cámara se acerca al coche
 function camHit(x,y,z){if(camBlocked(x,y,z))return true;const c=gq(x,z);
@@ -20,7 +20,7 @@ function loop(n){requestAnimationFrame(loop);const dt=Math.min(.05,(n-last)/1e3)
   gearCalc(dt);hud(kmh,gearL,rpmD);effects(dt);audio();
   const cin=idle>15;camH+=ad(h,camH)*Math.min(1,dt*(mode<2||cin?3.5:20));
   const fx=Math.sin(camH),fz=Math.cos(camH),hx=Math.sin(h),hz=Math.cos(h);let fv=65+Math.min(22,sp*.3);cam.up.set(0,1,0);
-  if(intG)intG.visible=mode===3&&!cin;if(whl)whl.rotation.z=stV*1.2;for(const e of HUDS)$(e).hidden=cin;
+  if(intG)intG.visible=mode===3&&!cin;if(whl)whl.rotation.z=stV*1.2;if(cin!==lastCin){lastCin=cin;hudVis(!cin)}
   if(cin){ca+=dt*.3;const cv2=Math.floor((idle-15)/7)%5,rx=-Math.cos(h),rz=Math.sin(h);
    if(cv2==0){cam.position.set(px+Math.sin(ca)*11,3.5,pz+Math.cos(ca)*11);LK.set(px,1,pz);fv=50}
    else if(cv2==1){cam.position.set(px+hx*9+rx*Math.sin(ca)*2,.9,pz+hz*9+rz*Math.sin(ca)*2);LK.set(px,.8,pz);fv=60}
@@ -33,7 +33,9 @@ function loop(n){requestAnimationFrame(loop);const dt=Math.min(.05,(n-last)/1e3)
   else{cam.position.set(px+hx*.1-Math.cos(h)*.38,cur.ey+bodyY,pz+hz*.1+Math.sin(h)*.38);cam.lookAt(px+hx*20,cur.ey+bodyY,pz+hz*20)}
   cam.fov=fv;cam.updateProjectionMatrix();mini()}
  else{audio(true);t0+=dt*.1;sc.fog.far=FOGF;sc.fog.near=FOGF*.2;
-  if(spawned){cam.position.set(px+Math.sin(t0)*220,90,pz+Math.cos(t0)*220);cam.lookAt(px,20,pz)}else{cam.position.set(TX+Math.sin(t0)*420,140,TZ+Math.cos(t0)*420);cam.lookAt(TX,110,TZ)}}
+  // En ajustes con la partida empezada, la imagen se queda quieta (pausa)
+  if(state==="set"&&spawned&&setPrev==="play"){}
+  else if(spawned){cam.position.set(px+Math.sin(t0)*220,90,pz+Math.cos(t0)*220);cam.lookAt(px,20,pz)}else{cam.position.set(TX+Math.sin(t0)*420,140,TZ+Math.cos(t0)*420);cam.lookAt(TX,110,TZ)}}
  envUpdate(dt);if(typeof weather==="function")weather(dt);renderFrame()}
 loop(last);
 loadWorld().then(()=>{initTraffic();applyQuality();ld.hidden=true}).catch(e=>{console.error(e);ld.textContent="No se pudo cargar el mapa. Ábrelo con jugar.bat (necesita el servidor local)."});
