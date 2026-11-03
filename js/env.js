@@ -52,7 +52,7 @@ const LPL=[];let lampT=0;
 function setLampLights(n){while(LPL.length<n){const l=new THREE.PointLight(0xffd29a,0,26,2);sc.add(l);LPL.push(l)}while(LPL.length>n)sc.remove(LPL.pop())}
 const PAL={dTop:new THREE.Color(0x2f6fc8),dHor:new THREE.Color(0xbfd8ef),kTop:new THREE.Color(0x2d3a74),kHor:new THREE.Color(0xf28a4e),nTop:new THREE.Color(0x02040c),nHor:new THREE.Color(0x111a2e),
  sunD:new THREE.Color(0xfff2dc),sunK:new THREE.Color(0xff9a4a),moon:new THREE.Color(0x8fa8d8),hSky:new THREE.Color(0xcfe4ff),hNight:new THREE.Color(0x1e2a46),tw:new THREE.Color(0xff6a1a),rain:new THREE.Color(0x6f7680)};
-const _c=new THREE.Color(),_c2=new THREE.Color();
+const _c=new THREE.Color(),_c2=new THREE.Color(),_c3=new THREE.Color();
 // Estación del año: la de la fecha real de Japón (marzo-mayo primavera, junio-agosto verano, septiembre-noviembre otoño,
 // diciembre-febrero invierno) o la elegida en Ajustes. 0 primavera · 1 verano · 2 otoño · 3 invierno
 function seasonNow(){if(ENV.season!==undefined&&ENV.season!=="auto")return+ENV.season;let m=new Date().getMonth()+1;try{m=+new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Tokyo",month:"numeric"}).format(new Date())}catch(e){}
@@ -86,6 +86,9 @@ function envUpdate(dt){HOUR=hourNow();const e=Math.sin((HOUR-6)/12*PI),day=sstep
  SKYU.sunC.value.copy(PAL.sunD).lerp(PAL.sunK,dusk);SKYU.time.value=performance.now()/1000;SKYU.cloud.value=WEA.cloud;SKYU.night.value=NF;SKYU.flash.value=WEA.flash;
  sun.intensity=(day>0?.25+.6*Math.min(1,e/.35)*day:.22)*(1-rn*.6)+WEA.flash*1.5;sun.color.copy(day>0?PAL.sunD:PAL.moon).lerp(PAL.sunK,day>0?dusk*.7:0);
  hemi.intensity=(.34+.56*day)*(1-rn*.3)+WEA.flash;hemi.color.copy(PAL.hNight).lerp(PAL.hSky,day);
+ // Tono de la estación (seasons.js): sol, luz ambiente y cielo, sobre todo de día
+ if(typeof SEASK!=="undefined"&&SEASK){const m=(col,a)=>col.multiply(_c3.setRGB(1+(a[0]-1)*day,1+(a[1]-1)*day,1+(a[2]-1)*day));m(sun.color,SEASK.sun);sun.intensity*=1+(SEASK.si-1)*day;m(hemi.color,SEASK.hemi);
+  m(SKYU.top.value,SEASK.sky);m(SKYU.hor.value,SEASK.hor);sc.fog.color.copy(SKYU.hor.value);sc.background=SKYU.hor.value}
  // Luces nocturnas
  for(const m of NM.win)if(m.envMap)m.reflectivity=.25*(1-NF*.85);
  for(const m of NM.int){const s=m.userData.sh;if(s){s.uniforms.uNight.value=NF;s.uniforms.uSkyT.value.copy(SKYU.top.value);s.uniforms.uSkyH.value.copy(SKYU.hor.value)}}for(const m of NM.sign)m.emissiveIntensity=.12+NF*1.9;if(NM.ledGlow)NM.ledGlow.opacity=NF*.55;

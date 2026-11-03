@@ -34,7 +34,7 @@ function weather(dt){if(!ready)return;if(!SPR.length)sprayInit();const lv=qLevel
  let target=0,storm=false;const gd=gameDay();
  if(ENV.wx==="rain"){target=.75}else if(ENV.wx==="storm"){target=1;storm=true}else if(ENV.wx!=="clear"){const d=Math.floor(gd);if(d!==wDay){wDay=d;wPlan=planDay(d)}const f=gd-d;
   if(wPlan.rain){const a=Math.min(1,Math.max(0,(f-wPlan.start)*30),Math.max(0,(wPlan.end-f)*30));target=wPlan.amt*a;storm=wPlan.storm&&a>.5}}
- WEA.rain+=(target-WEA.rain)*Math.min(1,dt*.25);WEA.cloud=.35+WEA.rain*.6;WEA.wet=WEA.rain>WEA.wet?WEA.wet+(WEA.rain-WEA.wet)*Math.min(1,dt*.15):Math.max(WEA.rain,WEA.wet-dt*.004);
+ WEA.rain+=(target-WEA.rain)*Math.min(1,dt*.25);WEA.cloud=(typeof SEASK!=="undefined"&&SEASK?SEASK.cl:.35)+WEA.rain*.6;WEA.wet=WEA.rain>WEA.wet?WEA.wet+(WEA.rain-WEA.wet)*Math.min(1,dt*.15):Math.max(WEA.rain,WEA.wet-dt*.004);
  // Gotas cayendo alrededor de la cámara (caja que la sigue), con algo de viento
  if(rainMesh){rainMesh.material.opacity=Math.min(.55,WEA.rain*.6)*(state==="play"||state==="cars"?1:0);rainMesh.visible=WEA.rain>.02&&SEASON!==3;
   if(rainMesh.visible){const p=rainMesh.geometry.attributes.position.array,fall=(18+WEA.rain*6)*dt,wx=2.5*dt,c=cam.position;rainMesh.position.set(c.x,0,c.z);

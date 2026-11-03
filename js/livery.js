@@ -110,7 +110,9 @@ function buildShowroom(){if(SHOW)return;const g=new THREE.Group();g.position.set
  const box=(w,hh,d,m,x,y,z)=>{const o=new THREE.Mesh(new THREE.BoxGeometry(w,hh,d),m);o.position.set(x,y,z);g.add(o);return o};
  const floor=new THREE.Mesh(new THREE.PlaneGeometry(36,28).rotateX(-PI/2),new THREE.MeshPhongMaterial({map:fl,shininess:140,specular:0x777777,envMap:SKYCUBE,reflectivity:.18,emissive:0x111214}));g.add(floor);
  const tt=new THREE.Mesh(new THREE.CylinderGeometry(3.8,3.9,.1,64),new THREE.MeshPhongMaterial({color:0xcfd2d6,shininess:120,specular:0x999999,emissive:0x202224}));tt.position.y=.05;g.add(tt);
- const wall=new THREE.MeshLambertMaterial({color:0xe8e9eb,emissive:0x4a4b4e}),dark=new THREE.MeshLambertMaterial({color:0x1b1d22,emissive:0x0a0b0d}),strip=new THREE.MeshBasicMaterial({color:0xfff4e4});
+ // Paredes de listones verticales de madera clara con huecos oscuros (estilo japonés moderno)
+ const wd=canvasTex(256,256,(c)=>{const r=rng(13);for(let x=0;x<256;x+=16){const l=150+r()*30|0;c.fillStyle=`rgb(${l+40},${l},${l-50})`;c.fillRect(x,0,12,256);c.fillStyle="rgba(90,60,30,.18)";for(let k=0;k<6;k++)c.fillRect(x+r()*12,0,1,256);c.fillStyle="#2a2018";c.fillRect(x+12,0,4,256)}},true);wd.repeat.set(6,1);
+ const wall=new THREE.MeshLambertMaterial({map:wd,emissive:0x3a2c1e}),dark=new THREE.MeshLambertMaterial({color:0x1b1d22,emissive:0x0a0b0d}),strip=new THREE.MeshBasicMaterial({color:0xfff4e4});
  box(36,9,.3,wall,0,4.5,-14);box(36,9,.3,dark,0,4.5,14);box(.3,9,28,wall,-18,4.5,0);box(.3,9,28,wall,18,4.5,0);
  const lg=new THREE.Mesh(new THREE.PlaneGeometry(16,2.5),new THREE.MeshBasicMaterial({map:logoTex(1024,160)}));lg.position.set(0,5.6,-13.8);g.add(lg);
  for(const x of[-14,-7,7,14])box(.25,6.5,.08,strip,x,4,-13.82);for(const z of[-9,-3,3,9]){box(.08,6.5,.25,strip,-17.82,4,z);box(.08,6.5,.25,strip,17.82,4,z)}

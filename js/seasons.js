@@ -9,12 +9,27 @@ function snowMat(m,k){const prev=m.onBeforeCompile;m.onBeforeCompile=sh=>{if(pre
  sh.fragmentShader=sh.fragmentShader.replace("#include <common>","#include <common>\nuniform float uSnow;varying float vSNy;").replace("#include <color_fragment>",`#include <color_fragment>
  diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.93,.95,.98),uSnow*${k.toFixed(2)}*smoothstep(.5,.85,vSNy));`)};
  const ck=m.customProgramCacheKey;m.customProgramCacheKey=()=>(ck?ck.call(m):"")+"snow"+k;m.needsUpdate=true;return m}
+// Luz, cielo y suelo de cada estación: multiplicadores del color del sol y su fuerza, del cielo (arriba y horizonte) y de la luz
+// ambiente; color del césped; pétalos en las aceras (primavera); escarcha (invierno); nubosidad base
+const SEASL=[{sun:[1,.95,.97],si:1,hemi:[1,.96,1],sky:[1,.94,1.02],hor:[1.06,.96,1],grass:[.95,1.1,.85],pet:1,fr:0,cl:.35},
+ {sun:[1.06,1,.88],si:1.15,hemi:[1,1,.94],sky:[.86,1,1.15],hor:[1.06,1.04,.9],grass:[.78,1.18,.66],pet:0,fr:0,cl:.25},
+ {sun:[1.14,.94,.72],si:.95,hemi:[1.06,.96,.84],sky:[1,.96,.88],hor:[1.14,1,.8],grass:[1.38,1,.52],pet:0,fr:0,cl:.4},
+ {sun:[.84,.93,1.12],si:.85,hemi:[.9,.95,1.1],sky:[.82,.88,.95],hor:[.95,.98,1.06],grass:[1.05,.84,.8],pet:0,fr:.22,cl:.55}];
+let SEASK=null;const SEAU={uGrass:{value:new THREE.Vector3(1,1,1)},uPetal:{value:0},uFrost:{value:0}};
+// Suelo: el césped cambia de color, pétalos rosas sueltos por las aceras en primavera y escarcha azulada en invierno
+function seasonGround(m){const prev=m.onBeforeCompile;m.onBeforeCompile=sh=>{if(prev)prev(sh);Object.assign(sh.uniforms,SEAU);
+ sh.vertexShader=sh.vertexShader.replace("#include <common>","#include <common>\nvarying vec2 vGW;").replace("#include <begin_vertex>","#include <begin_vertex>\nvGW=(modelMatrix*vec4(transformed,1.)).xz;");
+ sh.fragmentShader=sh.fragmentShader.replace("#include <common>","#include <common>\nuniform vec3 uGrass;uniform float uPetal,uFrost;varying vec2 vGW;").replace("#include <map_fragment>",`#include <map_fragment>
+ {vec3 c=diffuseColor.rgb;float gr=smoothstep(.01,.06,c.g-max(c.r,c.b));c=mix(c,clamp(c*uGrass,0.,1.),gr);
+  vec2 cell=floor(vGW*2.5);float hs=fract(sin(dot(cell,vec2(12.9898,78.233)))*43758.5453);if(uPetal>0.&&hs>.93&&length(fract(vGW*2.5)-.5)<.22)c=mix(c,vec3(1.,.74,.84),uPetal*(1.-gr*.4));
+  c=mix(c,vec3(.84,.89,.95),uFrost);diffuseColor.rgb=c;}`)};
+ const ck=m.customProgramCacheKey;m.customProgramCacheKey=()=>(ck?ck.call(m):"")+"seas";m.needsUpdate=true;return m}
 let SNOWP=null,PETP=null,LITTER=null,XMAS=null,LANT=null;
 function partBox(n,col,size,opa){const p=new Float32Array(n*3);for(let i=0;i<n;i++){p[i*3]=(Math.random()-.5)*70;p[i*3+1]=Math.random()*30;p[i*3+2]=(Math.random()-.5)*70}
  const g=new THREE.BufferGeometry();g.setAttribute("position",new THREE.BufferAttribute(p,3));const t=canvasTex(32,32,(c)=>{const gr=c.createRadialGradient(16,16,0,16,16,16);gr.addColorStop(0,"rgba(255,255,255,1)");gr.addColorStop(.5,"rgba(255,255,255,.8)");gr.addColorStop(1,"rgba(255,255,255,0)");c.fillStyle=gr;c.fillRect(0,0,32,32)});
  const m=new THREE.Points(g,new THREE.PointsMaterial({color:col,size,map:t,transparent:true,opacity:opa,depthWrite:false}));m.frustumCulled=false;m.visible=false;sc.add(m);return m}
 function seasonInit(){
- for(const[m,k]of[[GROUNDMAT,1],[ROADMAT,.55],[TREEG.tm,.8],[ROOFM,1],[TREEH[2]&&TREEH[2].lm,.9]])if(m)snowMat(m,k);
+ for(const[m,k]of[[GROUNDMAT,1],[ROADMAT,.55],[TREEG.tm,.8],[ROOFM,1],[TREEH[2]&&TREEH[2].lm,.9]])if(m)snowMat(m,k);if(GROUNDMAT)seasonGround(GROUNDMAT);
  SNOWP=partBox(2600,0xffffff,.16,.9);PETP=partBox(420,0xffb7d0,.22,.95);
  // Hojas caídas bajo los árboles (otoño)
  {const L=[],r=rng(9),cols=[0xe8b52a,0xd8642a,0xc23a24,0xf0cf4a,0xb07a2a];for(const t of TREES){if(t.s===2||L.length>12000)continue;for(let k=0;k<3;k++){const a=r()*PI*2,d=.6+r()*2.4,x=t.e[0]+Math.cos(a)*d,z=t.e[2]+Math.sin(a)*d;if(groundD(x,z)>.3)L.push([x,CURB+.02+r()*.01,z,r()*PI,1,1,cols[(r()*cols.length)|0]])}}
@@ -35,7 +50,8 @@ const TGEO={};
 function seasonApply(se){if(se===SEASON||!TREES.length)return;SEASON=se;
  for(let sp=0;sp<3;sp++){const key=sp+"_"+se;if(!TGEO[key])TGEO[key]=treeGeo(sp,se);for(const m of new Set(TREES.filter(t=>t.s===sp).map(t=>t.m))){const bs=m.geometry.boundingSphere,g=TGEO[key].clone();g.boundingSphere=bs.clone();m.geometry.dispose();m.geometry=g}
   const H=TREEH[sp];if(H){H.lm.map=H.dm.map=leafTex(sp,se);H.l.visible=!(se===3&&sp<2)}}
- SEAFOG=se===1?.82:1;if(se!==3)SNOWACC=0}
+ SEAFOG=se===1?.82:1;if(se!==3)SNOWACC=0;
+ SEASK=SEASL[se];SEAU.uGrass.value.fromArray(SEASK.grass);SEAU.uPetal.value=SEASK.pet;SEAU.uFrost.value=SEASK.fr}
 // Cada imagen: estación actual, nieve que cae y se acumula, pétalos, adornos según la hora
 function seasonTick(dt){if(SNOWP===null)return;if(Math.random()<.02)seasonApply(seasonNow());const se=SEASON,lv=qLevel(),c=cam.position,tm=performance.now()/1000,out=state==="play"||state==="cars";
  const snowing=se===3&&WEA.rain>.05;SNOWACC=Math.max(0,Math.min(1,SNOWACC+(snowing?dt*WEA.rain/120:-dt/900)));SNOWU.uSnow.value=SNOWACC;WEA.snow=SNOWACC;
