@@ -38,6 +38,14 @@ Pedido por el usuario (todo con permiso ya dado; descargas permitidas: partes de
 - [x] 8b. Marcas viales solo sobre la calzada de su calle; cielo con nubes, sol, atardeceres y luna.
 - [x] 9. Optimizado (árboles más ligeros, mobiliario y suelo por zonas): Baja 0,77 M triángulos / ~8 ms; Alta 2,5 M / ~13 ms en el PC del usuario (panel pequeño). Publicado y subido.
 
+## Tanda 2026-11-03 (mañana) — orden acordado con el usuario
+- [x] Errores: FootTown encajado entre las patas (56×56 m, 13 m), sombra de contacto bajo los coches, huecos de acera tapados (capa de asfalto + groundD), objetos solo sobre acera, haz de faros en el suelo (beamMat), NPC que siguen recto y salen por el borde, sin cámara satélite. FALTA comprobar visualmente la torre.
+- [ ] Ajustes (Esc/engranaje; también en móvil salvo cambiar teclas): gráficos, hora y clima, volumen por separado, tráfico, cambiar teclas (solo PC), km/h-mph, mostrar/ocultar HUD. Zoom en minimapa y mapa grande; edificios importantes marcados.
+- [ ] Gráficos: lluvia en el parabrisas (no en la cara), LED/carteles más luminosos de noche, relieve en edificios (ventanas hundidas, pilares/franjas, balcones/terrazas, escaleras y aires en fachada, tejados inclinados en casas bajas), tiendas que parezcan tiendas con LOD, toldos proporcionados, konbinis por dentro y más, yatai, árboles con hojas en racimos 3D según calidad.
+- [ ] Coches: buscar modelos 3D libres y preguntar uno a uno (nombre, web, tamaño, licencia).
+- [ ] Calcomanías: packs, color, franjas, dorsales, llantas, tintado, pegatinas libres; anime propio + libre con permiso.
+- [ ] Móvil (al final): el coche va hacia donde apunta el joystick, atrás = marcha atrás; botones freno y freno de mano separados; velocímetro como barra fina arriba.
+
 ## Pendiente / ideas
 - Autopista Shuto elevada.
 - Modelos 3D de coches libres (hypercar = hypercar, drift = estilo japonés…), pedir permiso por cada descarga.
