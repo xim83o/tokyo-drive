@@ -11,8 +11,8 @@ function camHit(x,y,z){if(camBlocked(x,y,z))return true;const c=gq(x,z);
 function clipCam(){if(!ready)return;const tx=px,ty=1.4+bodyY,tz=pz,P=cam.position;let ok=1;
  for(let k=2;k<=20;k++){const f=k/20;if(camHit(tx+(P.x-tx)*f,ty+(P.y-ty)*f,tz+(P.z-tz)*f)){ok=(k-1)/20*.92;break}}
  if(ok<1)P.set(tx+(P.x-tx)*ok,ty+(P.y-ty)*ok,tz+(P.z-tz)*ok);P.y=Math.max(P.y,CURB+.35)}
-function loop(n){requestAnimationFrame(loop);const dt=Math.min(.05,(n-last)/1e3);last=n;
- if(state==="play"){const inp=input();idle=(inp.t||inp.b||Math.abs(inp.s)>.1||inp.hb||keyAct)?0:idle+dt;keyAct=0;step(dt,inp);npcs(dt);
+function loop(n){requestAnimationFrame(loop);const dt=Math.min(.05,(n-last)/1e3);last=n;if(state!=="liv"&&cam.view&&cam.view.enabled){cam.clearViewOffset()}
+ if(state==="play"){const inp=input();idle=(inp.t||inp.b||Math.abs(inp.s)>.1||inp.hb||keyAct)?0:idle+dt;keyAct=0;step(dt,inp);wheelSpin(dt);npcs(dt);
   car.position.set(px,bodyY,pz);car.rotation.set(pitch,h,roll);
   // Niebla que se cierra al acercarse al borde del mapa (ahí hay un muro invisible)
   const de=Math.min(px,pz,W-px,W-pz);sc.fog.far=Math.min(FOGF,90+de*2.2);sc.fog.near=sc.fog.far*.2;
@@ -35,7 +35,10 @@ function loop(n){requestAnimationFrame(loop);const dt=Math.min(.05,(n-last)/1e3)
  else{audio(true);t0+=dt*.1;sc.fog.far=FOGF;sc.fog.near=FOGF*.2;
   // En ajustes con la partida empezada, la imagen se queda quieta (pausa)
   if(state==="set"&&spawned&&setPrev==="play"){}
+  // Editor de calcomanías: la cámara gira alrededor del coche, que queda a la derecha del panel
+  else if(state==="liv"){const a=h+livA,pw=$("livP").offsetWidth+12;cam.position.set(px+Math.sin(a)*6.5,2.2,pz+Math.cos(a)*6.5);cam.lookAt(px,.7,pz);cam.fov=50;
+   cam.setViewOffset(innerWidth,innerHeight,-pw/2,0,innerWidth,innerHeight);cam.updateProjectionMatrix()}
   else if(spawned){cam.position.set(px+Math.sin(t0)*220,90,pz+Math.cos(t0)*220);cam.lookAt(px,20,pz)}else{cam.position.set(TX+Math.sin(t0)*420,140,TZ+Math.cos(t0)*420);cam.lookAt(TX,110,TZ)}}
  envUpdate(dt);if(typeof weather==="function")weather(dt);renderFrame()}
 loop(last);
-loadWorld().then(()=>{initTraffic();applyQuality();ld.hidden=true}).catch(e=>{console.error(e);ld.textContent="No se pudo cargar el mapa. Ábrelo con jugar.bat (necesita el servidor local)."});
+Promise.all([loadWorld(),loadCars()]).then(()=>{initTraffic();applyQuality();ld.hidden=true}).catch(e=>{console.error(e);ld.textContent="No se pudo cargar el mapa. Ábrelo con jugar.bat (necesita el servidor local)."});

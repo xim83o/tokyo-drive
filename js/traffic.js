@@ -68,7 +68,10 @@ function buildLights(){const poles=[],boxes=[],lamps=[];
 const LCOL={g:new THREE.Color(0x20e0a0),y:new THREE.Color(0xffb000),r:new THREE.Color(0xff2a2a),off:new THREE.Color(0x22262c)};
 function lamps2(){if(!LM)return;LIT.forEach((L,i)=>{const st=lightSt(L);LM.setColorAt(i*3,st==="g"?LCOL.g:LCOL.off);LM.setColorAt(i*3+1,st==="y"?LCOL.y:LCOL.off);LM.setColorAt(i*3+2,st==="r"?LCOL.r:LCOL.off)});LM.instanceColor.needsUpdate=true}
 // --- Coches NPC. mode: 0 conduce · 1 desplazado por un choque · 2 parado tras el choque. wreck: siniestrado ---
-function mkNpc(){const g=new THREE.Group(),t=Math.floor(Math.random()*3),w=1.75,l=[3.6,4.3,4.8][t],bh=[.75,.6,.95][t],c=NCOL[Math.floor(Math.random()*NCOL.length)];
+function mkNpc(){if(CMAP){let r=Math.random()*NPCK.reduce((a,k)=>a+k.p,0),K=NPCK[0];for(const k of NPCK){r-=k.p;if(r<=0){K=k;break}}
+  if(MODELS[K.f]){const g=new THREE.Group(),m=modelInst(K.f,K.l,K.paint?NCOL[Math.floor(Math.random()*NCOL.length)]:undefined);g.add(m.s);carLights(g,m.w,m.h,K.l);g.add(blob(m.w,K.l));
+   return{g,x:-9999,z:-9999,h:0,v:0,vt:12,m:K.m,l:K.l,hp:.85+Math.random()*.3,si:0}}}
+ const g=new THREE.Group(),t=Math.floor(Math.random()*3),w=1.75,l=[3.6,4.3,4.8][t],bh=[.75,.6,.95][t],c=NCOL[Math.floor(Math.random()*NCOL.length)];
  const bx=(a,b,d,col,x,y,z)=>{const m=new THREE.Mesh(new THREE.BoxGeometry(a,b,d),new THREE.MeshLambertMaterial({color:col}));m.position.set(x,y,z);g.add(m)};
  bx(w,bh,l,c,0,.3+bh/2,0);bx(w*.88,.5,l*[.55,.45,.75][t],0x1a2430,0,.3+bh+.25,l*[-.05,-.1,.05][t]);
  for(const sx of[-1,1])for(const sz of[-1,1])bx(.25,.7,.7,0x111111,sx*w/2,.35,sz*l*.32);
