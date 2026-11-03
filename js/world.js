@@ -1,7 +1,7 @@
 // Mapa real (OpenStreetMap, ver tools/): consultas de superficie y colisión exacta, suelo, calzada, bordillos, agua y vías.
 // Edificios en buildings.js, Torre de Tokio en tower.js, árboles y mobiliario urbano en props.js
 const MAPNAME="tokyo-tower",HC=20,CURB=.15;
-let MAP=null,ready=false,mapImg=null,TA=0,DEALER=null;   // TA: giro de la Torre de Tokio (su base está alineada con FootTown)
+let MAP=null,ready=false,mapImg=null,TA=0,DEALER=null;const PARK=[];   // TA: giro de la Torre de Tokio (su base está alineada con FootTown)
 // Rejilla espacial: cada celda de 20 m guarda índices de bordes (e), cápsulas (c), polígonos (p), círculos (o) y tramos de calle (r)
 const CELLS=new Map(),EMPTY={e:[],c:[],p:[],o:[],r:[]};
 function gadd(x0,z0,x1,z1,list,v){const i0=Math.floor(x0/HC),i1=Math.floor(x1/HC),j0=Math.floor(z0/HC),j1=Math.floor(z1/HC);
@@ -108,6 +108,12 @@ async function loadWorld(){
    rd=Math.sqrt(rd);if(rd>Math.sqrt(A)*.75+14)continue;const s=Math.abs(d-450)+Math.abs(A-1100)*.05+rd*2;if(s<bs){bs=s;best={b,cx,cz,rq}}}
   if(best){best.b.dealer=1;best.b.h=9;const q=best.rq,dx=best.cx-q.x,dz=best.cz-q.z,l=Math.hypot(dx,dz)||1,o=Math.max(1,q.w/2-2.2);
    DEALER={bx:best.cx,bz:best.cz,x:q.x+dx/l*o,z:q.z+dz/l*o,h:q.a}}}
+ // Edificios con el eje de una calle por dentro (casas "en medio de la calle" en OSM): se quitan, salvo templos, puertas y FootTown
+ {const G=new Map(),key=(i,j)=>i*1000+j;MAP.buildings.forEach(b=>{if(b.k||b.dealer)return;let x0=1e9,z0=1e9,x1=-1e9,z1=-1e9;for(let i=0;i<b.p.length;i+=2){x0=Math.min(x0,b.p[i]);x1=Math.max(x1,b.p[i]);z0=Math.min(z0,b.p[i+1]);z1=Math.max(z1,b.p[i+1])}
+   b.bb=[x0,z0,x1,z1];for(let i=Math.floor(x0/20);i<=Math.floor(x1/20);i++)for(let j=Math.floor(z0/20);j<=Math.floor(z1/20);j++){const k=key(i,j);if(!G.has(k))G.set(k,[]);G.get(k).push(b)}});
+  for(const r of MAP.roads){const p=r.p;for(let i=2;i<p.length;i+=2){const ax=p[i-2],az=p[i-1],bx=p[i],bz=p[i+1],n=Math.ceil(Math.hypot(bx-ax,bz-az)/2);
+   for(let k=0;k<=n;k++){const x=ax+(bx-ax)*k/n,z=az+(bz-az)*k/n,l=G.get(key(Math.floor(x/20),Math.floor(z/20)));if(!l)continue;for(const b of l)if(!b.del&&x>b.bb[0]&&x<b.bb[2]&&z>b.bb[1]&&z<b.bb[3]&&inPoly(b.p,x,z))b.del=1}}}
+  MAP.buildings=MAP.buildings.filter(b=>!b.del)}
  // Edificios primero: las calles se estrechan donde se meterían en uno, y los adornos comprueban si caen dentro
  for(const b of MAP.buildings)addPoly(b.p,b.h);
  for(const R of MAP.water)addPoly(R,0);
@@ -117,12 +123,26 @@ async function loadWorld(){
    for(;hw>2.6;hw*=.88){let hit=false;for(let k=0;k<=4&&!hit;k++){const x=ax+(bx-ax)*k/4,z=az+(bz-az)*k/4;if(inBuilding(x+lx*hw,z+lz*hw)||inBuilding(x-lx*hw,z-lz*hw))hit=true}if(!hit)break}
    r.hw.push(hw);quad(ra,ax,az,bx,bz,hw,0);const k=RSG.length/6;RSG.push(ax,az,bx,bz,hw,ri);gadd(Math.min(ax,bx)-hw-3,Math.min(az,bz)-hw-3,Math.max(ax,bx)+hw+3,Math.max(az,bz)+hw+3,"r",k)}
   for(let i=0;i<p.length;i+=2){const s=i/2,hw=Math.min(r.hw[Math.max(0,s-1)],r.hw[Math.min(r.hw.length-1,s)]);for(let k=0;k<12;k++){const a0=k/12*PI*2,a1=(k+1)/12*PI*2;flatTri(ra,0,p[i],p[i+1],p[i]+Math.cos(a0)*hw,p[i+1]+Math.sin(a0)*hw,p[i]+Math.cos(a1)*hw,p[i+1]+Math.sin(a1)*hw)}}});
+ // Calles sin salida (un extremo que no toca ninguna otra calle y no está en el borde del mapa): aparcamiento de 12 m con plazas
+ // donde quepa y, si no, un final redondo para dar la vuelta con su señal. Se añaden como tramos de calzada (dejan hueco y bordillo)
+ {const use=new Map();for(const r of MAP.roads)if(r.n)r.n.forEach((id,i)=>{if(i===0||i===r.n.length-1)use.set(id,(use.get(id)||0)+1);else use.set(id,(use.get(id)||0)+2)});
+  const fits=(pts)=>pts.every(([x,z])=>!inBuilding(x,z)&&x>30&&z>30&&x<W-30&&z<W-30);
+  MAP.roads.forEach((r,ri)=>{if(!r.n)return;const p=r.p;for(const end of[0,1]){const id=end?r.n[r.n.length-1]:r.n[0];if(use.get(id)!==1)continue;
+   const i=end?p.length-2:0,j=end?p.length-4:2,x=p[i],z=p[i+1],L=Math.hypot(x-p[j],z-p[j+1])||1,ux=(x-p[j])/L,uz=(z-p[j+1])/L,hw=r.hw[end?r.hw.length-1:0],lx=uz,lz=-ux;
+   const pw=hw+3.5,ex=x+ux*13,ez=z+uz*13,rect=[];for(let a=0;a<=13;a+=3)for(const s of[-1,0,1])rect.push([x+ux*a+lx*pw*s,z+uz*a+lz*pw*s]);
+   if(fits(rect)){quad(ra,x,z,ex,ez,pw,0);const k=RSG.length/6;RSG.push(x,z,ex,ez,pw,ri);gadd(Math.min(x,ex)-pw-3,Math.min(z,ez)-pw-3,Math.max(x,ex)+pw+3,Math.max(z,ez)+pw+3,"r",k);PARK.push({x,z,ux,uz,pw,t:"p"})}
+   else{const R=Math.max(hw,5.5),circ=[];for(let a=0;a<8;a++)circ.push([x+ux*2+Math.cos(a/8*PI*2)*R,z+uz*2+Math.sin(a/8*PI*2)*R]);if(!fits(circ))continue;
+    const cx=x+ux*2,cz=z+uz*2;for(let k2=0;k2<16;k2++){const a0=k2/16*PI*2,a1=(k2+1)/16*PI*2;flatTri(ra,0,cx,cz,cx+Math.cos(a0)*R,cz+Math.sin(a0)*R,cx+Math.cos(a1)*R,cz+Math.sin(a1)*R)}
+    const k=RSG.length/6;RSG.push(cx,cz,cx+ux*.01,cz+uz*.01,R,ri);gadd(cx-R-3,cz-R-3,cx+R+3,cz+R+3,"r",k);PARK.push({x:cx,z:cz,ux,uz,pw:R,t:"c"})}}})}
  // Capa de asfalto por debajo de todo el mapa: tapa las franjas estrechas entre calles donde no cabe acera (antes eran huecos).
  // No pasa por el canal (ahí se ve el agua, más abajo): se hace en casillas de 20 m y se saltan las que tocan el cauce
  for(let x=0;x<W;x+=20)for(let z=0;z<W;z+=20){if(riverD(x+10,z+10)<14.2)continue;flatTri(ra,-.03,x,z,x+20,z+20,x+20,z);flatTri(ra,-.03,x,z,x,z+20,x+20,z+20)}
  // Colisión del canal: los dos bordes (no el cauce entero), salvo donde pasa una calle por encima (puentes)
  for(const r of MAP.rivers){const p=r.p,hw=r.w/2;for(let i=2;i<p.length;i+=2){const ax=p[i-2],az=p[i-1],bx=p[i],bz=p[i+1],L=Math.hypot(bx-ax,bz-az)||1,lx=(bz-az)/L*hw,lz=-(bx-ax)/L*hw,n=Math.ceil(L/2);
-  for(const s of[-1,1])for(let k=0;k<n;k++){const x0=ax+(bx-ax)*k/n+lx*s,z0=az+(bz-az)*k/n+lz*s,x1=ax+(bx-ax)*(k+1)/n+lx*s,z1=az+(bz-az)*(k+1)/n+lz*s;if(roadAt((x0+x1)/2,(z0+z1)/2)<0)addEdge(x0,z0,x1,z1)}}}
+  // (solo se abre donde la calle cruza de verdad: también hay calzada 3 m hacia dentro del cauce; si una calle va pegada al
+  // borde, el borde sigue cerrado)
+  for(const s of[-1,1])for(let k=0;k<n;k++){const x0=ax+(bx-ax)*k/n+lx*s,z0=az+(bz-az)*k/n+lz*s,x1=ax+(bx-ax)*(k+1)/n+lx*s,z1=az+(bz-az)*(k+1)/n+lz*s,mx=(x0+x1)/2,mz=(z0+z1)/2;
+   if(!(roadAt(mx,mz)>=0&&roadAt(mx-lx*s*3/hw,mz-lz*s*3/hw)>=0))addEdge(x0,z0,x1,z1)}}}
  const asph=canvasTex(256,256,(g,w,h)=>{g.fillStyle="#3a3c42";g.fillRect(0,0,w,h);const r=rng(5);for(let i=0;i<9000;i++){const v=44+r()*44|0;g.fillStyle=`rgb(${v},${v},${v+3})`;g.fillRect(r()*w,r()*h,1+r()*1.6,1+r()*1.6)}
   g.globalAlpha=.08;for(let i=0;i<30;i++){g.fillStyle=r()<.5?"#000":"#888";g.beginPath();g.ellipse(r()*w,r()*h,8+r()*30,4+r()*14,r()*PI,0,7);g.fill()}g.globalAlpha=1},true);
  ROADMAT=beamMat(new THREE.MeshPhongMaterial({map:asph,specularMap:puddleTex(),specular:0x000000,shininess:70,lightMap:LIGHTMAP,lightMapIntensity:0}));
@@ -142,6 +162,8 @@ async function loadWorld(){
  buildBuildings();buildTower();decorate();drawMapImg();ready=true}
 
 let ROADMAT=null,GROUNDMAT=null;
+// ¿Dentro de un estanque o de la bahía?
+function inWater(x,z){for(const R of MAP.water)if(inPoly(R,x,z))return true;return false}
 // Distancia al borde del canal (negativa dentro del cauce)
 function riverD(x,z){let d=1e9;for(const r of MAP.rivers){const p=r.p;for(let i=2;i<p.length;i+=2){const q=Math.sqrt(segD2(x,z,p[i-2],p[i-1],p[i],p[i+1]))-r.w/2;if(q<d)d=q}}return d}
 // Mapa de luz nocturna de todas las farolas (1 píxel ≈ 1,2 m): se dibuja en props.js y se suma al asfalto y a las aceras
@@ -162,6 +184,10 @@ function buildGround(){const GS=MOBILE?4:3,N=Math.ceil(W/GS)+1,SD=new Float32Arr
  for(const r of MAP.rivers){const p=r.p,hw=r.w/2;for(let k=2;k<p.length;k+=2){const ax=p[k-2],az=p[k-1],bx=p[k],bz=p[k+1],m=hw+GS*2;
   const i0=Math.max(0,Math.floor((Math.min(ax,bx)-m)/GS)),i1=Math.min(N-1,Math.ceil((Math.max(ax,bx)+m)/GS)),j0=Math.max(0,Math.floor((Math.min(az,bz)-m)/GS)),j1=Math.min(N-1,Math.ceil((Math.max(az,bz)+m)/GS));
   for(let j=j0;j<=j1;j++)for(let i=i0;i<=i1;i++){const d=Math.sqrt(segD2(i*GS,j*GS,ax,az,bx,bz))-hw,o=j*N+i;if(d<RD[o])RD[o]=d}}}
+ // Estanques y lagos (polígonos de agua de OSM dentro del mapa): también dejan hueco en el suelo
+ for(const R of MAP.water){let x0=1e9,z0=1e9,x1=-1e9,z1=-1e9;for(let i=0;i<R.length;i+=2){x0=Math.min(x0,R[i]);x1=Math.max(x1,R[i]);z0=Math.min(z0,R[i+1]);z1=Math.max(z1,R[i+1])}
+  const i0=Math.max(0,Math.floor(x0/GS)-2),i1=Math.min(N-1,Math.ceil(x1/GS)+2),j0=Math.max(0,Math.floor(z0/GS)-2),j1=Math.min(N-1,Math.ceil(z1/GS)+2);
+  for(let j=j0;j<=j1;j++)for(let i=i0;i<=i1;i++){const x=i*GS,z=j*GS;let d=1e9;for(let k=0;k<R.length;k+=2){const m=(k+2)%R.length;d=Math.min(d,segD2(x,z,R[k],R[k+1],R[m],R[m+1]))}d=Math.sqrt(d)*(inPoly(R,x,z)?-1:1);const o=j*N+i;if(d<RD[o])RD[o]=d}}
  for(let o=0;o<SD.length;o++)if(RD[o]<SD[o]){const t=SD[o];SD[o]=RD[o];RD[o]=t<9?-1:-2}else RD[o]=1;
  GSD=SD;GSN=N;GSS=GS;
  const pos=[],cb=[],Y=CURB;
@@ -194,7 +220,7 @@ function buildCanal(){if(!MAP.rivers.length)return;const wa=[],wl=[],rl=[],gi=[]
  const vq=(a,x0,z0,x1,z1,y0,y1)=>a.push(x0,y0,z0,x1,y0,z1,x1,y1,z1,x0,y0,z0,x1,y1,z1,x0,y1,z0);
  for(const r of MAP.rivers){const p=r.p,h2=r.w/2;ribbon(wa,p,h2+.3,WY);
   for(let i=2;i<p.length;i+=2){const ax=p[i-2],az=p[i-1],bx=p[i],bz=p[i+1],L=Math.hypot(bx-ax,bz-az)||1,lx=(bz-az)/L,lz=-(bx-ax)/L,n=Math.ceil(L/2);
-   for(const s of[-1,1])for(let k=0;k<n;k++){const x0=ax+(bx-ax)*k/n+lx*h2*s,z0=az+(bz-az)*k/n+lz*h2*s,x1=ax+(bx-ax)*(k+1)/n+lx*h2*s,z1=az+(bz-az)*(k+1)/n+lz*h2*s,road=roadAt((x0+x1)/2,(z0+z1)/2)>=0;
+   for(const s of[-1,1])for(let k=0;k<n;k++){const x0=ax+(bx-ax)*k/n+lx*h2*s,z0=az+(bz-az)*k/n+lz*h2*s,x1=ax+(bx-ax)*(k+1)/n+lx*h2*s,z1=az+(bz-az)*(k+1)/n+lz*h2*s,road=roadAt((x0+x1)/2,(z0+z1)/2)>=0&&roadAt((x0+x1)/2-lx*s*3,(z0+z1)/2-lz*s*3)>=0;
     vq(wl,x0,z0,x1,z1,WY-.6,road?-.45:CURB);if(!road)vq(rl,x0,z0,x1,z1,CURB,CURB+1.1)}
    // Autopista elevada: tablero de 13 m a 12 m de altura, pretiles y pilares en el centro del cauce
    quad(hd,ax,az,bx,bz,6.5,12);quad(hs,ax,az,bx,bz,6.5,11.2);for(const s of[-1,1]){const x0=ax+lx*6.5*s,z0=az+lz*6.5*s,x1=bx+lx*6.5*s,z1=bz+lz*6.5*s;vq(hw,x0,z0,x1,z1,11.2,13.1)}
@@ -213,7 +239,9 @@ function buildCanal(){if(!MAP.rivers.length)return;const wa=[],wl=[],rl=[],gi=[]
    totalEmissiveRadiance+=uNightW*(vec3(.02,.05,.09)+vec3(1.,.72,.4)*pow(max(0.,s),6.)*.55+vec3(.4,.7,1.)*pow(max(0.,-s),8.)*.25);}`).replace("#include <normal_fragment_maps>",`#include <normal_fragment_maps>
   {vec2 q=vWw.xz;float t=uTime;vec3 pn=vec3(sin(q.x*.9+t*1.3)*.5+sin(q.x*2.3-q.y*1.7+t*2.1)*.3+sin(q.x*5.1+q.y*3.7-t*3.)*.12,0.,cos(q.y*1.1-t*1.1)*.5+sin(q.y*2.9+q.x*1.3+t*1.7)*.3+cos(q.y*4.7-q.x*4.3+t*2.6)*.12);
    normal=normalize(normal+(viewMatrix*vec4(pn*.22,0.)).xyz);}`)};
- for(const m of mkMeshZ(wa,WATERM,0))worldUV2(m);
+ // Estanques y lagos: agua 0,6 m por debajo de la acera con borde de piedra
+ const pw=[],pb=[];for(const R of MAP.water){polyFill(pw,R,-.6);for(let i=0;i<R.length;i+=2){const j=(i+2)%R.length;vq(pb,R[i],R[i+1],R[j],R[j+1],-1,CURB+.05)}}
+ for(const m of mkMeshZ(wa.concat(pw),WATERM,0))worldUV2(m);if(pb.length)mkMeshZ(pb,new THREE.MeshLambertMaterial({color:0x8b877e,side:THREE.DoubleSide}),0,1);
  mkMeshZ(wl,conc,0,1);if(rl.length)mkMesh(rl,RAILM||(RAILM=new THREE.MeshLambertMaterial({color:0x9aa1a8,transparent:true,opacity:.6,side:THREE.DoubleSide,depthWrite:false})));if(gi.length)mkMesh(gi,conc,0,null,2);
  // Autopista: asfalto arriba (con la misma textura que las calles), hormigón debajo y a los lados
  for(const m of mkMeshZ(hd,ROADMAT,0,1)){worldUV2(m);const q=m.geometry.attributes.position.array,uv=new Float32Array(q.length/3*2);for(let i=0,j=0;i<q.length;i+=3,j+=2){uv[j]=q[i]/7;uv[j+1]=q[i+2]/7}m.geometry.setAttribute("uv",new THREE.BufferAttribute(uv,2))}

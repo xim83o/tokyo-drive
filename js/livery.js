@@ -125,9 +125,6 @@ function buildDealer(){if(!DEALER||DMK)return;DMK=new THREE.Group();DMK.position
  DMK.add(new THREE.Mesh(new THREE.RingGeometry(2.6,3.2,48).rotateX(-PI/2),new THREE.MeshBasicMaterial({color:0x29d3ff,transparent:true,opacity:.85,blending:THREE.AdditiveBlending,depthWrite:false})));
  const ic=canvasTex(128,128,(c)=>{c.font="84px system-ui";c.textAlign="center";c.textBaseline="middle";c.fillText("🎨",64,70)});DMK.add(new THREE.Mesh(new THREE.PlaneGeometry(2.4,2.4).rotateX(-PI/2),new THREE.MeshBasicMaterial({map:ic,transparent:true,depthWrite:false})));
  sc.add(DMK);
- // Haz de luz azul vertical sobre el edificio: se ve desde lejos por encima de los tejados
- const bm=new THREE.Mesh(new THREE.CylinderGeometry(1.4,1.4,160,16,1,true),new THREE.MeshBasicMaterial({color:0x29d3ff,transparent:true,opacity:.35,blending:THREE.AdditiveBlending,depthWrite:false,fog:false,side:THREE.DoubleSide}));
- bm.position.set(DEALER.bx,80,DEALER.bz);sc.add(bm);DMK.userData.beam=bm;
  const s=new THREE.Mesh(new THREE.PlaneGeometry(14,2.2),new THREE.MeshLambertMaterial({map:logoTex(1024,160),emissiveMap:logoTex(1024,160),emissive:0xffffff,emissiveIntensity:.3,side:THREE.DoubleSide}));
  // En el borde del tejado que da a la calle (desde el centro del edificio hacia la marca, hasta salir de él)
  const dx=DEALER.x-DEALER.bx,dz=DEALER.z-DEALER.bz,l=Math.hypot(dx,dz)||1;let t=0;while(t<l&&inBuilding(DEALER.bx+dx/l*(t+1),DEALER.bz+dz/l*(t+1)))t++;

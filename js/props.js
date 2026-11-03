@@ -56,6 +56,19 @@ function treeGeoHi(sp){const r=rng(77+sp*11),wood=[],leaf=[];
   for(const g of arr){P.set(g.attributes.position.array,o);Nn.set(g.attributes.normal.array,o);U.set(g.attributes.uv.array,ou);o+=g.attributes.position.count*3;ou+=g.attributes.position.count*2}
   const g=new THREE.BufferGeometry();g.setAttribute("position",new THREE.BufferAttribute(P,3));g.setAttribute("normal",new THREE.BufferAttribute(Nn,3));g.setAttribute("uv",new THREE.BufferAttribute(U,2));return g};
  return[merge(wood),merge(leaf)]}
+// Aparcamientos y finales redondos de las calles sin salida (world.js → PARK): plazas pintadas, coches aparcados (cuando ya están
+// cargados los modelos) y señal de "行き止まり" (calle sin salida) en los finales redondos
+function placeParked(){if(!PARK.length)return;const ln=[],sg=[],r=rng(77);
+ for(const P of PARK){const lx=P.uz,lz=-P.ux;
+  if(P.t==="p"){for(let o=-P.pw+.2;o<=P.pw-.2;o+=2.6){const x0=P.x+P.ux*6+lx*o,z0=P.z+P.uz*6+lz*o,x1=P.x+P.ux*12.6+lx*o,z1=P.z+P.uz*12.6+lz*o;quad(ln,x0,z0,x1,z1,.06,.025)}
+   quad(ln,P.x+P.ux*6+lx*-P.pw,P.z+P.uz*6+lz*-P.pw,P.x+P.ux*6+lx*P.pw,P.z+P.uz*6+lz*P.pw,.06,.025);
+   for(let o=-P.pw+1.5;o<P.pw-1.2;o+=2.6){if(r()<.45||!CMAP)continue;const K=NPCK[(r()*5)|0];if(!MODELS[K.f])continue;const x=P.x+P.ux*9.3+lx*o,z=P.z+P.uz*9.3+lz*o,
+     m=modelInst(K.f,4.2,K.paint?NCOL[(r()*NCOL.length)|0]:undefined,true),g=new THREE.Group();g.add(m.s);g.position.set(x,0,z);g.rotation.y=Math.atan2(-P.ux,-P.uz);sc.add(g);
+     addCirc(x+P.ux*1.1,z+P.uz*1.1,.95);addCirc(x-P.ux*1.1,z-P.uz*1.1,.95)}}
+  else sg.push([P.x+lx*(P.pw+.8),CURB,P.z+lz*(P.pw+.8),Math.atan2(-P.ux,-P.uz)])}
+ if(ln.length)mkMesh(ln,new THREE.MeshLambertMaterial({color:0xf2f2f2,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-6}));
+ if(sg.length){const t=canvasTex(64,64,g=>{g.fillStyle="#1d4fa0";g.fillRect(0,0,64,64);g.strokeStyle="#fff";g.lineWidth=3;g.strokeRect(3,3,58,58);g.fillStyle="#fff";g.fillRect(28,22,8,32);g.fillRect(14,14,36,8);g.font="bold 10px 'Yu Gothic',sans-serif";g.textAlign="center";g.fillText("行き止まり",32,62)});
+  inst(new THREE.CylinderGeometry(.04,.04,2.4,6).translate(0,1.2,0),new THREE.MeshLambertMaterial({color:0x9aa0a8}),sg,0);inst(new THREE.PlaneGeometry(.6,.6).translate(0,2.55,.05),new THREE.MeshLambertMaterial({map:t,side:THREE.DoubleSide}),sg,0);for(const s of sg)addCirc(s[0],s[2],.1)}}
 function decorate(){const tr=[],lp=[],sg=[],vm=[],up=[],wires=[],rnd=rng(11),TMAX=MOBILE?1800:3500;
  // Solo sobre acera dibujada (no en franjas estrechas entre calles), fuera de edificios y obstáculos
  const free=(x,z,m)=>x>5&&z>5&&x<W-5&&z<W-5&&roadAt(x,z)<0&&groundD(x,z)>m+.25&&!blockedAt(x,z,m);

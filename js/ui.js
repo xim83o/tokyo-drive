@@ -28,8 +28,8 @@ const mapS=()=>640*mapV.z/W,mapO=()=>[mapV.x-W/2/mapV.z,mapV.z0-W/2/mapV.z];
 function mapClamp(){const h=W/2/mapV.z;mapV.x=Math.max(h,Math.min(W-h,mapV.x));mapV.z0=Math.max(h,Math.min(W-h,mapV.z0))}
 function mapZoom(d,cx,cz){const z=Math.max(1,Math.min(8,mapV.z*(d>0?1.5:1/1.5)));if(cx!==undefined){const k=1-mapV.z/z;mapV.x+=(cx-mapV.x)*k;mapV.z0+=(cz-mapV.z0)*k}mapV.z=z;mapClamp();drawMap()}
 // Lugares importantes con nombre en el mapa
-function landmarks(){if(LMK||!ready)return LMK;LMK=[{x:TX,z:TZ,n:T("Torre de Tokio"),c:"#ff5a3c"}];const T=MAP.buildings.filter(b=>b.k===1||b.k===3);
- if(T.length){let x=0,z=0,n=0;for(const b of T)for(let i=0;i<b.p.length;i+=2){x+=b.p[i];z+=b.p[i+1];n++}LMK.push({x:x/n,z:z/n,n:T("Templo Zojoji"),c:"#e2553f"})}
+function landmarks(){if(LMK||!ready)return LMK;LMK=[{x:TX,z:TZ,n:T("Torre de Tokio"),c:"#ff5a3c"}];const TP=MAP.buildings.filter(b=>b.k===1||b.k===3);
+ if(TP.length){let x=0,z=0,n=0;for(const b of TP)for(let i=0;i<b.p.length;i+=2){x+=b.p[i];z+=b.p[i+1];n++}LMK.push({x:x/n,z:z/n,n:T("Templo Zojoji"),c:"#e2553f"})}
  const ft=MAP.buildings.find(b=>b.k===2);if(ft)LMK.push({x:TX,z:TZ+34,n:"FootTown",c:"#f2f2ef",s:1});
  if(DEALER)LMK.push({x:DEALER.bx,z:DEALER.bz,n:T("🎨 Concesionario"),c:"#29d3ff"});
  const big=MAP.green.filter(g=>g.k!==2).map(g=>{let a=0,x=0,z=0;const R=g.p;for(let i=0;i<R.length;i+=2){x+=R[i];z+=R[i+1]}const n=R.length/2;for(let i=0,j=R.length-2;i<R.length;j=i,i+=2)a+=R[j]*R[i+1]-R[i]*R[j+1];return{x:x/n,z:z/n,a:Math.abs(a)/2}}).filter(g=>g.a>20000).sort((a,b)=>b.a-a.a).slice(0,4);
@@ -38,8 +38,11 @@ function drawMap(){const S=mapS(),[ox,oz]=mapO();mx.setTransform(1,0,0,1,0,0);mx
  mx.setTransform(S,0,0,S,-ox*S,-oz*S);if(mapImg)mx.drawImage(mapImg,0,0);mx.setTransform(1,0,0,1,0,0);
  const P=(x,z)=>[(x-ox)*S,(z-oz)*S];mx.textAlign="center";mx.textBaseline="bottom";
  for(const l of landmarks()||[]){if(l.s&&mapV.z<2)continue;const[x,y]=P(l.x,l.z);mx.font=`600 ${l.s?11:13}px system-ui`;mx.lineWidth=3;mx.strokeStyle="rgba(0,0,0,.8)";mx.strokeText(l.n,x,y-(l.s?2:16));mx.fillStyle=l.c;mx.fillText(l.n,x,y-(l.s?2:16))}
- const q=pend||(spawned?{x:px,z:pz,h}:null);
- if(q){const[x,y]=P(q.x,q.z),[x2,y2]=P(q.x+Math.sin(q.h)*40,q.z+Math.cos(q.h)*40);mx.fillStyle="#fff";mx.strokeStyle="#e5173f";mx.lineWidth=3;mx.beginPath();mx.arc(x,y,7,0,7);mx.fill();mx.stroke();
+ // Concesionario: círculo azul con 🎨
+ if(DEALER){const[x,y]=P(DEALER.bx,DEALER.bz);mx.fillStyle="#29d3ff";mx.strokeStyle="#fff";mx.lineWidth=3;mx.beginPath();mx.arc(x,y,12,0,7);mx.fill();mx.stroke();mx.font="14px system-ui";mx.textBaseline="middle";mx.fillText("🎨",x,y+1);mx.textBaseline="bottom"}
+ // Tu coche (cochecito de su color) y, si has elegido otro sitio, la marca de donde aparecerás
+ if(spawned){const[x,y]=P(px,pz);carIcon(mx,x,y,PI-h,1.1)}
+ if(pend){const[x,y]=P(pend.x,pend.z),[x2,y2]=P(pend.x+Math.sin(pend.h)*40,pend.z+Math.cos(pend.h)*40);mx.fillStyle="#fff";mx.strokeStyle="#e5173f";mx.lineWidth=3;mx.beginPath();mx.arc(x,y,7,0,7);mx.fill();mx.stroke();
   mx.beginPath();mx.moveTo(x,y);mx.lineTo(x2,y2);mx.stroke()}}
 // Arrastrar para mover el mapa (con el dedo o el ratón); la rueda o el pellizco hacen zoom
 let mDrag=null,mMoved=false;const mPts=new Map();

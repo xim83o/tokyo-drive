@@ -33,4 +33,10 @@ function mini(){const s=MZ,c=95;mc.setTransform(1,0,0,1,0,0);mc.clearRect(0,0,19
  mc.restore();mc.setTransform(1,0,0,1,0,0);
  // Concesionario: icono en su sitio o, si está lejos, en el borde del minimapa señalando hacia dónde está
  if(DEALER){const dx=DEALER.bx-px,dz=DEALER.bz-pz;let x=a*dx+cc*dz,y=b*dx+d*dz;const r=Math.hypot(x,y);if(r>76){x*=76/r;y*=76/r}
-  mc.fillStyle="#29d3ff";mc.strokeStyle="#fff";mc.lineWidth=3;mc.beginPath();mc.arc(c+x,c+y,13,0,7);mc.fill();mc.stroke();mc.font="15px system-ui";mc.textAlign="center";mc.textBaseline="middle";mc.fillText("🎨",c+x,c+y+1)}mc.fillStyle="#e5173f";mc.strokeStyle="#fff";mc.lineWidth=2;mc.beginPath();mc.moveTo(c,c-11);mc.lineTo(c+8,c+9);mc.lineTo(c-8,c+9);mc.closePath();mc.fill();mc.stroke()}
+  mc.fillStyle="#29d3ff";mc.strokeStyle="#fff";mc.lineWidth=3;mc.beginPath();mc.arc(c+x,c+y,13,0,7);mc.fill();mc.stroke();mc.font="15px system-ui";mc.textAlign="center";mc.textBaseline="middle";mc.fillText("🎨",c+x,c+y+1)}carIcon(mc,c,c,0,1)}
+// Cochecito visto desde arriba (del color de tu coche, borde blanco y sombra) que marca dónde estás. ang 0 = mirando hacia arriba
+function carIcon(g,x,y,ang,s){const col="#"+new THREE.Color(typeof carPaint==="function"?carPaint(carK):cur.c).getHexString();g.save();g.translate(x,y);g.rotate(ang);g.scale(s,s);
+ g.shadowColor="rgba(0,0,0,.7)";g.shadowBlur=6;g.fillStyle="#fff";g.beginPath();g.roundRect?g.roundRect(-8,-14,16,28,5):g.rect(-8,-14,16,28);g.fill();g.shadowBlur=0;
+ g.fillStyle="#111";for(const[wx,wy]of[[-8.5,-8],[5.5,-8],[-8.5,5],[5.5,5]])g.fillRect(wx,wy,3,5);
+ g.fillStyle=col;g.beginPath();g.roundRect?g.roundRect(-6.5,-12.5,13,25,4):g.rect(-6.5,-12.5,13,25);g.fill();
+ g.fillStyle="#1d2733";g.fillRect(-5,-6,10,4);g.fillRect(-4.5,5,9,3);g.fillStyle="#fff6c8";g.fillRect(-5.5,-12.5,3,2);g.fillRect(2.5,-12.5,3,2);g.restore()}

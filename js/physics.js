@@ -20,6 +20,8 @@ function step(dt,i){thrL=i.t;brkL=i.b;stV+=(i.s-stV)*Math.min(1,dt*10);
  const n=Math.max(1,Math.ceil(Math.hypot(vx,vz)*dt/.4));for(let k=0;k<n;k++){px+=vx*dt/n;pz+=vz*dt/n;carHit(dt)}
  // Borde del mapa: muro invisible (la niebla lo tapa)
  if(px<8||px>W-8){px=Math.max(8,Math.min(W-8,px));vx=0}if(pz<8||pz>W-8){pz=Math.max(8,Math.min(W-8,pz));vz=0}
+ // Si el coche acaba en el agua (fuera de un puente), se hunde y reaparece en la calle más cercana
+ if(ready&&roadAt(px,pz)<0&&(riverD(px,pz)<-1||inWater(px,pz))){spawnAt(nearestRoad(px,pz,false));vx=vz=0;if(typeof thump==="function")thump(8)}
  suspension(dt)}
 // Hitbox del coche: tres círculos del ancho del coche repartidos a lo largo, contra los bordes reales de edificios, agua, vías y postes
 const CO={x:0,z:0};

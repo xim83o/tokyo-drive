@@ -21,7 +21,9 @@ function effects(dt){const vf=vx*Math.sin(h)+vz*Math.cos(h),sp=Math.hypot(vx,vz)
   const ox=-dz/d*.16,oz=dx/d*.16,y=surfH(q[0],q[1])+.02,y0=surfH(T.x,T.z)+.02,a=T.l||[T.x-ox,y0,T.z-oz,T.x+ox,y0,T.z+oz],b=[q[0]-ox,y,q[1]-oz,q[0]+ox,y,q[1]+oz];
   MKP.set([a[0],a[1],a[2],b[0],b[1],b[2],b[3],b[4],b[5],a[0],a[1],a[2],b[3],b[4],b[5],a[3],a[4],a[5]],mi*18);mb[mi]=now;mkk[mi]=.4+.6*sk;mi=(mi+1)%SEG;
   T.x=q[0];T.z=q[1];T.l=b;chg=true});
- if(sk>0){sT+=dt;if(sT>.04&&sk>.2){sT=0;const q=wp(Math.random()<.5?-1:1),m=SM[si];si=(si+1)%50;m.s.position.set(q[0],.4,q[1]);m.s.visible=true;m.l=0;m.o=.55*sk;m.vx=vx*.2+(Math.random()-.5);m.vy=.8+Math.random()*.6;m.vz=vz*.2+(Math.random()-.5)}}
+ // Con nieve en el suelo las ruedas levantan polvo de nieve blanco (más y antes) en vez de humo gris
+ const sn=(WEA.snow||0)>.15;
+ if(sk>0){sT+=dt;if(sT>(sn?.025:.04)&&sk>(sn?.08:.2)){sT=0;const q=wp(Math.random()<.5?-1:1),m=SM[si];si=(si+1)%50;m.s.position.set(q[0],.4,q[1]);m.s.visible=true;m.l=0;m.o=(sn?.9:.55)*Math.max(sk,sn?.5:0);m.s.material.color.setHex(sn?0xffffff:0xdddddd);m.vx=vx*.2+(Math.random()-.5);m.vy=.8+Math.random()*.6;m.vz=vz*.2+(Math.random()-.5)}}
  // Las marcas se aclaran con el tiempo hasta el color del asfalto; las caducadas se aplastan a un punto
  for(let k=0;k<SEG;k++){if(mb[k]<0)continue;const t=(now-mb[k])/LIFE;
   if(t>=1){MKP.fill(0,k*18,k*18+18);mb[k]=-99;chg=true}else{mcol.copy(RC).lerp(BK,mkk[k]*(1-t));for(let v=k*18;v<k*18+18;v+=3){MKC[v]=mcol.r;MKC[v+1]=mcol.g;MKC[v+2]=mcol.b}chg=true}}
