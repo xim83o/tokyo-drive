@@ -25,7 +25,9 @@ function drawSettings(){const P=$("setP");P.innerHTML="<h1>Ajustes</h1>";
   note("La calidad cambia la resolución, el detalle de árboles y edificios y cuántas farolas dan luz real. Si el juego va a tirones, baja la calidad o la distancia.")}
  else if(setTab==="time"){env("Hora",[["real","Tokio real"],["cycle","Día y noche"],["day","Siempre de día"],["night","Siempre de noche"]],"mode",()=>{cyc.hidden=ENV.mode!=="cycle"});
   const cyc=env("Un día dura",[[5,"5 min"],[10,"10 min"],[15,"15 min"],[30,"30 min"],[60,"60 min"]],"cycle");cyc.hidden=ENV.mode!=="cycle";
-  env("Clima",[["auto","Aleatorio"],["clear","Despejado"],["rain","Lluvia"],["storm","Tormenta"]],"wx")}
+  env("Clima",[["auto","Aleatorio"],["clear","Despejado"],["rain","Lluvia"],["storm","Tormenta"]],"wx");
+  if(ENV.season===undefined)ENV.season="auto";env("Estación",[["auto","Fecha de Japón"],[0,"Primavera"],[1,"Verano"],[2,"Otoño"],[3,"Invierno"]],"season",()=>{if(ready)seasonApply(seasonNow())});
+  note("En invierno, si llueve, nieva: la nieve se acumula en el suelo y los tejados y el coche agarra menos.")}
  else if(setTab==="snd"){slider("General","m");slider("Motor","e");slider("Golpes y derrapes","fx");slider("Lluvia y truenos","rain");slider("Claxon","horn");
   row("Sonido",[[0,"Activado"],[1,"Silenciado"]],()=>mute?1:0,v=>{initAudio();setMute(!!v)})}
  else if(setTab==="trf"){row("Tráfico",NLAB.map((t,i)=>[i,t]),()=>npcLvl,v=>setNpc(v));note("Más coches hace la ciudad más viva, pero pide más al ordenador o al móvil.")}

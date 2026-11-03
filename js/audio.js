@@ -31,7 +31,7 @@ function hornSnd(dist,p){if(!AC||mute)return;const v=.22*Math.max(0,1-dist/70);i
 let rainG=null,rainF=null;
 function rainAudio(){if(!AC)return;if(!rainG){const s=AC.createBufferSource(),hp=AC.createBiquadFilter();s.buffer=nb;s.loop=true;s.playbackRate.value=.7;hp.type="highpass";hp.frequency.value=350;rainF=AC.createBiquadFilter();rainF.type="lowpass";rainF.frequency.value=3000;
   rainG=AC.createGain();rainG.gain.value=0;s.connect(hp);hp.connect(rainF);rainF.connect(rainG);rainG.connect(BUS.rain);s.start()}
- const t=AC.currentTime,inside=mode===3&&state==="play",v=mute?0:WEA.rain*(inside?.16:.22);rainG.gain.setTargetAtTime(v,t,.3);rainF.frequency.setTargetAtTime(inside?1100:3200,t,.3);
+ const t=AC.currentTime,inside=mode===3&&state==="play",v=mute?0:WEA.rain*(inside?.16:.22)*(SEASON===3?.12:1);rainG.gain.setTargetAtTime(v,t,.3);rainF.frequency.setTargetAtTime(inside?1100:3200,t,.3);
  if(!mute&&WEA.rain>.1&&Math.random()<WEA.rain*(inside?.5:.25)){const b=AC.createBufferSource(),f=AC.createBiquadFilter(),g=AC.createGain();b.buffer=nb;f.type="bandpass";f.frequency.value=inside?900+Math.random()*600:2500+Math.random()*3000;f.Q.value=4;
   g.gain.setValueAtTime(WEA.rain*(inside?.18:.06),t);g.gain.exponentialRampToValueAtTime(.001,t+.05);b.connect(f);f.connect(g);g.connect(BUS.rain);b.start(t,Math.random());b.stop(t+.06)}}
 function thunderSnd(v){if(!AC||mute)return;const t=AC.currentTime,s=AC.createBufferSource(),f=AC.createBiquadFilter(),g=AC.createGain();s.buffer=nb;s.loop=true;s.playbackRate.value=.35;f.type="lowpass";f.frequency.setValueAtTime(380,t);f.frequency.exponentialRampToValueAtTime(90,t+4);

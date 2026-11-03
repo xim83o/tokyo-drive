@@ -102,7 +102,7 @@ function drawAd(g,w,h,tm,ph){const n=ADS.length,k=Math.floor(tm/5+ph)%n,a=ADS[k]
  g.font="bold 24px system-ui";g.fillText(a.s,w*(k===1?.62:.5),h*.75);g.fillStyle=`rgba(255,255,255,${(1-Math.abs(f-.5)*2)*.0})`;
  if(f>.92){g.fillStyle=`rgba(0,0,0,${(f-.92)/.08})`;g.fillRect(0,0,w,h)}}
 
-let BALM=null,RAILM=null,DETM=null;const DET=[];
+let BALM=null,RAILM=null,DETM=null,ROOFM=null,AWP=[];const DET=[];
 // Muestra el detalle cercano (balcones, pilares, aires, escaleras) solo en los bloques de 500 m próximos a la cámara
 function lodUpdate(){const lv=qLevel();if(typeof treeLod==="function")treeLod();for(const d of DET){const dx=Math.max(0,Math.abs(cam.position.x-d.x)-250),dz=Math.max(0,Math.abs(cam.position.z-d.z)-250),v=lv>=1&&dx*dx+dz*dz<260*260;for(const m of d.m)m.visible=v}}
 const BCOL=[0xe6e2d8,0xd4d4d0,0xcfc6b4,0xb9b6ae,0xa9b1ba,0xe2dccd,0x9a958c,0xc4bfb2];
@@ -127,7 +127,7 @@ function buildBuildings(){const CH=500,ch=new Map(),c=new THREE.Color(),R0=rng(3
  const ringX=(o,Q,y,hh,off,col)=>{const n=Q.length/2;for(let i=0;i<n;i++){const j=(i+1)%n,ax=Q[i*2],az=Q[i*2+1],bx=Q[j*2],bz=Q[j*2+1],L=Math.hypot(bx-ax,bz-az);if(L<.3)continue;const nx=(bz-az)/L*off,nz=-(bx-ax)/L*off;
   quadP(o,col,[ax+nx,y,az+nz],[bx+nx,y,bz+nz],[bx+nx,y+hh,bz+nz],[ax+nx,y+hh,az+nz]);quadP(o,col,[ax,y+hh,az],[bx,y+hh,bz],[bx+nx,y+hh,bz+nz],[ax+nx,y+hh,az+nz])}};
  const RFC=[0x464b52,0x3d5068,0x5e4436,0x6b3a30,0x4f5862,0x3a3d42],ACC=new THREE.Color(0xd9dbd6),STC=new THREE.Color(0x59616b),dk=new THREE.Color();
- const AW=[],KS=[],PH=[];let kon=0;
+ const AW=AWP,KS=[],PH=[];let kon=0;
  // u va al revés que el borde para que los textos de los letreros se lean bien desde fuera
  const wall=(s,ax,az,bx,bz,y0,y1,u0,u1,v0,v1,nx,nz,col)=>{u0=-u0;u1=-u1;s.p.push(ax,y0,az,bx,y1,bz,bx,y0,bz,ax,y0,az,ax,y1,az,bx,y1,bz);s.u.push(u0,v0,u1,v1,u1,v0,u0,v0,u0,v1,u1,v1);for(let k=0;k<6;k++){s.n.push(nx,0,nz);s.c.push(col.r,col.g,col.b)}};
  const roofT=[],tank=[],ant=[],vs=SIGNS.map(()=>[]),leds=[[],[],[]];
@@ -211,7 +211,7 @@ function buildBuildings(){const CH=500,ch=new Map(),c=new THREE.Color(),R0=rng(3
    g.fillStyle="#1d5fb8";g.font="bold 30px 'Yu Gothic','Meiryo',sans-serif";g.textAlign="center";g.fillText("サクラマート  24H",256,32)}),km=new THREE.MeshLambertMaterial({map:t,emissiveMap:t,emissive:0xffffff,emissiveIntensity:.3});NM.sign.push(km);
   const ks=inst(new THREE.BoxGeometry(1,.9,.25).translate(0,.45,0),km,KS,0),o3=new THREE.Object3D();KS.forEach((k,i)=>{o3.position.set(k[0],k[1],k[2]);o3.rotation.set(0,k[3],0);o3.scale.set(k[4],1,1);o3.updateMatrix();ks.setMatrixAt(i,o3.matrix)});ks.instanceMatrix.needsUpdate=true}
  for(const o of ch.values()){o.f.forEach((s,t)=>s.p.length&&mkMesh(s.p,t===7?konM:t>=4?shopMs[t-4]:mats[t],0,{normal:s.n,uv:s.u,color:s.c},2));
-  if(o.r.p.length)mkMesh(o.r.p,new THREE.MeshLambertMaterial({vertexColors:true,side:THREE.DoubleSide}),0,{color:o.r.c},2);
+  if(o.r.p.length)mkMesh(o.r.p,ROOFM||(ROOFM=new THREE.MeshLambertMaterial({vertexColors:true,side:THREE.DoubleSide})),0,{color:o.r.c},2);
   // Detalle cercano (balcones): solo visible a menos de 260 m (ver lodUpdate)
   // Detalle cercano (balcones, barandillas, pilares, franjas, aires acondicionados, escaleras): solo a menos de 260 m (ver lodUpdate)
   const ms=[],cxk=(Math.floor(o.k/100)+.5)*CH,czk=((o.k%100)+.5)*CH;

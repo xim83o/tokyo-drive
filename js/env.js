@@ -53,6 +53,10 @@ function setLampLights(n){while(LPL.length<n){const l=new THREE.PointLight(0xffd
 const PAL={dTop:new THREE.Color(0x2f6fc8),dHor:new THREE.Color(0xbfd8ef),kTop:new THREE.Color(0x2d3a74),kHor:new THREE.Color(0xf28a4e),nTop:new THREE.Color(0x02040c),nHor:new THREE.Color(0x111a2e),
  sunD:new THREE.Color(0xfff2dc),sunK:new THREE.Color(0xff9a4a),moon:new THREE.Color(0x8fa8d8),hSky:new THREE.Color(0xcfe4ff),hNight:new THREE.Color(0x1e2a46),tw:new THREE.Color(0xff6a1a),rain:new THREE.Color(0x6f7680)};
 const _c=new THREE.Color(),_c2=new THREE.Color();
+// Estación del año: la de la fecha real de Japón (marzo-mayo primavera, junio-agosto verano, septiembre-noviembre otoño,
+// diciembre-febrero invierno) o la elegida en Ajustes. 0 primavera · 1 verano · 2 otoño · 3 invierno
+function seasonNow(){if(ENV.season!==undefined&&ENV.season!=="auto")return+ENV.season;let m=new Date().getMonth()+1;try{m=+new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Tokyo",month:"numeric"}).format(new Date())}catch(e){}
+ return m>=3&&m<=5?0:m>=6&&m<=8?1:m>=9&&m<=11?2:3}
 function tokyoHour(){try{const p=new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Tokyo",hour:"numeric",minute:"numeric",second:"numeric",hour12:false}).formatToParts(new Date()),v=k=>+p.find(x=>x.type===k).value;return(v("hour")%24)+v("minute")/60+v("second")/3600}catch(e){return 12}}
 function hourNow(){if(ENV.mode==="real")return tokyoHour();if(ENV.mode==="day")return 12.5;if(ENV.mode==="night")return 22;return(10+(performance.now()/1000-T0)/(ENV.cycle*60)*24)%24}
 // --- Postproceso: resplandor (bloom) de luces y ventanas, corrección de color con viñeta y suavizado de bordes (FXAA) ---
@@ -98,7 +102,7 @@ function envUpdate(dt){HOUR=hourNow();const e=Math.sin((HOUR-6)/12*PI),day=sstep
  for(const l of LPL)l.intensity=NF*.75;
  // Pantallas LED: se redibujan unas 10 veces por segundo
  ledT+=dt;if(ledT>.1&&NM.led.length){ledT=0;const tm=performance.now()/1000;for(const l of NM.led){drawAd(l.g,320,180,tm,l.ph);l.t.needsUpdate=true}}
- FOGF=FOGQ*(1-rn*.5)}
+ FOGF=FOGQ*(1-rn*.5)*(typeof SEAFOG!=="undefined"?SEAFOG:1)}
 let qApplied=-1;
 function applyQuality(){const lv=qLevel(),Q=QUAL[lv];rd.setPixelRatio(Math.max(.6,Math.min(Q.pr,Math.min(devicePixelRatio,2)*(lv===0?.75:1))));setupPost();
  const sh=ENV.sh==="auto"?Q.sh>0:ENV.sh==="on",SM=Q.sh||1024,SR=Q.R||110,relight=rd.shadowMap.enabled!==sh||LPL.length!==Q.lights||qApplied<0;setLampLights(Q.lights);

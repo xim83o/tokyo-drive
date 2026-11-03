@@ -1,6 +1,6 @@
 // Mobiliario urbano: árboles (OSM, parques y aceras), farolas con su charco de luz nocturno, señales de velocidad,
 // máquinas expendedoras y postes eléctricos con cables (muy típicos de las calles pequeñas de Tokio)
-let lampN=0;const LAMPS=[],TREES=[],TREEH=[];
+let lampN=0;const LAMPS=[],TREES=[],TREEH=[],TREEG={};
 // Nivel de detalle de los árboles (cada 0,3 s). Baja y Media: solo la mitad de los árboles, sencillos. Alta y Ultra: detallados a
 // menos de 260 m (Ultra 400 m) y sencillos más lejos. Un árbol se oculta en su malla poniendo su escala a cero
 const _to=new THREE.Object3D(),_tz=new THREE.Matrix4().makeScale(0,0,0),_tc=new THREE.Color();
@@ -11,12 +11,21 @@ function treeLod(){if(!TREES.length)return;const lv=qLevel(),R=lv>=3?400:260,P=c
  TREEH.forEach((H,s)=>{const L=hi[s];L.forEach((t,i)=>{const e=t.e,k=e[4];_to.position.set(e[0],e[1],e[2]);_to.rotation.set(0,e[3],0);_to.scale.set(k,e[5],k);_to.updateMatrix();H.w.setMatrixAt(i,_to.matrix);H.l.setMatrixAt(i,_to.matrix);H.l.setColorAt(i,_tc.set(e[6]))});
   H.w.count=H.l.count=L.length;H.w.instanceMatrix.needsUpdate=H.l.instanceMatrix.needsUpdate=true;H.l.instanceColor.needsUpdate=true})}
 // Geometría de un árbol (tronco + copa de varios bultos deformados con colores variados). sp: 0 ginkgo, 1 copa redonda, 2 conífera
-function treeGeo(sp){const r=rng(31+sp*7),parts=[],col=(g,cs)=>{const n=g.attributes.position.count,a=new Float32Array(n*3),c=new THREE.Color();for(let i=0;i<n;i++){c.set(cs[(r()*cs.length)|0]);c.offsetHSL(0,0,(r()-.5)*.06);a[i*3]=c.r;a[i*3+1]=c.g;a[i*3+2]=c.b}g.setAttribute("color",new THREE.BufferAttribute(a,3));return g};
+// Colores de las copas por estación (0 primavera, 1 verano, 2 otoño, 3 invierno) y especie (0 ginkgo, 1 copa redonda: cerezo en
+// primavera y arce rojo en otoño, 2 conífera). En invierno ginkgos y cerezos se quedan sin hojas (copa de ramas finas, grisácea)
+const BARE=["#6b5a4a","#5e5044","#7a6a58","#544a40"];
+const TPAL=[[["#9fd36b","#8cc45a","#b3e07a","#7fb850"],["#ffc4dc","#ffb3d1","#ffd6e6","#f7a8c8","#ffe4ee"],["#2f5a34","#3a6a3c","#264c2b","#43703f"]],
+ [["#4f9a3a","#3f8a33","#5fae45","#468f3a"],["#4e8a3e","#3f7a35","#5f9a45","#3f7a3a","#4f8a3f"],["#2f5a34","#3a6a3c","#264c2b","#43703f"]],
+ [["#f2cf3a","#e3b21f","#f7dc5a","#c9a227","#d8be3c"],["#c8402a","#e0662e","#b8341f","#e88a2a","#d65a24"],["#2f5a34","#3a6a3c","#264c2b","#43703f"]],
+ [BARE,BARE,["#2b4f31","#33593a","#24452a","#3b633c"]]];
+const TBASE=[["#5f8f3a","#e89ab8","#1e3d22"],["#2f6a28","#2f5a2a","#1e3d22"],["#a88a1e","#8a2a1a","#1e3d22"],["#4a3e34","#4a3e34","#1a3620"]];
+function treeGeo(sp,se){if(se===undefined)se=seasonNow();const r=rng(31+sp*7),parts=[],col=(g,cs)=>{const n=g.attributes.position.count,a=new Float32Array(n*3),c=new THREE.Color();for(let i=0;i<n;i++){c.set(cs[(r()*cs.length)|0]);c.offsetHSL(0,0,(r()-.5)*.06);a[i*3]=c.r;a[i*3+1]=c.g;a[i*3+2]=c.b}g.setAttribute("color",new THREE.BufferAttribute(a,3));return g};
  const lump=(rad,x,y,z,sx,sy,cs)=>{const g=new THREE.IcosahedronGeometry(rad,0).toNonIndexed(),p=g.attributes.position;for(let i=0;i<p.count;i++){const k=.82+r()*.32;p.setXYZ(i,p.getX(i)*k*sx+x,p.getY(i)*k*sy+y,p.getZ(i)*k*sx+z)}g.computeVertexNormals();parts.push(col(g,cs))};
  const trunk=(h,r0)=>{const g=new THREE.CylinderGeometry(r0*.65,r0,h,7).toNonIndexed();g.translate(0,h/2,0);parts.push(col(g,["#5a4332","#4d392b","#634a37"]))};
- if(sp===0){trunk(5,.2);const cs=["#e6c22e","#d9b21f","#f0d34a","#b8a63a","#c9b52c"];lump(1.3,0,5.6,0,1,1.5,cs);lump(1,.5,4.2,.3,1,1.3,cs);lump(1,-.45,4.4,-.35,1,1.3,cs);lump(.8,.1,7,0,1,1.2,cs)}
- else if(sp===1){trunk(3,.22);const cs=["#3f7a3a","#4f8a3f","#356b35","#6a8f3a","#8a8f34"];for(let k=0;k<7;k++){const a=k/6*PI*2,d=k?1.1:0;lump(k?1.2:1.5,Math.cos(a)*d,3.9+(k?r()*.8:1),Math.sin(a)*d,1,.85,cs)}}
- else{trunk(2.5,.2);const cs=["#2f5a34","#36633a","#284d2d"];for(let k=0;k<3;k++){const g=new THREE.ConeGeometry(1.9-k*.5,2.6,8).toNonIndexed();g.translate(0,2.6+k*1.5,0);parts.push(col(g,cs))}}
+ const cs=TPAL[se][sp];
+ if(sp===0){trunk(5,.2);lump(1.3,0,5.6,0,1,1.5,cs);lump(1,.5,4.2,.3,1,1.3,cs);lump(1,-.45,4.4,-.35,1,1.3,cs);lump(.8,.1,7,0,1,1.2,cs)}
+ else if(sp===1){trunk(3,.22);for(let k=0;k<7;k++){const a=k/6*PI*2,d=k?1.1:0;lump(k?1.2:1.5,Math.cos(a)*d,3.9+(k?r()*.8:1),Math.sin(a)*d,1,.85,cs)}}
+ else{trunk(2.5,.2);for(let k=0;k<3;k++){const g=new THREE.ConeGeometry(1.9-k*.5,2.6,8).toNonIndexed();g.translate(0,2.6+k*1.5,0);parts.push(col(g,cs))}}
  // Unir todas las partes en una sola geometría
  let n=0;for(const g of parts)n+=g.attributes.position.count;const P=new Float32Array(n*3),N=new Float32Array(n*3),C=new Float32Array(n*3);let o=0;
  for(const g of parts){P.set(g.attributes.position.array,o);N.set(g.attributes.normal.array,o);C.set(g.attributes.color.array,o);o+=g.attributes.position.count*3}
@@ -24,13 +33,13 @@ function treeGeo(sp){const r=rng(31+sp*7),parts=[],col=(g,cs)=>{const n=g.attrib
 // Árbol detallado (calidad Alta y Ultra): tronco y ramas en 3D y copa hecha de muchos racimos de hojas dibujadas, cada racimo con
 // tres planos cruzados en direcciones al azar (no un plano mirando a la cámara). Las normales salen del centro de la copa para que la
 // luz la ilumine como un volumen. Devuelve [madera, hojas] para usar con dos materiales
-const LEAFTEX=[];
-function leafTex(sp){if(LEAFTEX[sp])return LEAFTEX[sp];const cs=[["#f2cf3a","#e3b21f","#f7dc5a","#c9a227","#d8be3c"],["#4e8a3e","#3f7a35","#5f9a45","#7a9a3a","#8f8f32","#b07a2a"],["#2f5a34","#3a6a3c","#264c2b","#43703f"]][sp],r=rng(55+sp);
+const LEAFTEX={};
+function leafTex(sp,se){if(se===undefined)se=seasonNow();const key=sp+"_"+se;if(LEAFTEX[key])return LEAFTEX[key];const cs=TPAL[se][sp],r=rng(55+sp);
  // Base irregular más oscura bajo las hojas: así cada racimo es casi opaco por dentro y solo los bordes quedan recortados
- const t=canvasTex(256,256,(g)=>{const base=["#a88a1e","#2f5a2a","#1e3d22"][sp];g.fillStyle=base;for(let i=0;i<16;i++){const a=r()*PI*2,d=r()*55;g.beginPath();g.arc(128+Math.cos(a)*d,128+Math.sin(a)*d,34+r()*22,0,7);g.fill()}
+ const t=canvasTex(256,256,(g)=>{const base=TBASE[se][sp];g.fillStyle=base;for(let i=0;i<16;i++){const a=r()*PI*2,d=r()*55;g.beginPath();g.arc(128+Math.cos(a)*d,128+Math.sin(a)*d,34+r()*22,0,7);g.fill()}
   for(let i=0;i<(sp===2?1100:320);i++){const x=20+r()*216,y=20+r()*216,d=Math.hypot(x-128,y-128);if(d>112)continue;g.fillStyle=cs[(r()*cs.length)|0];g.save();g.translate(x,y);g.rotate(r()*PI*2);
   if(sp===0){g.beginPath();g.moveTo(0,0);g.arc(0,0,9+r()*5,-.9,.9);g.closePath();g.fill()}else if(sp===1){g.beginPath();g.ellipse(0,0,4+r()*3,9+r()*4,0,0,7);g.fill()}else{g.fillRect(-1.5,-9,3,18)}g.restore()}});
- t.wrapS=t.wrapT=THREE.ClampToEdgeWrapping;return LEAFTEX[sp]=t}
+ t.wrapS=t.wrapT=THREE.ClampToEdgeWrapping;return LEAFTEX[key]=t}
 function treeGeoHi(sp){const r=rng(77+sp*11),wood=[],leaf=[];
  const cyl=(x0,y0,z0,x1,y1,z1,r0,r1)=>{const d=new THREE.Vector3(x1-x0,y1-y0,z1-z0),L=d.length(),g=new THREE.CylinderGeometry(r1,r0,L,6,1,true).toNonIndexed();g.translate(0,L/2,0);
   g.applyMatrix4(new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize())));g.translate(x0,y0,z0);wood.push(g)};
@@ -81,7 +90,8 @@ function decorate(){const tr=[],lp=[],sg=[],vm=[],up=[],wires=[],rnd=rng(11),TMA
   for(const l of Z.values()){const m=inst(SP[s],tm,l.map(q=>q[0]),0,true);delete m.userData.q;l.forEach(([e,i],j)=>TREES.push({s,e,m,j,odd:i%2,st:"lo"}))}
   const[gw,gl]=treeGeoHi(s),lt=leafTex(s),lm=new THREE.MeshLambertMaterial({map:lt,alphaTest:.45,side:THREE.DoubleSide}),dm=new THREE.MeshDepthMaterial({depthPacking:THREE.RGBADepthPacking,map:lt,alphaTest:.45});
   const hw=new THREE.InstancedMesh(gw,bark,all.length),hl=new THREE.InstancedMesh(gl,lm,all.length);for(const m of[hw,hl]){m.count=0;m.frustumCulled=false;m.castShadow=m.receiveShadow=true;sc.add(m)}
-  hl.customDepthMaterial=dm;hl.instanceColor=new THREE.InstancedBufferAttribute(new Float32Array(all.length*3),3);TREEH[s]={w:hw,l:hl}}
+  hl.customDepthMaterial=dm;hl.instanceColor=new THREE.InstancedBufferAttribute(new Float32Array(all.length*3),3);TREEH[s]={w:hw,l:hl,lm,dm}}
+ TREEG.sp=SP;TREEG.tm=tm;TREEG.se=seasonNow();
  const steel=new THREE.MeshLambertMaterial({color:0x6d7178});
  instZ(new THREE.CylinderGeometry(.08,.11,7,6).translate(0,3.5,0),steel,lp,0,true);instZ(new THREE.BoxGeometry(.12,.12,1.6).translate(0,6.9,.75),steel,lp,0);
  NM.lampHead=new THREE.MeshLambertMaterial({color:0xfff6d8,emissive:0xffe2a8,emissiveIntensity:0});instZ(new THREE.BoxGeometry(.35,.12,.6).translate(0,6.8,1.5),NM.lampHead,lp,0);lampN=lp.length;
