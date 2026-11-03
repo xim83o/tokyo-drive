@@ -1,7 +1,8 @@
 // Coches: datos y construcción del modelo
 // vm: velocidad máxima (m/s) · ac: empuje a 0 km/h (m/s²) · gr: agarre lateral · dr: tendencia a derrapar · m: masa (kg)
 // Curva de aceleración ac·(1-(v/vm)²) → 0-100 km/h: Kei 7,0 s · Drift 4,8 s · GT 4,0 s · Hypercar 2,6 s
-// rl: régimen máximo del motor (rpm), cambia el tono del sonido · f: modelo 3D (Car Kit de Kenney, CC0, en models/cars)
+// rl: régimen máximo del motor (rpm), cambia el tono del sonido · f: modelo 3D (Car Kit de Kenney, CC0, en models/cars; glTF con
+// los datos incrustados y extensión .json porque el enlace del móvil no sirve archivos .glb)
 const CARS=[{n:"Kei Sport",c:0xf5b800,vm:44.4,ac:4.7,gr:8.5,dr:.6,w:1.7,l:3.6,m:850,rl:8500,f:"hatchback-sports"},{n:"Coupé GT",c:0xe5173f,vm:75,ac:7.3,gr:7.5,dr:1,w:1.9,l:4.4,m:1450,rl:7000,f:"sedan-sports"},
  {n:"Hypercar",c:0x2a6cff,vm:97.2,ac:11,gr:6.5,dr:1.2,w:2,l:4.6,m:1400,rl:8500,f:"race-future"},{n:"Drift Spec",c:0xf2f2f2,vm:66.7,ac:6.2,gr:7.5,dr:1.5,w:1.85,l:4.4,m:1300,rl:7800,f:"sedan-sports"}];
 const t100=c=>c.vm/c.ac*Math.atanh(27.78/c.vm);
@@ -32,7 +33,7 @@ const PMAT=new Map();
 function paintMat(cell,col,tint){const key=cell+"|"+col+"|"+(tint||0);if(!PMAT.has(key))PMAT.set(key,new THREE.MeshPhongMaterial({map:paintTex(cell,col,tint),shininess:60,specular:0x2a2a2a}));return PMAT.get(key)}
 function loadCars(){if(!THREE.GLTFLoader)return Promise.resolve();const L=new THREE.GLTFLoader(),names=[...new Set([...CARS.map(c=>c.f),...NPCK.map(k=>k.f)])];
  return new Promise(ok=>{const im=new Image();im.onload=()=>{CMAP=im;ok()};im.onerror=()=>ok();im.src="models/cars/Textures/colormap.png"})
-  .then(()=>Promise.all(names.map(n=>L.loadAsync(`models/cars/${n}.glb`).then(g=>{const s=g.scene,bb=new THREE.Box3().setFromObject(s);MODELS[n]={s,bb,cell:paintCell(s)}}).catch(e=>console.warn("Modelo",n,e)))))
+  .then(()=>Promise.all(names.map(n=>L.loadAsync(`models/cars/${n}.json`).then(g=>{const s=g.scene,bb=new THREE.Box3().setFromObject(s);MODELS[n]={s,bb,cell:paintCell(s)}}).catch(e=>console.warn("Modelo",n,e)))))
   .then(()=>{if(CMAP&&MODELS[cur.f])buildCar(carK)})}
 // Copia del modelo escalada al largo pedido (un poco más bajo que el original, que es de estilo juguete), con la pintura elegida
 function modelInst(n,len,col,flat,tint){const M=MODELS[n],s=M.s.clone(true),sz=M.bb.getSize(new THREE.Vector3()),k=len/sz.z,mat=paintMat(col===undefined?-1:M.cell,col,tint);
