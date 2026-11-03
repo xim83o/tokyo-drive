@@ -111,6 +111,27 @@ function hitNpc(n,dv,nx,nz,along){const fx=Math.sin(n.h),fz=Math.cos(n.h);let dl
 function boxHit(ax,az,ah,aw,al,bx,bz,bh,bw,bl){const A=[[Math.sin(ah),Math.cos(ah)],[Math.cos(ah),-Math.sin(ah)]],B=[[Math.sin(bh),Math.cos(bh)],[Math.cos(bh),-Math.sin(bh)]],dx=ax-bx,dz=az-bz;let best=null;
  for(const u of[...A,...B]){const d=dx*u[0]+dz*u[1],ra=Math.abs(A[0][0]*u[0]+A[0][1]*u[1])*al/2+Math.abs(A[1][0]*u[0]+A[1][1]*u[1])*aw/2,rb=Math.abs(B[0][0]*u[0]+B[0][1]*u[1])*bl/2+Math.abs(B[1][0]*u[0]+B[1][1]*u[1])*bw/2,o=ra+rb-Math.abs(d);
   if(o<=0)return null;if(!best||o<best.p){const s=d<0?-1:1;best={p:o,nx:u[0]*s,nz:u[1]*s}}}return best}
+// Prueba automática del tráfico (consola: trafficTest(300)): simula esos segundos de golpe con el jugador quieto y cuenta coches
+// atascados más de 40 s, coches metidos uno dentro de otro y cambios de sentido fuera de una calle sin salida
+function trafficTest(sec){const dt=1/20,cnt=NCNT[npcLvl],st=new Map(),prev=new Map();let over=0,checks=0,uturn=0,stuck=new Set();
+ for(let t=0;t<sec;t+=dt){npcs(dt);for(let k=0;k<cnt;k++){const n=NPC[k];if(!n.lane||n.mode)continue;
+   const s=n.v<.3?(st.get(n)||0)+dt:0;st.set(n,s);if(s>40)stuck.add(n);
+   const pl=prev.get(n);if(pl&&pl!==n.lane&&pl.rev===n.lane&&GN[pl.to].out.filter(q=>q!==pl.rev).length>0)uturn++;prev.set(n,n.lane);
+   for(let q=k+1;q<cnt;q++){const o=NPC[q];if(!o.lane||o.mode||(o.x-n.x)**2+(o.z-n.z)**2>64)continue;checks++;const b=boxHit(n.x,n.z,n.h,n.w||1.8,n.l,o.x,o.z,o.h,o.w||1.8,o.l);if(b&&b.p>.4)over++}}}
+ const mv=NPC.slice(0,cnt).filter(n=>n.lane&&n.v>1).length;
+ return{segundos:sec,coches:cnt,enMarcha:mv,atascadosMas40s:stuck.size,solapes:over,parejasCercanas:checks,cambiosDeSentido:uturn}}
+// --- Normas en los cruces (en Japón se circula por la izquierda) ---
+// Giro en el próximo cruce: >0 izquierda, <0 derecha (cruzando el carril contrario)
+const turnA=n=>{const L=n.lane,q=L.p.length,a0=Math.atan2(L.p[q-2]-L.p[q-4],L.p[q-1]-L.p[q-3]),M=n.nx;return M?ad(Math.atan2(M.p[2]-M.p[0],M.p[3]-M.p[1]),a0):0};
+// ¿Viene alguien de frente hacia el mismo cruce (y no gira también a la derecha)?
+function oncoming(n,g){const fx=Math.sin(n.h),fz=Math.cos(n.h);for(const o of g.apr){if(o===n)continue;if(Math.sin(o.h)*fx+Math.cos(o.h)*fz<-.7&&o.v>1&&turnA(o)>-.6)return true}return false}
+// Cruce sin semáforo: cede a quien va por una calle más importante; si son iguales, al que viene por su izquierda. Al girar a la
+// derecha cede también a los que vienen de frente. Para no quedarse todos esperando en círculo, quien lleva más de 3 s más
+// esperando que el otro pasa primero
+function mustYield(n,g){const fx=Math.sin(n.h),fz=Math.cos(n.h),lx=Math.cos(n.h),lz=-Math.sin(n.h),t=n.lane.t,right=n.nx&&turnA(n)<-.6;
+ for(const o of g.apr){if(o===n)continue;const dot=Math.sin(o.h)*fx+Math.cos(o.h)*fz;if(dot>.7)continue;if((n.wt||0)-(o.wt||0)>3)continue;
+  if(dot<-.7){if(right&&turnA(o)>-.6)return true;continue}
+  const ot=o.lane.t;if(ot<t)return true;if(ot>t)continue;if((o.x-n.x)*lx+(o.z-n.z)*lz>0)return true}return false}
 function knock(n,dt){n.x+=n.vx*dt;n.z+=n.vz*dt;n.h+=n.sp*dt;
  // Rozamiento de neumáticos: de lado frena mucho (~1 g), hacia delante algo menos (el conductor frena)
  const s=Math.hypot(n.vx,n.vz),fx=Math.sin(n.h),fz=Math.cos(n.h),fw=n.wreck?1.3:1;let l=n.vx*fx+n.vz*fz,r=-n.vx*fz+n.vz*fx;
@@ -129,7 +150,9 @@ const FR=new THREE.Frustum(),FM=new THREE.Matrix4(),SPH=new THREE.Sphere(new THR
 function npcs(dt){if(!LANES.length)return;TT+=dt;const k2=Math.floor(TT*2);if(k2!==lastLt){lastLt=k2;lamps2()}
  const cnt=NCNT[npcLvl];while(NPC.length<cnt){const o=mkNpc();npcRst(o);sc.add(o.g);NPC.push(o)}
  NPC.forEach((n,k)=>{n.g.visible=k<cnt&&!!n.lane});FR.setFromProjectionMatrix(FM.multiplyMatrices(cam.projectionMatrix,cam.matrixWorldInverse));
- for(const g of GN)g.busy=0;for(let k=0;k<cnt;k++){const n=NPC[k];if(n.tr&&!n.mode)GN[n.tr.node].busy++}
+ for(const g of GN){g.busy=0;if(g.apr)g.apr.length=0;else g.apr=[]}
+ // Coches que se acercan a cada cruce (a menos de 22 m), para las normas de prioridad
+ for(let k=0;k<cnt;k++){const n=NPC[k];if(n.tr&&!n.mode)GN[n.tr.node].busy++;else if(n.lane&&!n.mode&&!n.exit&&n.lane.s1-n.s<22)GN[n.lane.to].apr.push(n)}
  for(let k=0;k<cnt;k++){const n=NPC[k];
   if(!n.lane||Math.hypot(n.x-px,n.z-pz)>380){npcRst(n);npcPlace(n);if(!n.lane)continue}
   if(n.wreck){SPH.center.set(n.x,1,n.z);const seen=Math.hypot(n.x-px,n.z-pz)<200&&FR.intersectsSphere(SPH);n.uns=seen?0:n.uns+dt;if(n.uns>20){npcRst(n);npcPlace(n);continue}}
@@ -140,7 +163,8 @@ function npcs(dt){if(!LANES.length)return;TT+=dt;const k2=Math.floor(TT*2);if(k2
    if(Math.min(n.x,n.z,W-n.x,W-n.z)<-60){npcRst(n);n.lane=null;continue}}
   else{const L=n.lane,fx=Math.sin(n.h),fz=Math.cos(n.h);let vt=Math.min(L.vmax*n.k,n.tr?n.tr.vt:99),blk=null;
    // Coche de delante (mismo carril o el siguiente) y jugador
-   const chk=(ox,oz,ov,o)=>{const dx=ox-n.x,dz=oz-n.z,f=dx*fx+dz*fz,s=Math.abs(dx*fz-dz*fx);if(f>0&&f<18&&s<2.2){const lim=f<6?0:ov+(f-6)*.8;if(lim<vt){vt=lim;blk=o}}};
+   // Distancia de seguridad entre parachoques: 2 m parado más casi un segundo de recorrido a la velocidad actual
+   const chk=(ox,oz,ov,o)=>{const dx=ox-n.x,dz=oz-n.z,f=dx*fx+dz*fz,s=Math.abs(dx*fz-dz*fx),gap=n.l/2+(o==="P"?cur.l:o.l)/2+2+n.v*.9;if(f>0&&f<gap+14&&s<2.2){const lim=f<gap?0:ov+(f-gap)*.8;if(lim<vt){vt=lim;blk=o}}};
    chk(px,pz,Math.hypot(vx,vz),"P");
    // Solo frena por coches que van en su mismo sentido o accidentados (los que vienen de frente o cruzan los regulan los semáforos).
    // Si lleva más de 2,5 s parado dentro de un cruce, termina de cruzar para no bloquearlo
@@ -148,9 +172,9 @@ function npcs(dt){if(!LANES.length)return;TT+=dt;const k2=Math.floor(TT*2);if(k2
    if(!(n.gh>0))for(let q=0;q<cnt;q++){const o=NPC[q];if(q===k||!o.lane)continue;if(o.mode||Math.sin(o.h)*fx+Math.cos(o.h)*fz>.5)chk(o.x,o.z,o.mode?0:o.v,o)}
    // Cualquier coche (aunque cruce o venga de frente) pegado delante: se para para no atravesarlo. Si los dos se tienen delante,
    // pasa el de número más bajo (así no se bloquean ni se meten uno dentro del otro)
-   for(let q=0;q<cnt;q++){if(q===k)continue;const o=NPC[q];if(!o.lane||o.mode)continue;const dx=o.x-n.x,dz=o.z-n.z,f=dx*fx+dz*fz;if(f<=0||f>5.5||Math.abs(dx*fz-dz*fx)>2.3)continue;
-    const ofx=Math.sin(o.h),ofz=Math.cos(o.h),f2=-dx*ofx-dz*ofz,mut=f2>0&&f2<5.5&&Math.abs(-dx*ofz+dz*ofx)<2.3;if(!mut||k>q){vt=0;blk=o}}
-   n.wb=blk&&blk!=="P"&&blk.mode&&n.v<.5?n.wb+dt:0;if(n.wb>4){n.wb=0;if(L.rev){n.lane=L.rev;n.s=Math.max(L.rev.s0,L.len-n.s);n.si=0;n.tr=null;n.nx=null}}
+   for(let q=0;q<cnt;q++){if(q===k)continue;const o=NPC[q];if(!o.lane||o.mode)continue;const dx=o.x-n.x,dz=o.z-n.z,f=dx*fx+dz*fz,R=(n.l+o.l)/2+1.2;if(f<=0||f>R||Math.abs(dx*fz-dz*fx)>2.3)continue;
+    const ofx=Math.sin(o.h),ofz=Math.cos(o.h),f2=-dx*ofx-dz*ofz,mut=f2>0&&f2<R&&Math.abs(-dx*ofz+dz*ofx)<2.3;if(!mut||k>q){vt=0;blk=o}}
+   // (ya no dan la vuelta en mitad de la calle si hay un coche accidentado delante: esperan; los siniestros desaparecen solos)
    if(blk==="P"){if(n.v>6&&n.v-vt>4)honk(n);n.pw=n.v<.3?n.pw+dt:0;if(n.pw>4){honk(n);n.pw=0}}else n.pw=0;
    if(n.tr){const T=n.tr;T.t+=n.v*dt/T.len;
     if(T.t>=1){n.tr=null;n.lane=n.nx;n.nx=null;n.s=n.lane.s0;n.si=0}else{const[x,z]=bez(T.P,T.t),[x2,z2]=bez(T.P,Math.min(1,T.t+.05));n.x=x;n.z=z;n.h=Math.atan2(x2-x,z2-z)}}
@@ -162,7 +186,10 @@ function npcs(dt){if(!LANES.length)return;TT+=dt;const k2=Math.floor(TT*2);if(k2
     // Semáforo o cruce sin semáforo ocupado: frenada progresiva hasta quedarse con el morro en la línea
     const g=GN[L2.to],room=d-n.l/2-.5;let stop=false;if(n.ign>0)n.ign-=dt;
     if(g.r>0&&d<60){if(g.cl>=0&&!L2.internal){const st=lightSt(L2);stop=st==="r"||(st==="y"&&room>n.v*n.v/12)}
-     else if(g.cl<0&&n.ign<=0&&(g.busy>0||Math.hypot(px-g.x,pz-g.z)<g.r))stop=true}
+     else if(g.cl<0&&n.ign<=0&&(g.busy>0||Math.hypot(px-g.x,pz-g.z)<g.r||mustYield(n,g)))stop=true;
+     // Con semáforo, al girar a la derecha (cruzando el carril contrario) cede a los que vienen de frente
+     if(g.cl>=0&&!stop&&n.nx&&turnA(n)<-.6&&oncoming(n,g))stop=true}
+    n.wt=stop&&n.v<.5?(n.wt||0)+dt:0;
     if(stop)vt=Math.min(vt,room>0?Math.sqrt(2*BD*room):0);
     if(n.nx&&Math.abs(ad(Math.atan2(n.nx.p[2]-n.nx.p[0],n.nx.p[3]-n.nx.p[1]),n.h))>.6&&d<30)vt=Math.min(vt,7);
     n.sw=n.v<.3?n.sw+dt:0;if(n.sw>10){n.ign=5;n.sw=0}

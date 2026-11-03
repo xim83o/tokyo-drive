@@ -1,7 +1,10 @@
 // Bucle principal: física, cámaras, cinemáticas AFK, ambiente y render
 function resize(){rd.setSize(innerWidth,innerHeight,false);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();if(typeof postSize==="function")postSize()}
 addEventListener("resize",resize);resize();
-let last=performance.now(),t0=0,lastCin=false;const LK=new THREE.Vector3();
+let last=performance.now(),t0=0,lastCin=false;const SPEC={x:0,y:20,z:0,a:0,p:-.4};
+function startSpec(){if(!spawned)return;closeSettings();SPEC.x=px-Math.sin(h)*20;SPEC.z=pz-Math.cos(h)*20;SPEC.y=22;SPEC.a=h;SPEC.p=-.5;state="spec";$("ov").hidden=true;hudVis(false);$("touch").hidden=true}
+// Arrastrar con el ratón también gira la cámara del espectador
+{let dg=null;addEventListener("pointerdown",e=>{if(state==="spec")dg=[e.clientX,e.clientY]});addEventListener("pointermove",e=>{if(state==="spec"&&dg){SPEC.a-=(e.clientX-dg[0])*.005;SPEC.p=Math.max(-1.4,Math.min(1.4,SPEC.p-(e.clientY-dg[1])*.005));dg=[e.clientX,e.clientY]}});addEventListener("pointerup",()=>dg=null)}const LK=new THREE.Vector3();
 // La cámara no atraviesa nada: edificios, árboles, postes, coches ni la Torre de Tokio. Si algo se interpone entre el coche
 // y la cámara, la cámara se acerca al coche
 function camHit(x,y,z){if(camBlocked(x,y,z))return true;const c=gq(x,z);
@@ -35,6 +38,10 @@ function loop(n){requestAnimationFrame(loop);const dt=Math.min(.05,(n-last)/1e3)
  else{audio(true);t0+=dt*.1;sc.fog.far=FOGF;sc.fog.near=FOGF*.2;
   // En ajustes con la partida empezada, la imagen se queda quieta (pausa)
   if(state==="set"&&spawned&&setPrev==="play"){}
+  // Modo espectador: cámara libre (WASD mover, Q/E bajar y subir, flechas o arrastrar para girar, Mayús rápido, Esc salir); el tráfico sigue
+  else if(state==="spec"){npcs(dt);const k=(keys.ShiftLeft||keys.ShiftRight?60:18)*dt,f=SPEC,fw=[Math.sin(f.a),Math.cos(f.a)];if(keys.ArrowLeft)f.a+=dt*1.5;if(keys.ArrowRight)f.a-=dt*1.5;if(keys.ArrowUp)f.p=Math.min(1.4,f.p+dt);if(keys.ArrowDown)f.p=Math.max(-1.4,f.p-dt);
+   if(keys.KeyW){f.x+=fw[0]*k;f.z+=fw[1]*k}if(keys.KeyS){f.x-=fw[0]*k;f.z-=fw[1]*k}if(keys.KeyA){f.x+=fw[1]*k;f.z-=fw[0]*k}if(keys.KeyD){f.x-=fw[1]*k;f.z+=fw[0]*k}if(keys.KeyE)f.y+=k;if(keys.KeyQ)f.y=Math.max(1.5,f.y-k);
+   cam.position.set(f.x,f.y,f.z);cam.lookAt(f.x+Math.sin(f.a)*Math.cos(f.p),f.y+Math.sin(f.p),f.z+Math.cos(f.a)*Math.cos(f.p));cam.fov=65;cam.updateProjectionMatrix();sc.fog.far=FOGF}
   // Editor de calcomanías: la cámara gira alrededor del coche, que queda a la derecha del panel
   else if(state==="liv"){const a=h+livA,pw=$("livP").offsetWidth+12,c=livCenter();cam.position.set(c.x+Math.sin(a)*6.5,c.y+2.2,c.z+Math.cos(a)*6.5);cam.lookAt(c.x,c.y+.7,c.z);cam.fov=50;
    cam.setViewOffset(innerWidth,innerHeight,-pw/2,0,innerWidth,innerHeight);cam.updateProjectionMatrix()}

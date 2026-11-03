@@ -33,7 +33,8 @@ function drawSettings(){const P=$("setP");P.innerHTML=`<h1>${T("Ajustes")}</h1>`
   slider("Radio","radio");row("País de la radio",RCOUNTRY,()=>ENV.radio.c,v=>{ENV.radio.c=v;radioReset()});row("Estilo",RTAG,()=>ENV.radio.t,v=>{ENV.radio.t=v;radioReset()});
   {const b=document.createElement("button");b.className="b g";b.textContent="📻 "+T("Siguiente emisora");b.onclick=()=>{initAudio();if(!RADIO.on)radioToggle();else radioNext(1)};box.appendChild(b)}
   note("La radio usa emisoras en directo de radio-browser.info: necesita internet y la música (y los anuncios) son los que pongan ellas.")}
- else if(setTab==="trf"){row("Tráfico",NLAB.map((t,i)=>[i,t]),()=>npcLvl,v=>setNpc(v));note("Más coches hace la ciudad más viva, pero pide más al ordenador o al móvil.")}
+ else if(setTab==="trf"){row("Tráfico",NLAB.map((t,i)=>[i,t]),()=>npcLvl,v=>setNpc(v));note("Más coches hace la ciudad más viva, pero pide más al ordenador o al móvil.");
+  if(spawned&&!MOBILE){const b=document.createElement("button");b.className="b g";b.textContent="👁 "+T("Modo espectador");b.onclick=startSpec;box.appendChild(b);note("Cámara libre para mirar el tráfico: WASD mover, Q/E bajar y subir, flechas o arrastrar para girar, Mayús para ir rápido, Esc para volver.")}}
  else if(setTab==="scr"){row("Velocidad en",[["kmh","km/h"],["mph","mph"]],()=>ENV.units,v=>ENV.units=v);
   row("Minimapa",[[1,"Sí"],[0,"No"]],()=>ENV.hud.mini,v=>ENV.hud.mini=v);row("Velocímetro",[[1,"Sí"],[0,"No"]],()=>ENV.hud.speed,v=>ENV.hud.speed=v);
   if(!MOBILE)row("Ayuda de teclas",[[1,"Sí"],[0,"No"]],()=>ENV.hud.help,v=>ENV.hud.help=v);
