@@ -101,5 +101,5 @@ function applyQuality(){const lv=qLevel(),Q=QUAL[lv];rd.setPixelRatio(Math.max(.
  const sh=ENV.sh==="auto"?Q.sh>0:ENV.sh==="on",SM=Q.sh||1024,SR=Q.R||110,relight=rd.shadowMap.enabled!==sh||LPL.length!==Q.lights||qApplied<0;setLampLights(Q.lights);
  if(relight){rd.shadowMap.enabled=sh;rd.shadowMap.type=THREE.PCFSoftShadowMap;sc.traverse(o=>{if(o.material){(Array.isArray(o.material)?o.material:[o.material]).forEach(m=>m.needsUpdate=true)}})}
  sun.castShadow=sh;if(sh){if(sun.shadow.map){sun.shadow.map.dispose();sun.shadow.map=null}sun.shadow.mapSize.set(SM,SM);const c=sun.shadow.camera;c.left=c.bottom=-SR;c.right=c.top=SR;c.near=10;c.far=900;c.updateProjectionMatrix();sun.shadow.bias=-.0004;sun.shadow.normalBias=.04}
- FOGQ=Q.far*ENV.far;cam.far=FOGQ+150;cam.updateProjectionMatrix();sc.traverse(o=>{if(o.userData.q!==undefined)o.visible=lv>=o.userData.q});qApplied=lv;resize()}
+ FOGQ=Q.far*ENV.far;cam.far=FOGQ+150;cam.updateProjectionMatrix();sc.traverse(o=>{if(o.userData.q!==undefined)o.visible=lv>=o.userData.q&&(o.userData.qx===undefined||lv<=o.userData.qx)});qApplied=lv;resize()}
 if(ENV.wx===undefined)ENV.wx="auto";

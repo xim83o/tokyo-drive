@@ -12,6 +12,30 @@ function treeGeo(sp){const r=rng(31+sp*7),parts=[],col=(g,cs)=>{const n=g.attrib
  let n=0;for(const g of parts)n+=g.attributes.position.count;const P=new Float32Array(n*3),N=new Float32Array(n*3),C=new Float32Array(n*3);let o=0;
  for(const g of parts){P.set(g.attributes.position.array,o);N.set(g.attributes.normal.array,o);C.set(g.attributes.color.array,o);o+=g.attributes.position.count*3}
  const g=new THREE.BufferGeometry();g.setAttribute("position",new THREE.BufferAttribute(P,3));g.setAttribute("normal",new THREE.BufferAttribute(N,3));g.setAttribute("color",new THREE.BufferAttribute(C,3));return g}
+// Árbol detallado (calidad Alta y Ultra): tronco y ramas en 3D y copa hecha de muchos racimos de hojas dibujadas, cada racimo con
+// tres planos cruzados en direcciones al azar (no un plano mirando a la cámara). Las normales salen del centro de la copa para que la
+// luz la ilumine como un volumen. Devuelve [madera, hojas] para usar con dos materiales
+const LEAFTEX=[];
+function leafTex(sp){if(LEAFTEX[sp])return LEAFTEX[sp];const cs=[["#f2cf3a","#e3b21f","#f7dc5a","#c9a227","#d8be3c"],["#4e8a3e","#3f7a35","#5f9a45","#7a9a3a","#8f8f32","#b07a2a"],["#2f5a34","#3a6a3c","#264c2b","#43703f"]][sp],r=rng(55+sp);
+ const t=canvasTex(256,256,(g)=>{for(let i=0;i<(sp===2?1100:260);i++){const x=20+r()*216,y=20+r()*216,d=Math.hypot(x-128,y-128);if(d>112)continue;g.fillStyle=cs[(r()*cs.length)|0];g.save();g.translate(x,y);g.rotate(r()*PI*2);
+  if(sp===0){g.beginPath();g.moveTo(0,0);g.arc(0,0,9+r()*5,-.9,.9);g.closePath();g.fill()}else if(sp===1){g.beginPath();g.ellipse(0,0,4+r()*3,9+r()*4,0,0,7);g.fill()}else{g.fillRect(-1.5,-9,3,18)}g.restore()}});
+ t.wrapS=t.wrapT=THREE.ClampToEdgeWrapping;return LEAFTEX[sp]=t}
+function treeGeoHi(sp){const r=rng(77+sp*11),wood=[],leaf=[];
+ const cyl=(x0,y0,z0,x1,y1,z1,r0,r1)=>{const d=new THREE.Vector3(x1-x0,y1-y0,z1-z0),L=d.length(),g=new THREE.CylinderGeometry(r1,r0,L,6,1,true).toNonIndexed();g.translate(0,L/2,0);
+  g.applyMatrix4(new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize())));g.translate(x0,y0,z0);wood.push(g)};
+ const H=sp===0?5.2:sp===1?3.4:2.2,cy=sp===0?6.4:sp===1?4.6:4.8,RX=sp===0?1.9:sp===1?2.9:2,RY=sp===0?2.9:sp===1?2:3.2;
+ cyl(0,0,0,0,H,0,sp===2?.2:.24,.14);
+ const tips=[];for(let k=0;k<(sp===2?0:5);k++){const a=k/5*PI*2+r(),e=.4+r()*.5,x=Math.cos(a)*RX*.6,z=Math.sin(a)*RX*.6,y=cy+(r()-.5)*RY*.6;cyl(0,H*.85,0,x,y,z,.09,.04);tips.push([x,y,z])}
+ const N=sp===2?26:22,C=new THREE.Vector3(0,cy,0);
+ for(let k=0;k<N;k++){let x,y,z;if(sp===2){const t=r(),rr=(1-t)*RX*(.55+r()*.45),a=r()*PI*2;x=Math.cos(a)*rr;z=Math.sin(a)*rr;y=1.4+t*RY*1.9}
+  else{const u=r()*2-1,a=r()*PI*2,s=Math.sqrt(1-u*u),q=.55+r()*.45;x=Math.cos(a)*s*RX*q;z=Math.sin(a)*s*RX*q;y=cy+u*RY*q*.85}
+  const sz=sp===2?1.3:1.5+r()*.5;
+  for(let j=0;j<3;j++){const g=new THREE.PlaneGeometry(sz,sz).toNonIndexed();g.rotateX(r()*PI);g.rotateY(r()*PI*2);g.rotateZ((r()-.5)*.8);g.translate(x,y,z);
+   const p=g.attributes.position,n=g.attributes.normal;for(let i=0;i<p.count;i++){const v=new THREE.Vector3(p.getX(i),p.getY(i),p.getZ(i)).sub(sp===2?new THREE.Vector3(0,p.getY(i),0):C).normalize();v.y+=.35;v.normalize();n.setXYZ(i,v.x,v.y,v.z)}leaf.push(g)}}
+ const merge=(arr,col)=>{let n=0;for(const g of arr)n+=g.attributes.position.count;const P=new Float32Array(n*3),Nn=new Float32Array(n*3),U=new Float32Array(n*2);let o=0,ou=0;
+  for(const g of arr){P.set(g.attributes.position.array,o);Nn.set(g.attributes.normal.array,o);U.set(g.attributes.uv.array,ou);o+=g.attributes.position.count*3;ou+=g.attributes.position.count*2}
+  const g=new THREE.BufferGeometry();g.setAttribute("position",new THREE.BufferAttribute(P,3));g.setAttribute("normal",new THREE.BufferAttribute(Nn,3));g.setAttribute("uv",new THREE.BufferAttribute(U,2));return g};
+ return[merge(wood),merge(leaf)]}
 function decorate(){const tr=[],lp=[],sg=[],vm=[],up=[],wires=[],rnd=rng(11),TMAX=MOBILE?1800:3500;
  // Solo sobre acera dibujada (no en franjas estrechas entre calles), fuera de edificios y obstáculos
  const free=(x,z,m)=>x>5&&z>5&&x<W-5&&z<W-5&&roadAt(x,z)<0&&groundD(x,z)>m+.25&&!blockedAt(x,z,m);
@@ -38,14 +62,36 @@ function decorate(){const tr=[],lp=[],sg=[],vm=[],up=[],wires=[],rnd=rng(11),TMA
  // Tres especies hechas de varios volúmenes irregulares con colores de otoño: ginkgo (amarillo, típico de las avenidas de Tokio),
  // árbol de copa redonda (zelkova) y conífera. Cada especie es una sola malla instanciada; la mitad "extra" solo en calidad alta
  const SP=[treeGeo(0),treeGeo(1),treeGeo(2)],tm=new THREE.MeshLambertMaterial({vertexColors:true}),TT=[0xfff0c0,0xe8ffe0,0xffffff,0xd8f0d0];
- for(let s=0;s<3;s++)for(let k=0;k<2;k++){const l=tr.filter((t,i)=>t[4]===s&&i%2===k);instZ(SP[s],tm,l.map((t,i)=>[t[0],CURB,t[1],t[3],t[2],t[2]*(.9+(i%5)*.06),TT[i%4]]),k?2:0,true)}
+ // Baja y Media: árboles sencillos (la mitad); Alta y Ultra: todos con ramas y racimos de hojas (treeGeoHi)
+ const bark=new THREE.MeshLambertMaterial({color:0x5a4332});
+ for(let s=0;s<3;s++){const all=tr.filter(t=>t[4]===s).map((t,i)=>[t[0],CURB,t[1],t[3],t[2],t[2]*(.9+(i%5)*.06),TT[i%4]]);
+  for(const m of instZ(SP[s],tm,all.filter((t,i)=>i%2===0),0,true))if(m)m.userData.qx=1;
+  const[gw,gl]=treeGeoHi(s),lt=leafTex(s),lm=new THREE.MeshLambertMaterial({map:lt,alphaTest:.45,side:THREE.DoubleSide}),dm=new THREE.MeshDepthMaterial({depthPacking:THREE.RGBADepthPacking,map:lt,alphaTest:.45});
+  instZ(gw,bark,all,2,true);for(const m of instZ(gl,lm,all,2,true))if(m)m.customDepthMaterial=dm}
  const steel=new THREE.MeshLambertMaterial({color:0x6d7178});
  instZ(new THREE.CylinderGeometry(.08,.11,7,6).translate(0,3.5,0),steel,lp,0,true);instZ(new THREE.BoxGeometry(.12,.12,1.6).translate(0,6.9,.75),steel,lp,0);
  NM.lampHead=new THREE.MeshLambertMaterial({color:0xfff6d8,emissive:0xffe2a8,emissiveIntensity:0});instZ(new THREE.BoxGeometry(.35,.12,.6).translate(0,6.8,1.5),NM.lampHead,lp,0);lampN=lp.length;
  // Posición de cada bombilla: las más cercanas al jugador dan luz real (env.js)
  for(const l of lp)LAMPS.push(l[0]+Math.sin(l[3])*1.5,6.5+CURB,l[2]+Math.cos(l[3])*1.5);
+ // Yatai: puestos callejeros de comida (carrito de madera con tejadillo, noren con el nombre, farolillos rojos y taburetes),
+ // sobre todo cerca de los templos, la torre y los parques
+ const YT=[];{const hot=[[TX,TZ]];for(const b of MAP.buildings)if(b.k===1)hot.push([b.p[0],b.p[1]]);
+  for(const r of MAP.roads){if(r.t>3||YT.length>=32)continue;const p=r.p,hw=r.w/2;for(let i=2;i<p.length&&YT.length<32;i+=2){const ax=p[i-2],az=p[i-1],bx=p[i],bz=p[i+1],L=Math.hypot(bx-ax,bz-az)||1,ux=(bx-ax)/L,uz=(bz-az)/L;
+   for(let t=4;t<L-4;t+=9){const x0=ax+ux*t,z0=az+uz*t,near=hot.some(q=>Math.hypot(q[0]-x0,q[1]-z0)<180);if(rnd()>(near?.06:.004))continue;const s=rnd()<.5?1:-1,x=x0+uz*s*(hw+2.3),z=z0-ux*s*(hw+2.3);
+    if(free(x,z,1.5)&&!YT.some(q=>Math.hypot(q[0]-x,q[2]-z)<30)){YT.push([x,CURB,z,Math.atan2(-uz*s,ux*s)]);addCirc(x,z,1.3)}}}}
+  if(YT.length){const box=(a,w,h,d,x,y,z)=>{const g=new THREE.BoxGeometry(w,h,d).toNonIndexed();g.translate(x,y,z);a.push(g)},mg=a=>{let n=0;for(const g of a)n+=g.attributes.position.count;const P=new Float32Array(n*3),N=new Float32Array(n*3);let o=0;
+    for(const g of a){P.set(g.attributes.position.array,o);N.set(g.attributes.normal.array,o);o+=g.attributes.position.count*3}const g=new THREE.BufferGeometry();g.setAttribute("position",new THREE.BufferAttribute(P,3));g.setAttribute("normal",new THREE.BufferAttribute(N,3));return g};
+   const wd=[],rf=[],st=[];box(wd,2.2,.95,1.1,0,.55,0);box(wd,2.5,.07,1.4,0,1.06,.1);for(const sx of[-1.15,1.15])for(const sz of[-.45,.6])box(wd,.07,1.35,.07,sx,1.75,sz);box(wd,.08,.5,.5,-1.12,.25,-.1);box(wd,.08,.5,.5,1.12,.25,-.1);
+   {const g=new THREE.BoxGeometry(2.7,.06,1.7).toNonIndexed();g.rotateX(-.18);g.translate(0,2.47,.1);rf.push(g)}
+   for(const sx of[-.7,0,.7]){const g=new THREE.CylinderGeometry(.17,.17,.5,8).toNonIndexed();g.translate(sx,.4,1.15);st.push(g)}
+   instZ(mg(wd),new THREE.MeshLambertMaterial({color:0x7a5232}),YT,0,true);instZ(mg(rf),new THREE.MeshLambertMaterial({color:0xb3261e}),YT,0,true);instZ(mg(st),new THREE.MeshLambertMaterial({color:0xc9372c}),YT,1);
+   const nt=canvasTex(256,64,(g)=>{g.fillStyle="#1d2a4a";g.fillRect(0,0,256,64);g.fillStyle="#f4ecd8";g.font="bold 34px 'Yu Gothic','Meiryo',sans-serif";g.textAlign="center";g.textBaseline="middle";g.fillText("おでん・やきとり",128,34);g.fillStyle="#1d2a4a";for(let x=51;x<256;x+=51)g.fillRect(x,22,3,42)});
+   instZ(new THREE.PlaneGeometry(2.3,.5).translate(0,2.12,.72),new THREE.MeshLambertMaterial({map:nt,side:THREE.DoubleSide}),YT,0);
+   NM.lant=new THREE.MeshLambertMaterial({color:0xd8302a,emissive:0xff4a20,emissiveIntensity:.1});NM.sign.push(NM.lant);
+   instZ(mg([-1,1].map(sx=>{const g=new THREE.SphereGeometry(.2,10,8).toNonIndexed();g.scale(1,1.35,1);g.translate(sx*1.2,1.95,.85);return g})),NM.lant,YT,0)}}
  // Luz de todas las farolas en el mapa de luz: manchas suaves alargadas en el sentido de la calle que se funden entre sí
  {const g=LMC.getContext("2d"),s=LMC.width/W;g.fillStyle="#000";g.fillRect(0,0,LMC.width,LMC.width);g.globalCompositeOperation="lighter";
+  for(const y of YT){const gr=g.createRadialGradient(y[0]*s,y[2]*s,0,y[0]*s,y[2]*s,6*s);gr.addColorStop(0,"rgba(255,150,90,.55)");gr.addColorStop(1,"rgba(255,120,60,0)");g.fillStyle=gr;g.beginPath();g.arc(y[0]*s,y[2]*s,6*s,0,7);g.fill()}
   for(const l of lp){const hx=(l[0]+Math.sin(l[3])*1.5)*s,hz=(l[2]+Math.cos(l[3])*1.5)*s,R=11*s;g.save();g.translate(hx,hz);g.rotate(-l[3]);g.scale(1.8,1);
    const gr=g.createRadialGradient(0,0,0,0,0,R);gr.addColorStop(0,"rgba(255,214,160,.6)");gr.addColorStop(.35,"rgba(255,196,140,.36)");gr.addColorStop(1,"rgba(255,180,120,0)");g.fillStyle=gr;g.beginPath();g.arc(0,0,R,0,7);g.fill();g.restore()}
   // Escaparates y konbinis también iluminan un poco la acera de delante
