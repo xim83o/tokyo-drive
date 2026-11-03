@@ -101,20 +101,24 @@ async function loadWorld(){
   MAP.buildings=MAP.buildings.filter(b=>!b.del)}
  // Edificios primero: las calles se estrechan donde se meterían en uno, y los adornos comprueban si caen dentro
  for(const b of MAP.buildings)addPoly(b.p,b.h);
- for(const R of MAP.water)addPoly(R,0);for(const r of MAP.rivers)for(let i=2;i<r.p.length;i+=2)addCaps(r.p[i-2],r.p[i-1],r.p[i],r.p[i+1],r.w/2);
+ for(const R of MAP.water)addPoly(R,0);
  // Calzada a 0 m (la acera queda 15 cm más alta). Cada tramo guarda su medio ancho (r.hw) ya ajustado
  const ra=[];MAP.roads.forEach((r,ri)=>{const p=r.p;r.hw=[];
   for(let i=2;i<p.length;i+=2){const ax=p[i-2],az=p[i-1],bx=p[i],bz=p[i+1],L=Math.hypot(bx-ax,bz-az)||1,lx=(bz-az)/L,lz=-(bx-ax)/L;let hw=r.w/2;
    for(;hw>2.6;hw*=.88){let hit=false;for(let k=0;k<=4&&!hit;k++){const x=ax+(bx-ax)*k/4,z=az+(bz-az)*k/4;if(inBuilding(x+lx*hw,z+lz*hw)||inBuilding(x-lx*hw,z-lz*hw))hit=true}if(!hit)break}
    r.hw.push(hw);quad(ra,ax,az,bx,bz,hw,0);const k=RSG.length/6;RSG.push(ax,az,bx,bz,hw,ri);gadd(Math.min(ax,bx)-hw-3,Math.min(az,bz)-hw-3,Math.max(ax,bx)+hw+3,Math.max(az,bz)+hw+3,"r",k)}
   for(let i=0;i<p.length;i+=2){const s=i/2,hw=Math.min(r.hw[Math.max(0,s-1)],r.hw[Math.min(r.hw.length-1,s)]);for(let k=0;k<12;k++){const a0=k/12*PI*2,a1=(k+1)/12*PI*2;flatTri(ra,0,p[i],p[i+1],p[i]+Math.cos(a0)*hw,p[i+1]+Math.sin(a0)*hw,p[i]+Math.cos(a1)*hw,p[i+1]+Math.sin(a1)*hw)}}});
- // Capa de asfalto por debajo de todo el mapa: tapa las franjas estrechas entre calles donde no cabe acera (antes eran huecos)
- for(let x=0;x<W;x+=600)for(let z=0;z<W;z+=600){const x1=Math.min(W,x+600),z1=Math.min(W,z+600);flatTri(ra,-.03,x,z,x1,z1,x1,z);flatTri(ra,-.03,x,z,x,z1,x1,z1)}
+ // Capa de asfalto por debajo de todo el mapa: tapa las franjas estrechas entre calles donde no cabe acera (antes eran huecos).
+ // No pasa por el canal (ahí se ve el agua, más abajo): se hace en casillas de 20 m y se saltan las que tocan el cauce
+ for(let x=0;x<W;x+=20)for(let z=0;z<W;z+=20){if(riverD(x+10,z+10)<14.2)continue;flatTri(ra,-.03,x,z,x+20,z+20,x+20,z);flatTri(ra,-.03,x,z,x,z+20,x+20,z+20)}
+ // Colisión del canal: los dos bordes (no el cauce entero), salvo donde pasa una calle por encima (puentes)
+ for(const r of MAP.rivers){const p=r.p,hw=r.w/2;for(let i=2;i<p.length;i+=2){const ax=p[i-2],az=p[i-1],bx=p[i],bz=p[i+1],L=Math.hypot(bx-ax,bz-az)||1,lx=(bz-az)/L*hw,lz=-(bx-ax)/L*hw,n=Math.ceil(L/2);
+  for(const s of[-1,1])for(let k=0;k<n;k++){const x0=ax+(bx-ax)*k/n+lx*s,z0=az+(bz-az)*k/n+lz*s,x1=ax+(bx-ax)*(k+1)/n+lx*s,z1=az+(bz-az)*(k+1)/n+lz*s;if(roadAt((x0+x1)/2,(z0+z1)/2)<0)addEdge(x0,z0,x1,z1)}}}
  const asph=canvasTex(256,256,(g,w,h)=>{g.fillStyle="#3a3c42";g.fillRect(0,0,w,h);const r=rng(5);for(let i=0;i<9000;i++){const v=44+r()*44|0;g.fillStyle=`rgb(${v},${v},${v+3})`;g.fillRect(r()*w,r()*h,1+r()*1.6,1+r()*1.6)}
   g.globalAlpha=.08;for(let i=0;i<30;i++){g.fillStyle=r()<.5?"#000":"#888";g.beginPath();g.ellipse(r()*w,r()*h,8+r()*30,4+r()*14,r()*PI,0,7);g.fill()}g.globalAlpha=1},true);
  ROADMAT=beamMat(new THREE.MeshPhongMaterial({map:asph,specularMap:puddleTex(),specular:0x000000,shininess:70,lightMap:LIGHTMAP,lightMapIntensity:0}));
  for(const rg of mkMeshZ(ra,ROADMAT,0,1)){worldUV2(rg);const q=rg.geometry.attributes.position.array,uv=new Float32Array(q.length/3*2);for(let i=0,j=0;i<q.length;i+=3,j+=2){uv[j]=q[i]/7;uv[j+1]=q[i+2]/7}rg.geometry.setAttribute("uv",new THREE.BufferAttribute(uv,2))}
- buildGround();
+ buildGround();buildCanal();
  // Vías de tren: a ras de suelo bloquean el paso salvo en los pasos a nivel; las elevadas van sobre pilares
  const ba=[],rl=[],dk=[],pil=[];
  for(const r of MAP.rails){const p=r.p,y=r.b?7.5:CURB+.03;ribbon(r.b?dk:ba,p,r.b?2.2:1.6,y,true);
@@ -129,6 +133,8 @@ async function loadWorld(){
  buildBuildings();buildTower();decorate();drawMapImg();ready=true}
 
 let ROADMAT=null,GROUNDMAT=null;
+// Distancia al borde del canal (negativa dentro del cauce)
+function riverD(x,z){let d=1e9;for(const r of MAP.rivers){const p=r.p;for(let i=2;i<p.length;i+=2){const q=Math.sqrt(segD2(x,z,p[i-2],p[i-1],p[i],p[i+1]))-r.w/2;if(q<d)d=q}}return d}
 // Mapa de luz nocturna de todas las farolas (1 píxel ≈ 1,2 m): se dibuja en props.js y se suma al asfalto y a las aceras
 const LMC=document.createElement("canvas");LMC.width=LMC.height=2048;const LIGHTMAP=new THREE.CanvasTexture(LMC);
 function worldUV2(m){const q=m.geometry.attributes.position.array,uv=new Float32Array(q.length/3*2);for(let i=0,j=0;i<q.length;i+=3,j+=2){uv[j]=Math.min(1,Math.max(0,q[i]/W));uv[j+1]=1-Math.min(1,Math.max(0,q[i+2]/W))}m.geometry.setAttribute("uv2",new THREE.BufferAttribute(uv,2))}
@@ -142,6 +148,12 @@ function buildGround(){const GS=MOBILE?4:3,N=Math.ceil(W/GS)+1,SD=new Float32Arr
  for(let k=0;k<RSG.length;k+=6){const ax=RSG[k],az=RSG[k+1],bx=RSG[k+2],bz=RSG[k+3],hw=RSG[k+4],m=hw+GS*2;
   const i0=Math.max(0,Math.floor((Math.min(ax,bx)-m)/GS)),i1=Math.min(N-1,Math.ceil((Math.max(ax,bx)+m)/GS)),j0=Math.max(0,Math.floor((Math.min(az,bz)-m)/GS)),j1=Math.min(N-1,Math.ceil((Math.max(az,bz)+m)/GS));
   for(let j=j0;j<=j1;j++)for(let i=i0;i<=i1;i++){const d=Math.sqrt(segD2(i*GS,j*GS,ax,az,bx,bz))-hw,o=j*N+i;if(d<SD[o])SD[o]=d}}
+ // El canal también deja hueco en el suelo (RD: distancia a su borde). El suelo usa el mínimo de las dos distancias
+ const RD=new Float32Array(N*N).fill(9);
+ for(const r of MAP.rivers){const p=r.p,hw=r.w/2;for(let k=2;k<p.length;k+=2){const ax=p[k-2],az=p[k-1],bx=p[k],bz=p[k+1],m=hw+GS*2;
+  const i0=Math.max(0,Math.floor((Math.min(ax,bx)-m)/GS)),i1=Math.min(N-1,Math.ceil((Math.max(ax,bx)+m)/GS)),j0=Math.max(0,Math.floor((Math.min(az,bz)-m)/GS)),j1=Math.min(N-1,Math.ceil((Math.max(az,bz)+m)/GS));
+  for(let j=j0;j<=j1;j++)for(let i=i0;i<=i1;i++){const d=Math.sqrt(segD2(i*GS,j*GS,ax,az,bx,bz))-hw,o=j*N+i;if(d<RD[o])RD[o]=d}}}
+ for(let o=0;o<SD.length;o++)if(RD[o]<SD[o]){const t=SD[o];SD[o]=RD[o];RD[o]=t<9?-1:-2}else RD[o]=1;
  GSD=SD;GSN=N;GSS=GS;
  const pos=[],cb=[],Y=CURB;
  const rect=(x0,z0,x1,z1)=>{flatTri(pos,Y,x0,z0,x1,z0,x1,z1);flatTri(pos,Y,x0,z0,x1,z1,x0,z1)};
@@ -149,10 +161,11 @@ function buildGround(){const GS=MOBILE?4:3,N=Math.ceil(W/GS)+1,SD=new Float32Arr
  for(let j=0;j<N-1;j++){let run=-1;for(let i=0;i<N;i++){const o=j*N+i,v0=SD[o],v1=SD[o+1],v2=SD[o+N+1],v3=SD[o+N],full=i<N-1&&v0>0&&v1>0&&v2>0&&v3>0;
   if(full){if(run<0)run=i;continue}if(run>=0){rect(run*GS,j*GS,i*GS,(j+1)*GS);run=-1}if(i>=N-1||(v0<=0&&v1<=0&&v2<=0&&v3<=0))continue;
   // Celda con borde: polígono de la parte "acera" e interpolación lineal del borde
-  const C=[[i*GS,j*GS,v0],[(i+1)*GS,j*GS,v1],[(i+1)*GS,(j+1)*GS,v2],[i*GS,(j+1)*GS,v3]],poly=[],edge=[];
-  for(let e=0;e<4;e++){const a=C[e],b=C[(e+1)%4];if(a[2]>0)poly.push(a);if((a[2]>0)!==(b[2]>0)){const t=a[2]/(a[2]-b[2]),q=[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t];poly.push(q);edge.push(q)}}
+  const C=[[i*GS,j*GS,v0,o],[(i+1)*GS,j*GS,v1,o+1],[(i+1)*GS,(j+1)*GS,v2,o+N+1],[i*GS,(j+1)*GS,v3,o+N]],poly=[],edge=[];
+  for(let e=0;e<4;e++){const a=C[e],b=C[(e+1)%4];if(a[2]>0)poly.push(a);if((a[2]>0)!==(b[2]>0)){const t=a[2]/(a[2]-b[2]),q=[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t,RD[a[3]]<0||RD[b[3]]<0];poly.push(q);edge.push(q)}}
   for(let k=1;k<poly.length-1;k++)flatTri(pos,Y,poly[0][0],poly[0][1],poly[k][0],poly[k][1],poly[k+1][0],poly[k+1][1]);
-  for(let k=0;k+1<edge.length;k+=2)curb(edge[k][0],edge[k][1],edge[k+1][0],edge[k+1][1])}}
+  // Bordillo solo hacia la calzada (hacia el canal están sus muros, ver buildCanal)
+  for(let k=0;k+1<edge.length;k+=2)if(!edge[k][2]&&!edge[k+1][2])curb(edge[k][0],edge[k][1],edge[k+1][0],edge[k+1][1])}}
  // Alrededor del mapa, suelo liso hasta el horizonte
  const F=4000;rect(-F,-F,W+F,0);rect(-F,W,W+F,W+F);rect(-F,0,0,W);rect(W,0,W+F,W);
  // Textura de colores del suelo (1 píxel ≈ 1,2 m): acera, parques, campos y agua
@@ -164,6 +177,38 @@ function buildGround(){const GS=MOBILE?4:3,N=Math.ceil(W/GS)+1,SD=new Float32Arr
  GROUNDMAT=beamMat(new THREE.MeshLambertMaterial({map:gt,lightMap:LIGHTMAP,lightMapIntensity:0}));for(const m of mkMeshZ(pos,GROUNDMAT,0,1)){worldUV2(m);m.geometry.setAttribute("uv",m.geometry.attributes.uv2)}
  mkMeshZ(cb,new THREE.MeshLambertMaterial({color:0xa8aaae,side:THREE.DoubleSide}),0,1)}
 
+// Canal (el río Furukawa): agua 2,4 m por debajo de la calle con olas suaves que reflejan el cielo y, de noche, la luz de las farolas;
+// muros de hormigón a los lados con barandilla, puentes donde lo cruza una calle (vigas debajo y pretiles a los lados) y, encima,
+// la autopista elevada sobre pilares como en la realidad (de adorno: no se puede subir)
+const WATERU={uTime:{value:0},uNightW:{value:0}};let WATERM=null;
+function buildCanal(){if(!MAP.rivers.length)return;const wa=[],wl=[],rl=[],gi=[],hw=[],hd=[],hs=[],pil=[],WY=-2.4;
+ const vq=(a,x0,z0,x1,z1,y0,y1)=>a.push(x0,y0,z0,x1,y0,z1,x1,y1,z1,x0,y0,z0,x1,y1,z1,x0,y1,z0);
+ for(const r of MAP.rivers){const p=r.p,h2=r.w/2;ribbon(wa,p,h2+.3,WY);
+  for(let i=2;i<p.length;i+=2){const ax=p[i-2],az=p[i-1],bx=p[i],bz=p[i+1],L=Math.hypot(bx-ax,bz-az)||1,lx=(bz-az)/L,lz=-(bx-ax)/L,n=Math.ceil(L/2);
+   for(const s of[-1,1])for(let k=0;k<n;k++){const x0=ax+(bx-ax)*k/n+lx*h2*s,z0=az+(bz-az)*k/n+lz*h2*s,x1=ax+(bx-ax)*(k+1)/n+lx*h2*s,z1=az+(bz-az)*(k+1)/n+lz*h2*s,road=roadAt((x0+x1)/2,(z0+z1)/2)>=0;
+    vq(wl,x0,z0,x1,z1,WY-.6,road?-.45:CURB);if(!road)vq(rl,x0,z0,x1,z1,CURB,CURB+1.1)}
+   // Autopista elevada: tablero de 13 m a 12 m de altura, pretiles y pilares en el centro del cauce
+   quad(hd,ax,az,bx,bz,6.5,12);quad(hs,ax,az,bx,bz,6.5,11.2);for(const s of[-1,1]){const x0=ax+lx*6.5*s,z0=az+lz*6.5*s,x1=bx+lx*6.5*s,z1=bz+lz*6.5*s;vq(hw,x0,z0,x1,z1,11.2,13.1)}
+   for(let t=16;t<L;t+=34)pil.push([ax+(bx-ax)*t/L,0,az+(bz-az)*t/L,Math.atan2(bx-ax,bz-az)])}}
+ // Puentes: tramos de calle por encima del agua
+ for(let k=0;k<RSG.length;k+=6){const ax=RSG[k],az=RSG[k+1],bx=RSG[k+2],bz=RSG[k+3],w2=RSG[k+4],L=Math.hypot(bx-ax,bz-az)||1,lx=(bz-az)/L,lz=-(bx-ax)/L,n=Math.ceil(L);
+  for(let i=0;i<n;i++){const x0=ax+(bx-ax)*i/n,z0=az+(bz-az)*i/n,x1=ax+(bx-ax)*(i+1)/n,z1=az+(bz-az)*(i+1)/n;if(riverD((x0+x1)/2,(z0+z1)/2)>.5)continue;
+   quad(gi,x0,z0,x1,z1,w2+.3,-.9);for(const s of[-1,1]){const ex0=x0+lx*(w2+.3)*s,ez0=z0+lz*(w2+.3)*s,ex1=x1+lx*(w2+.3)*s,ez1=z1+lz*(w2+.3)*s;vq(gi,ex0,ez0,ex1,ez1,-.9,.9);addEdge(ex0,ez0,ex1,ez1)}}}
+ const conc=new THREE.MeshLambertMaterial({color:0x8e9094,side:THREE.DoubleSide});
+ WATERM=new THREE.MeshPhongMaterial({color:0x1f3d4c,specular:0x9fb4c4,shininess:110,envMap:SKYCUBE,reflectivity:.5,lightMap:LIGHTMAP,lightMapIntensity:0});
+ WATERM.onBeforeCompile=sh=>{Object.assign(sh.uniforms,WATERU);sh.vertexShader=sh.vertexShader.replace("#include <common>","#include <common>\nvarying vec3 vWw;").replace("#include <begin_vertex>","#include <begin_vertex>\nvWw=(modelMatrix*vec4(transformed,1.)).xyz;");
+  sh.fragmentShader=sh.fragmentShader.replace("#include <common>","#include <common>\nuniform float uTime,uNightW;varying vec3 vWw;").replace("#include <emissivemap_fragment>",`#include <emissivemap_fragment>
+  // De noche: brillos cálidos temblorosos (reflejo de ventanas y letreros) sobre un azul oscuro
+  {vec2 q=vWw.xz;float s=sin(q.x*.37+sin(q.y*.21)*3.)*sin(q.y*.53+q.x*.11)+sin(q.x*1.7+uTime*1.5)*.25+sin(q.y*2.3-uTime*1.9)*.25;
+   totalEmissiveRadiance+=uNightW*(vec3(.02,.05,.09)+vec3(1.,.72,.4)*pow(max(0.,s),6.)*.55+vec3(.4,.7,1.)*pow(max(0.,-s),8.)*.25);}`).replace("#include <normal_fragment_maps>",`#include <normal_fragment_maps>
+  {vec2 q=vWw.xz;float t=uTime;vec3 pn=vec3(sin(q.x*.9+t*1.3)*.5+sin(q.x*2.3-q.y*1.7+t*2.1)*.3+sin(q.x*5.1+q.y*3.7-t*3.)*.12,0.,cos(q.y*1.1-t*1.1)*.5+sin(q.y*2.9+q.x*1.3+t*1.7)*.3+cos(q.y*4.7-q.x*4.3+t*2.6)*.12);
+   normal=normalize(normal+(viewMatrix*vec4(pn*.22,0.)).xyz);}`)};
+ for(const m of mkMeshZ(wa,WATERM,0))worldUV2(m);
+ mkMeshZ(wl,conc,0,1);if(rl.length)mkMesh(rl,RAILM||(RAILM=new THREE.MeshLambertMaterial({color:0x9aa1a8,transparent:true,opacity:.6,side:THREE.DoubleSide,depthWrite:false})));if(gi.length)mkMesh(gi,conc,0,null,2);
+ // Autopista: asfalto arriba (con la misma textura que las calles), hormigón debajo y a los lados
+ for(const m of mkMeshZ(hd,ROADMAT,0,1)){worldUV2(m);const q=m.geometry.attributes.position.array,uv=new Float32Array(q.length/3*2);for(let i=0,j=0;i<q.length;i+=3,j+=2){uv[j]=q[i]/7;uv[j+1]=q[i+2]/7}m.geometry.setAttribute("uv",new THREE.BufferAttribute(uv,2))}
+ mkMeshZ(hs,conc,0,2);mkMeshZ(hw,conc,0,2);
+ inst(new THREE.BoxGeometry(2.6,11.2-WY,4).translate(0,(11.2+WY)/2,0),new THREE.MeshLambertMaterial({color:0x9a9c9f}),pil,0,true)}
 // Imagen del mapa (1 píxel = 1 m) para el mapa de aparición y el fondo del minimapa
 function drawMapImg(){const c=document.createElement("canvas");c.width=c.height=W;const g=c.getContext("2d"),poly=(R)=>{g.beginPath();g.moveTo(R[0],R[1]);for(let i=2;i<R.length;i+=2)g.lineTo(R[i],R[i+1]);g.closePath();g.fill()},
  line=(p,w)=>{g.lineWidth=w;g.beginPath();g.moveTo(p[0],p[1]);for(let i=2;i<p.length;i+=2)g.lineTo(p[i],p[i+1]);g.stroke()};

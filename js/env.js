@@ -86,7 +86,7 @@ function envUpdate(dt){HOUR=hourNow();const e=Math.sin((HOUR-6)/12*PI),day=sstep
  for(const m of NM.win)if(m.envMap)m.reflectivity=.25*(1-NF*.85);
  for(const m of NM.int){const s=m.userData.sh;if(s){s.uniforms.uNight.value=NF;s.uniforms.uSkyT.value.copy(SKYU.top.value);s.uniforms.uSkyH.value.copy(SKYU.hor.value)}}for(const m of NM.sign)m.emissiveIntensity=.12+NF*1.9;if(NM.ledGlow)NM.ledGlow.opacity=NF*.55;
  if(NM.lampHead)NM.lampHead.emissiveIntensity=NF*2;if(NM.glow)NM.glow.opacity=NF*.9;
- if(ROADMAT)ROADMAT.lightMapIntensity=NF*1.5;if(GROUNDMAT)GROUNDMAT.lightMapIntensity=NF*1.3;if(NM.vend)NM.vend.emissiveIntensity=.15+NF*.85;
+ if(ROADMAT)ROADMAT.lightMapIntensity=NF*1.5;if(WATERM){WATERM.lightMapIntensity=NF*1.1;WATERM.reflectivity=.5*(1-NF*.6);WATERU.uTime.value=performance.now()/1000;WATERU.uNightW.value=NF}if(GROUNDMAT)GROUNDMAT.lightMapIntensity=NF*1.3;if(NM.vend)NM.vend.emissiveIntensity=.15+NF*.85;
  if(NM.head)NM.head.emissiveIntensity=.2+NF*1.8;if(NM.tail)NM.tail.emissiveIntensity=.25+NF*1.3;
  if(towerMat)towerMat.emissive.copy(PAL.tw).multiplyScalar(NF*.55);for(const m of NM.ledT)m.color.setScalar(.85+NF*.15);
  if(ROADMAT){ROADMAT.specular.setScalar(.05+WEA.wet*.75);ROADMAT.shininess=30+WEA.wet*70;ROADMAT.color.setScalar(1-WEA.wet*.35)}
