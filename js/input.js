@@ -5,7 +5,7 @@ function act(a){initAudio();if(a==="set"){if(state==="set")closeSettings();else 
  if(state!=="play")return;if(a==="map")show("map");else if(a==="cars")show("cars");else if(a==="cam")mode=(mode+1)%4}
 addEventListener("keydown",e=>{if(rebind){e.preventDefault();rebind(e.code);return}
  keys[e.code]=1;keyAct=1;initAudio();if(e.code==="Space"||e.code.startsWith("Arrow"))e.preventDefault();if(e.repeat)return;
- if(isK("snd",e.code))setMute(!mute);if(isK("trf",e.code))setNpc(npcLvl+1);
+ if(isK("snd",e.code))setMute(!mute);if(isK("radio",e.code)){if(!RADIO.on)radioToggle();else radioNext(1)}if(isK("trf",e.code))setNpc(npcLvl+1);
  if(isK("set",e.code)){if(state==="liv")closeLiv();else if(state==="set"||state==="play")act("set");else if(spawned)resume();return}
  if(isK("map",e.code))act("map");if(isK("cars",e.code))act("cars");if(isK("cam",e.code))act("cam")});
 addEventListener("keyup",e=>keys[e.code]=0);

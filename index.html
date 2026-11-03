@@ -7,12 +7,14 @@
 <canvas id="mini" width="190" height="190" hidden></canvas>
 <canvas id="hud" width="240" height="240" hidden></canvas>
 <div id="mz" hidden><button onclick="miniZoom(1)">+</button><button onclick="miniZoom(-1)">−</button></div>
-<div id="help" hidden data-i18n="WASD / flechas · Espacio: freno de mano · V: cámara · M: mapa · C: coches · N: sonido · T: tráfico · Esc: ajustes · Mando: RT/LT, stick, A freno de mano, X cámara, Y mapa, Back coches, Start ajustes">WASD / flechas · Espacio: freno de mano · V: cámara · M: mapa · C: coches · N: sonido · T: tráfico · Esc: ajustes · Mando: RT/LT, stick, A freno de mano, X cámara, Y mapa, Back coches, Start ajustes</div>
+<div id="help" hidden data-i18n="WASD / flechas · Espacio: freno de mano · V: cámara · M: mapa · C: coches · N: sonido · T: tráfico · R: radio · Esc: ajustes · Mando: RT/LT, stick, A freno de mano, X cámara, Y mapa, Back coches, Start ajustes">WASD / flechas · Espacio: freno de mano · V: cámara · M: mapa · C: coches · N: sonido · T: tráfico · R: radio · Esc: ajustes · Mando: RT/LT, stick, A freno de mano, X cámara, Y mapa, Back coches, Start ajustes</div>
 <div id="topbar">
  <button class="tb" id="gear" onclick="act('set')">⚙️</button>
  <button class="tb mob" onclick="act('cam')">🎥</button>
  <button class="tb mob" onclick="act('map')">🗺️</button>
  <button class="tb mob" onclick="act('cars')">🚘</button>
+ <button class="tb" id="rad" onclick="initAudio();radioToggle()">📻</button>
+ <button class="tb" onclick="initAudio();if(!RADIO.on)radioToggle();else radioNext(1)">⏭</button>
  <button class="tb" id="snd" onclick="initAudio();setMute(!mute)">🔊</button>
  <button class="tb" id="trf" onclick="setNpc(npcLvl+1)">🚗 Medio</button>
 </div>
@@ -21,6 +23,7 @@
  <button class="pd" id="tHb" data-i18n="FRENO MANO">FRENO MANO</button>
  <button class="pd" id="tBrk" data-i18n="FRENO">FRENO</button>
 </div>
+<div id="radioL" hidden></div>
 <div id="spd" hidden><div id="spdB"><u></u></div><span id="spdN">0</span><small id="spdU">km/h</small><b id="spdG">N</b></div>
 <div id="rot">🔄<br><span data-i18n="Gira el móvil en horizontal para jugar">Gira el móvil en horizontal para jugar</span></div>
 <div class="ov" id="ov">
@@ -58,6 +61,7 @@
 <script src="js/traffic.js"></script>
 <script src="js/weather.js"></script>
 <script src="js/hud.js"></script>
+<script src="js/radio.js"></script>
 <script src="js/settings.js"></script>
 <script src="js/livery.js"></script>
 <script src="js/seasons.js"></script>

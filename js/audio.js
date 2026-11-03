@@ -3,8 +3,8 @@
 let AC=null,mute=false,eo,eo2,eo3,ef,eg,ig,nf,ng,nb,aMaster,crashT=0;const ES=[];
 // Canales con su propio volumen (menú de ajustes): motor, efectos (golpes y chirridos), lluvia y truenos, claxon
 const BUS={};
-function setVol(){if(!AC)return;const v=ENV.vol,t=AC.currentTime;aMaster.gain.setTargetAtTime(.5*v.m,t,.05);BUS.eng.gain.setTargetAtTime(v.e,t,.05);BUS.fx.gain.setTargetAtTime(v.fx,t,.05);BUS.rain.gain.setTargetAtTime(v.rain,t,.05);BUS.horn.gain.setTargetAtTime(v.horn,t,.05)}
-function setMute(m){mute=m;$("snd").textContent=m?"🔇":"🔊"}
+function setVol(){if(typeof radioVol==="function")radioVol();if(!AC)return;const v=ENV.vol,t=AC.currentTime;aMaster.gain.setTargetAtTime(.5*v.m,t,.05);BUS.eng.gain.setTargetAtTime(v.e,t,.05);BUS.fx.gain.setTargetAtTime(v.fx,t,.05);BUS.rain.gain.setTargetAtTime(v.rain,t,.05);BUS.horn.gain.setTargetAtTime(v.horn,t,.05)}
+function setMute(m){mute=m;$("snd").textContent=m?"🔇":"🔊";if(typeof radioVol==="function")radioVol()}
 // Seis bucles del mismo motor a revoluciones crecientes: se mezclan los dos más cercanos a las rpm y se ajusta su velocidad de reproducción
 function loadEngine(){Promise.all([0,1,2,3,4,5].map(i=>fetch(`sounds/engine/loop${i}.wav`).then(r=>r.arrayBuffer()).then(b=>new Promise((ok,ko)=>AC.decodeAudioData(b,ok,ko)))))
  .then(bufs=>{bufs.forEach(b=>{const s=AC.createBufferSource(),g=AC.createGain();s.buffer=b;s.loop=true;g.gain.value=0;s.connect(g);g.connect(ef);s.start();ES.push({s,g})});eo.disconnect();eo2.disconnect();eo3.disconnect()})

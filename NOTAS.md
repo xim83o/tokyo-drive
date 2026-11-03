@@ -47,6 +47,16 @@ Pedido por el usuario (todo con permiso ya dado; descargas permitidas: partes de
 - [ ] Pendiente de preguntar: imágenes anime de licencia libre descargadas (permiso por cada una); modelos de coche más realistas si el usuario los baja de Sketchfab.
 - [x] Móvil: joystick delante = acelerar, atrás = frenar y marcha atrás, lados = girar; botones FRENO y FRENO MANO; velocímetro como barra fina arriba (#spd).
 
+## Tanda 2026-11-03 (tarde)
+- [x] Calcomanías: × en cada pegatina, chica morada oculta (hide), sin pack Anime, dorsal del capó legible desde delante, llantas y neumáticos por separado (wheelMat), rayas cortadas en los cristales, focos de estudio, subir imágenes propias (td-stk).
+- [x] Marcas de derrape continuas (effects.js), hitbox de NPC por caja (boxHit), toldos sin meterse en edificios, bordillos sin atascos (CRB), atardecer gradual 15:30-19:00, árboles detallados solo cerca (treeLod con una malla por especie), ventanas lejanas baratas (>300 m).
+- [x] Canal Furukawa (buildCanal): cauce hundido, agua animada con reflejos (de noche brillos de la ciudad), muros, barandillas, puentes cruzables (colisión solo en los bordes), autopista elevada de adorno encima.
+- [x] Concesionario Tokyo Drive Motors: edificio de cristal junto a una avenida con cartel y anillo en la calle (parar encima abre el editor); fondo del editor Ciudad/Concesionario (sala 300 m bajo el mapa).
+- [x] Estaciones (seasons.js): fecha real de Japón o Ajustes; sakura/pétalos, verano con calima y farolillos, otoño con hojas en el suelo, invierno con nieve acumulada (snowMat), menos agarre y luces de Navidad.
+- [x] Idiomas (i18n.js): español, inglés, japonés, catalán. Textos nuevos: añadir a I18N.
+- [x] Radio (radio.js): radio-browser.info, solo https, botón 📻 / ⏭ / tecla R, país, estilo y volumen en Ajustes → Sonido. Sin comprobar si el enlace del móvil permite conectarse a las emisoras.
+- Guardado para más adelante: contrarrelojes y radares, modo foto, autopista Shuto conducible.
+
 ## Pendiente / ideas
 - Autopista Shuto elevada.
 - Modelos 3D de coches libres (hypercar = hypercar, drift = estilo japonés…), pedir permiso por cada descarga.

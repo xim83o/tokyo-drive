@@ -1,7 +1,7 @@
 // Menú de ajustes (Esc o botón ⚙️): gráficos, hora y clima, sonido, tráfico, pantalla (HUD y unidades) y teclas (solo PC).
 // Todo se guarda en el navegador (ENV, ver env.js). Mientras está abierto el juego queda en pausa
 let rebind=null,setPrev="cars",setTab="gfx";
-const ACTS=[["up","Acelerar"],["down","Frenar / marcha atrás"],["left","Girar a la izquierda"],["right","Girar a la derecha"],["hb","Freno de mano"],["cam","Cambiar cámara"],["map","Mapa"],["cars","Coches"],["snd","Silenciar sonido"],["trf","Cambiar tráfico"],["set","Ajustes"]];
+const ACTS=[["up","Acelerar"],["down","Frenar / marcha atrás"],["left","Girar a la izquierda"],["right","Girar a la derecha"],["hb","Freno de mano"],["cam","Cambiar cámara"],["map","Mapa"],["cars","Coches"],["snd","Silenciar sonido"],["trf","Cambiar tráfico"],["radio","Cambiar emisora"],["set","Ajustes"]];
 const KEYDEF=JSON.parse(JSON.stringify(ENV.keys));
 function keyName(c){if(!c)return"—";const m={Space:"Espacio",Escape:"Esc",ArrowUp:"↑",ArrowDown:"↓",ArrowLeft:"←",ArrowRight:"→",ShiftLeft:"Mayús izq.",ShiftRight:"Mayús der.",ControlLeft:"Ctrl izq.",ControlRight:"Ctrl der.",Enter:"Intro",Tab:"Tab",Backspace:"Borrar"};
  return(m[c]?T(m[c]):0)||c.replace(/^Key/,"").replace(/^Digit/,"").replace(/^Numpad/,"Num ")}
@@ -29,7 +29,10 @@ function drawSettings(){const P=$("setP");P.innerHTML=`<h1>${T("Ajustes")}</h1>`
   if(ENV.season===undefined)ENV.season="auto";env("Estación",[["auto","Fecha de Japón"],[0,"Primavera"],[1,"Verano"],[2,"Otoño"],[3,"Invierno"]],"season",()=>{if(ready)seasonApply(seasonNow())});
   note("En invierno, si llueve, nieva: la nieve se acumula en el suelo y los tejados y el coche agarra menos.")}
  else if(setTab==="snd"){slider("General","m");slider("Motor","e");slider("Golpes y derrapes","fx");slider("Lluvia y truenos","rain");slider("Claxon","horn");
-  row("Sonido",[[0,"Activado"],[1,"Silenciado"]],()=>mute?1:0,v=>{initAudio();setMute(!!v)})}
+  row("Sonido",[[0,"Activado"],[1,"Silenciado"]],()=>mute?1:0,v=>{initAudio();setMute(!!v)});
+  slider("Radio","radio");row("País de la radio",RCOUNTRY,()=>ENV.radio.c,v=>{ENV.radio.c=v;radioReset()});row("Estilo",RTAG,()=>ENV.radio.t,v=>{ENV.radio.t=v;radioReset()});
+  {const b=document.createElement("button");b.className="b g";b.textContent="📻 "+T("Siguiente emisora");b.onclick=()=>{initAudio();if(!RADIO.on)radioToggle();else radioNext(1)};box.appendChild(b)}
+  note("La radio usa emisoras en directo de radio-browser.info: necesita internet y la música (y los anuncios) son los que pongan ellas.")}
  else if(setTab==="trf"){row("Tráfico",NLAB.map((t,i)=>[i,t]),()=>npcLvl,v=>setNpc(v));note("Más coches hace la ciudad más viva, pero pide más al ordenador o al móvil.")}
  else if(setTab==="scr"){row("Velocidad en",[["kmh","km/h"],["mph","mph"]],()=>ENV.units,v=>ENV.units=v);
   row("Minimapa",[[1,"Sí"],[0,"No"]],()=>ENV.hud.mini,v=>ENV.hud.mini=v);row("Velocímetro",[[1,"Sí"],[0,"No"]],()=>ENV.hud.speed,v=>ENV.hud.speed=v);
