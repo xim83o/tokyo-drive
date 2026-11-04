@@ -6,6 +6,21 @@ const DV={spd:1,scn:null,stuck:new Map(),t:0,keep:null};
 function devHud(html){let e=$("devHud");if(!e){e=document.createElement("div");e.id="devHud";document.body.appendChild(e)}e.hidden=!html;if(html)e.innerHTML=html}
 function devSave(){DV.keep={px,pz,h}}
 function devBack(){devHud("");SCN=null;DV.scn=null;if(DV.keep){px=DV.keep.px;pz=DV.keep.pz;h=DV.keep.h;DV.keep=null}for(const n of NPC){npcRst(n);n.lane=null}resume()}
+// --- Capturas para Claude (tecla P): foto del juego + nota escrita + dónde estás y qué ajustes tienes. El servidor de jugar.bat
+// las guarda en la carpeta "capturas" del juego, y Claude las lee de ahí. El juego se queda en pausa mientras escribes la nota
+function devShot(){if(DV.pause)return;renderFrame();let png;try{png=rd.domElement.toDataURL("image/png")}catch(e){return}DV.pause=true;
+ const r=v=>Math.round(v*100)/100,E={...ENV};delete E.keys;
+ const info={fecha:new Date().toLocaleString("es-ES"),pantalla:state,coche:cur&&cur.n,cocheN:carK,posicion:{x:r(px),z:r(pz),rumbo:r(h)},camara:{modo:mode,x:r(cam.position.x),y:r(cam.position.y),z:r(cam.position.z)},
+  hora:r(HOUR),estacion:SEASON,trafico:npcLvl,calidad:QUAL[qLevel()].n,ventana:[innerWidth,innerHeight],ajustes:E};
+ if(state==="liv")info.calcomanias=LIV[carK];
+ let d=$("devShot");if(!d){d=document.createElement("div");d.id="devShot";document.body.appendChild(d)}d.hidden=false;
+ d.innerHTML=`<b>Captura para Claude</b><img src="${png}"><textarea placeholder="¿Qué está mal? (opcional)"></textarea><div><button class="go">Enviar</button><button>Cancelar</button></div><p></p>`;
+ const ta=d.querySelector("textarea"),msg=d.querySelector("p"),bs=d.querySelectorAll("button");ta.focus();
+ const close=()=>{d.hidden=true;DV.pause=false;for(const k in keys)keys[k]=0;last=performance.now()};
+ const send=()=>{bs[0].disabled=true;msg.textContent="Enviando…";fetch("/captura",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({png,nota:ta.value,info})})
+  .then(x=>x.ok?x.json():Promise.reject(x.status)).then(j=>{msg.textContent="Guardada: capturas/"+j.nombre+".png";setTimeout(close,900)})
+  .catch(e=>{bs[0].disabled=false;msg.textContent="No se ha podido guardar ("+e+"). ¿Has abierto el juego con jugar.bat?"})};
+ bs[0].onclick=send;bs[1].onclick=close;ta.onkeydown=e=>{e.stopPropagation();if(e.key==="Escape")close();else if(e.key==="Enter"&&(e.ctrlKey||e.metaKey))send()}}
 // --- Vista de la ciudad: cámara desde arriba alrededor de tu coche, tráfico a x1-x10 y contadores ---
 function startCity(){closeSettings();devSave();state="devcity";$("ov").hidden=true;hudVis(false);DV.spd=1;DV.stuck.clear();DV.t=0;DV.ov=DV.pr=0;devCityHud()}
 function devCityHud(){devHud(`<b>Vista de la ciudad</b> · velocidad ${[1,2,5,10].map(s=>`<button onclick="DV.spd=${s};devCityHud()" class="${DV.spd===s?"on":""}">x${s}</button>`).join("")}

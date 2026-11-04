@@ -122,11 +122,11 @@ async function loadWorld(){
  for(const b of MAP.buildings)addPoly(b.p,b.h);
  for(const R of MAP.water)addPoly(R,0);
  // Calzada a 0 m (la acera queda 15 cm más alta). Cada tramo guarda su medio ancho (r.hw) ya ajustado
- const ra=[];MAP.roads.forEach((r,ri)=>{const p=r.p;r.hw=[];
+ const ra=[],DISCS=[];MAP.roads.forEach((r,ri)=>{const p=r.p;r.hw=[];
   for(let i=2;i<p.length;i+=2){const ax=p[i-2],az=p[i-1],bx=p[i],bz=p[i+1],L=Math.hypot(bx-ax,bz-az)||1,lx=(bz-az)/L,lz=-(bx-ax)/L;let hw=r.w/2;
    for(;hw>2.6;hw*=.88){let hit=false;for(let k=0;k<=4&&!hit;k++){const x=ax+(bx-ax)*k/4,z=az+(bz-az)*k/4;if(inBuilding(x+lx*hw,z+lz*hw)||inBuilding(x-lx*hw,z-lz*hw))hit=true}if(!hit)break}
    r.hw.push(hw);quad(ra,ax,az,bx,bz,hw,0);const k=RSG.length/6;RSG.push(ax,az,bx,bz,hw,ri);gadd(Math.min(ax,bx)-hw-3,Math.min(az,bz)-hw-3,Math.max(ax,bx)+hw+3,Math.max(az,bz)+hw+3,"r",k)}
-  for(let i=0;i<p.length;i+=2){const s=i/2,hw=Math.min(r.hw[Math.max(0,s-1)],r.hw[Math.min(r.hw.length-1,s)]);for(let k=0;k<12;k++){const a0=k/12*PI*2,a1=(k+1)/12*PI*2;flatTri(ra,0,p[i],p[i+1],p[i]+Math.cos(a0)*hw,p[i+1]+Math.sin(a0)*hw,p[i]+Math.cos(a1)*hw,p[i+1]+Math.sin(a1)*hw)}}});
+  for(let i=0;i<p.length;i+=2){const s=i/2,hw=Math.min(r.hw[Math.max(0,s-1)],r.hw[Math.min(r.hw.length-1,s)]);DISCS.push(p[i],p[i+1],hw)}});
  // Calles sin salida (un extremo que no toca ninguna otra calle y no está en el borde del mapa): aparcamiento de 12 m con plazas
  // donde quepa y, si no, un final redondo para dar la vuelta con su señal. Se añaden como tramos de calzada (dejan hueco y bordillo)
  {const use=new Map();for(const r of MAP.roads)if(r.n)r.n.forEach((id,i)=>{if(i===0||i===r.n.length-1)use.set(id,(use.get(id)||0)+1);else use.set(id,(use.get(id)||0)+2)});
@@ -138,6 +138,11 @@ async function loadWorld(){
    else{const R=Math.max(hw,5.5),circ=[];for(let a=0;a<8;a++)circ.push([x+ux*2+Math.cos(a/8*PI*2)*R,z+uz*2+Math.sin(a/8*PI*2)*R]);if(!fits(circ))continue;
     const cx=x+ux*2,cz=z+uz*2;for(let k2=0;k2<16;k2++){const a0=k2/16*PI*2,a1=(k2+1)/16*PI*2;flatTri(ra,0,cx,cz,cx+Math.cos(a0)*R,cz+Math.sin(a0)*R,cx+Math.cos(a1)*R,cz+Math.sin(a1)*R)}
     const k=RSG.length/6;RSG.push(cx,cz,cx+ux*.01,cz+uz*.01,R,ri);gadd(cx-R-3,cz-R-3,cx+R+3,cz+R+3,"r",k);PARK.push({x:cx,z:cz,ux,uz,pw:R,t:"c"})}}})}
+ // Redondeles de asfalto en cada vértice de las calles (cierran las esquinas de los cruces). Junto al canal, en trozos finos, y sin
+ // los que queden sobre el agua fuera de la calzada recortada (roadAtW): ahí la avenida ancha dejaba asfalto flotando sobre el agua
+ for(let i=0;i<DISCS.length;i+=3){const x=DISCS[i],z=DISCS[i+1],hw=DISCS[i+2],nearW=riverD(x,z)<hw+1,n=nearW?48:12;
+  for(let k=0;k<n;k++){const a0=k/n*PI*2,a1=(k+1)/n*PI*2,am=(a0+a1)/2;if(nearW){const mx=x+Math.cos(am)*hw*.95,mz=z+Math.sin(am)*hw*.95;if(riverD(mx,mz)<.3&&roadAtW(mx,mz)<0)continue}
+   flatTri(ra,0,x,z,x+Math.cos(a0)*hw,z+Math.sin(a0)*hw,x+Math.cos(a1)*hw,z+Math.sin(a1)*hw)}}
  // Capa de asfalto por debajo de todo el mapa: tapa las franjas estrechas entre calles donde no cabe acera (antes eran huecos).
  // No pasa por el canal (ahí se ve el agua, más abajo): se hace en casillas de 20 m y se saltan las que tocan el cauce
  // Tampoco pasa por los estanques y lagos (MAP.water): las casillas que tocan uno se parten en trozos de 4 m y se saltan los mojados
@@ -179,13 +184,22 @@ function inWater(x,z){for(const R of MAP.water)if(inPoly(R,x,z))return true;retu
 // ¿Ese trozo del borde del canal queda abierto (puente)? Los dos extremos y el centro tienen que estar sobre la calzada, y también
 // 3 y 6,5 m hacia dentro del cauce (nx,nz: normal hacia fuera). Antes bastaba el centro y quedaba un hueco al lado de algún puente
 // (hacia dentro se prueba en perpendicular y girando ±20°, para los puentes que cruzan el canal en diagonal)
-function bankOpen(x0,z0,x1,z1,nx,nz){const mx=(x0+x1)/2,mz=(z0+z1)/2;if(!(roadAt(mx,mz)>=0&&roadAt(x0,z0)>=0&&roadAt(x1,z1)>=0))return false;
- for(const a of[0,.35,-.35]){const c=Math.cos(a),s=Math.sin(a),dx=nx*c-nz*s,dz=nx*s+nz*c;if(roadAt(mx-dx*3,mz-dz*3)>=0&&roadAt(mx-dx*6.5,mz-dz*6.5)>=0)return true}return false}
+function bankOpen(x0,z0,x1,z1,nx,nz){const mx=(x0+x1)/2,mz=(z0+z1)/2;if(!(roadAtW(mx,mz)>=0&&roadAtW(x0,z0)>=0&&roadAtW(x1,z1)>=0))return false;
+ for(const a of[0,.35,-.35]){const c=Math.cos(a),s=Math.sin(a),dx=nx*c-nz*s,dz=nx*s+nz*c;if(roadAtW(mx-dx*3,mz-dz*3)>=0&&roadAtW(mx-dx*6.5,mz-dz*6.5)>=0)return true}return false}
+// Calzada junto al agua: igual que roadAt, pero el redondel del final de cada tramo no puede ser más ancho que la calle que sigue
+// en ese cruce. Una avenida de 17 m que acababa en un puente de 9,6 m dejaba medio círculo de calle sobre el agua a cada lado, y
+// su pretil curvo se pegaba a la mitad del puente en vez de al principio. RCAP: radio de los dos extremos de cada tramo
+let RCAP=null;
+function capR(){RCAP=new Float32Array(RSG.length/3);const N=new Map(),key=(x,z)=>Math.round(x*10)+","+Math.round(z*10);
+ for(let k=0;k<RSG.length;k+=6)for(const e of[0,1]){const q=key(RSG[k+e*2],RSG[k+1+e*2]);if(!N.has(q))N.set(q,[]);N.get(q).push(k)}
+ for(let k=0;k<RSG.length;k+=6)for(const e of[0,1]){let m=0;for(const o of N.get(key(RSG[k+e*2],RSG[k+1+e*2])))if(o!==k)m=Math.max(m,RSG[o+4]);RCAP[k/3+e]=m?Math.min(RSG[k+4],m):RSG[k+4]}}
+function roadAtW(x,z){if(!RCAP||RCAP.length!==RSG.length/3)capR();for(const k of gq(x,z).r){const o=k*6,ax=RSG[o],az=RSG[o+1],bx=RSG[o+2],bz=RSG[o+3],w=RSG[o+4],dx=bx-ax,dz=bz-az,l2=dx*dx+dz*dz||1e-9,t=((x-ax)*dx+(z-az)*dz)/l2;
+ if(t>=0&&t<=1){const qx=ax+dx*t-x,qz=az+dz*t-z;if(qx*qx+qz*qz<w*w)return RSG[o+5]}else{const e=t<0?0:1,ex=e?bx:ax,ez=e?bz:az,r=RCAP[k*2+e];if((x-ex)**2+(z-ez)**2<r*r)return RSG[o+5]}}return -1}
 // Muro curvo en cada vértice del canal: en el lado exterior de los recodos y en las uniones entre tramos los muros rectos no se tocan
 // y quedaba una cuña abierta al agua. Se recorre un círculo del ancho del cauce y se quedan los trozos que caen en el borde (no
 // dentro del agua de otro tramo ni sobre una calle)
 function riverCaps(r,cb){const p=r.p,h2=r.w/2;for(let i=0;i<p.length;i+=2){const cx=p[i],cz=p[i+1];for(let j=0;j<16;j++){const a0=j/16*PI*2,a1=(j+1)/16*PI*2,x0=cx+Math.cos(a0)*h2,z0=cz+Math.sin(a0)*h2,x1=cx+Math.cos(a1)*h2,z1=cz+Math.sin(a1)*h2,mx=(x0+x1)/2,mz=(z0+z1)/2;
- if(riverD(mx,mz)<-.3||roadAt(mx,mz)>=0)continue;cb(x0,z0,x1,z1)}}}
+ if(riverD(mx,mz)<-.3||roadAtW(mx,mz)>=0)continue;cb(x0,z0,x1,z1)}}}
 function riverD(x,z){let d=1e9;for(const r of MAP.rivers){const p=r.p;for(let i=2;i<p.length;i+=2){const q=Math.sqrt(segD2(x,z,p[i-2],p[i-1],p[i],p[i+1]))-r.w/2;if(q<d)d=q}}return d}
 // Mapa de luz nocturna de todas las farolas (1 píxel ≈ 1,2 m): se dibuja en props.js y se suma al asfalto y a las aceras
 const LMC=document.createElement("canvas");LMC.width=LMC.height=2048;const LIGHTMAP=new THREE.CanvasTexture(LMC);
@@ -260,11 +274,13 @@ function buildCanal(){if(!MAP.rivers.length)return;const wa=[],wl=[],rl=[],gi=[]
    quad(gi,x0,z0,x1,z1,w2+.3,-.9);for(const s of[-1,1]){if(!near[(s+1)/2])continue;const ex0=x0+lx*(w2+.3)*s,ez0=z0+lz*(w2+.3)*s,ex1=x1+lx*(w2+.3)*s,ez1=z1+lz*(w2+.3)*s;vq(gi,ex0,ez0,ex1,ez1,-.9,.9);addEdge(ex0,ez0,ex1,ez1)}}}
  // Además, cualquier borde de calzada que quede sobre el agua (bordes de cada tramo y redondeles de los cruces) lleva pretil si al
  // otro lado hay agua sin calle: así no queda ningún hueco al canal en los cruces que están encima o junto a un puente
- {const piece=(x0,z0,x1,z1,ox,oz)=>{const mx=(x0+x1)/2,mz=(z0+z1)/2;if(riverD(mx,mz)>.3)return;const qx=mx+ox*.45,qz=mz+oz*.45;if(roadAt(qx,qz)>=0||riverD(qx,qz)>-.2)return;vq(gi,x0,z0,x1,z1,-.9,.9);addEdge(x0,z0,x1,z1)};
+ {const piece=(x0,z0,x1,z1,ox,oz)=>{const mx=(x0+x1)/2,mz=(z0+z1)/2;if(riverD(mx,mz)>.3)return;const qx=mx+ox*.45,qz=mz+oz*.45;if(roadAtW(qx,qz)>=0||riverD(qx,qz)>-.2)return;vq(gi,x0,z0,x1,z1,-.9,.9);addEdge(x0,z0,x1,z1)};
   for(let k=0;k<RSG.length;k+=6){const ax=RSG[k],az=RSG[k+1],bx=RSG[k+2],bz=RSG[k+3],w2=RSG[k+4];if(riverD((ax+bx)/2,(az+bz)/2)>w2+Math.hypot(bx-ax,bz-az)/2+2)continue;
    const L=Math.hypot(bx-ax,bz-az)||1,lx=(bz-az)/L,lz=-(bx-ax)/L,n=Math.ceil(L/.5);
    for(const s of[-1,1])for(let i=0;i<n;i++){const t0=i/n,t1=(i+1)/n;piece(ax+(bx-ax)*t0+lx*w2*s,az+(bz-az)*t0+lz*w2*s,ax+(bx-ax)*t1+lx*w2*s,az+(bz-az)*t1+lz*w2*s,lx*s,lz*s)}
-   for(const[cx,cz]of[[ax,az],[bx,bz]]){const m=Math.max(12,Math.ceil(w2*PI*2/.5));for(let j=0;j<m;j++){const a0=j/m*PI*2,a1=(j+1)/m*PI*2,am=(a0+a1)/2;piece(cx+Math.cos(a0)*w2,cz+Math.sin(a0)*w2,cx+Math.cos(a1)*w2,cz+Math.sin(a1)*w2,Math.cos(am),Math.sin(am))}}}}
+   // y los dos lados cortos (el final del tramo): si una avenida ancha acaba en el borde del canal, su esquina queda sobre el agua
+   {const m=Math.ceil(w2*2/.5),ux=(bx-ax)/L,uz=(bz-az)/L;for(const[cx,cz,sg]of[[ax,az,-1],[bx,bz,1]])for(let i=0;i<m;i++){const o0=-w2+w2*2*i/m,o1=-w2+w2*2*(i+1)/m;piece(cx+lx*o0,cz+lz*o0,cx+lx*o1,cz+lz*o1,ux*sg,uz*sg)}}
+   for(const[cx,cz,e]of[[ax,az,0],[bx,bz,1]]){if(!RCAP)capR();const rr=RCAP[k/3+e],m=Math.max(12,Math.ceil(rr*PI*2/.5));for(let j=0;j<m;j++){const a0=j/m*PI*2,a1=(j+1)/m*PI*2,am=(a0+a1)/2;piece(cx+Math.cos(a0)*rr,cz+Math.sin(a0)*rr,cx+Math.cos(a1)*rr,cz+Math.sin(a1)*rr,Math.cos(am),Math.sin(am))}}}}
  const conc=new THREE.MeshLambertMaterial({color:0x8e9094,side:THREE.DoubleSide});
  WATERM=new THREE.MeshPhongMaterial({color:0x1f3d4c,specular:0x9fb4c4,shininess:110,envMap:SKYCUBE,reflectivity:.5,lightMap:LIGHTMAP,lightMapIntensity:0});
  WATERM.onBeforeCompile=sh=>{Object.assign(sh.uniforms,WATERU);sh.vertexShader=sh.vertexShader.replace("#include <common>","#include <common>\nvarying vec3 vWw;").replace("#include <begin_vertex>","#include <begin_vertex>\nvWw=(modelMatrix*vec4(transformed,1.)).xyz;");

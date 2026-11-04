@@ -14,13 +14,14 @@ function camHit(x,y,z){if(camBlocked(x,y,z))return true;const c=gq(x,z);
  for(const n of NPC){if(!n.g.visible||y>(n.l>5?2.9:1.9))continue;const dx=x-n.x,dz=z-n.z;if(dx*dx+dz*dz>16)continue;const s=Math.sin(n.h),c=Math.cos(n.h);
   if(Math.abs(dx*s+dz*c)<n.l/2+.25&&Math.abs(dx*c-dz*s)<(n.w||1.8)/2+.25)return true}
  const u=(x-TX)*Math.cos(TA)+(z-TZ)*Math.sin(TA),v=-(x-TX)*Math.sin(TA)+(z-TZ)*Math.cos(TA),w=y<250?37*Math.exp(-y/86)+3.5:3;
- // Torre: por debajo de los arcos (14 m) solo cuentan las patas, para que la cámara pueda pasar por debajo entre ellas
- if(y<14){const a=w-.7,du=Math.abs(Math.abs(u)-a),dv=Math.abs(Math.abs(v)-a);return du<3.2&&dv<3.2}
+ // Torre: por debajo de los arcos (30 m en el centro de cada cara, 6 m junto a las patas) solo cuentan las patas, para que la
+ // cámara pueda pasar por debajo entre ellas
+ if(y<30){const a=w-.7,du=Math.abs(Math.abs(u)-a),dv=Math.abs(Math.abs(v)-a),s=Math.abs(u)>Math.abs(v)?v:u;if(y<TARCH((s/a+1)/2))return du<3.2&&dv<3.2}
  return Math.abs(u)<w&&Math.abs(v)<w&&y<333}
 function clipCam(){if(!ready)return;const tx=px,ty=1.4+bodyY,tz=pz,P=cam.position;let ok=1;
  for(let k=2;k<=20;k++){const f=k/20;if(camHit(tx+(P.x-tx)*f,ty+(P.y-ty)*f,tz+(P.z-tz)*f)){ok=(k-1)/20*.92;break}}
  if(ok<1)P.set(tx+(P.x-tx)*ok,ty+(P.y-ty)*ok,tz+(P.z-tz)*ok);P.y=Math.max(P.y,CURB+.35)}
-function loop(n){requestAnimationFrame(loop);const dt=Math.min(.05,(n-last)/1e3);last=n;if(state!=="liv"&&cam.view&&cam.view.enabled){cam.clearViewOffset()}
+function loop(n){requestAnimationFrame(loop);const dt=Math.min(.05,(n-last)/1e3);last=n;if(DV.pause)return;if(state!=="liv"&&cam.view&&cam.view.enabled){cam.clearViewOffset()}
  if(state==="play"){const inp=input();idle=(inp.t||inp.b||Math.abs(inp.s)>.1||inp.hb||keyAct)?0:idle+dt;keyAct=0;step(dt,inp);wheelSpin(dt);npcs(dt);
   car.position.set(px,bodyY,pz);car.rotation.set(pitch,h,roll);
   // Niebla que se cierra al acercarse al borde del mapa (ahí hay un muro invisible)

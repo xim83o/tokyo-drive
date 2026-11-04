@@ -4,6 +4,9 @@ const K=a=>{const k=ENV.keys[a];return!!(keys[k[0]]||(k[1]&&keys[k[1]]))},isK=(a
 function act(a){initAudio();if(a==="set"){if(state==="set")closeSettings();else if(state==="play"||state==="cars")openSettings();return}
  if(state!=="play")return;if(a==="map")show("map");else if(a==="cars")show("cars");else if(a==="cam")mode=(mode+1)%4}
 addEventListener("keydown",e=>{if(rebind){e.preventDefault();rebind(e.code);return}
+ // Escribiendo en un cuadro de texto (nota de la captura, número del dorsal…) las teclas no mueven el coche ni abren menús
+ const tg=e.target;if(tg&&(tg.tagName==="TEXTAREA"||(tg.tagName==="INPUT"&&tg.type!=="range"&&tg.type!=="checkbox")))return;
+ if(DEV&&e.code==="KeyP"&&!e.repeat){e.preventDefault();devShot();return}
  keys[e.code]=1;keyAct=1;initAudio();if(e.code==="Space"||e.code.startsWith("Arrow"))e.preventDefault();if(e.repeat)return;
  if(isK("snd",e.code))setMute(!mute);if(isK("radio",e.code)){if(!RADIO.on)radioToggle();else radioNext(1)}if(isK("trf",e.code))setNpc(npcLvl+1);
  if(isK("set",e.code)){if(state==="devcity"||state==="devscn"){devBack();return}if(state==="liv")closeLiv();else if(state==="set"||state==="play")act("set");else if(spawned)resume();return}

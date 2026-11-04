@@ -72,7 +72,12 @@ Pedido por el usuario (todo con permiso ya dado; descargas permitidas: partes de
 - [x] 12. Mapa grande: cuadradito azul con la T en cada final sin salida (aparcamiento o redondel) y punto azul en cada señal de entrada; nombre al pasar el ratón.
 - [x] 13. Canal: muros curvos en los recodos y uniones (ahí estaba el hueco), bordes del canal en trozos de 0,5 m, pretil en cualquier borde de calzada sobre el agua y apertura de puentes en diagonal. Prueba: 0 huecos y los 13 puentes se cruzan sin chocar.
 - [x] 14. Simulador, vista de la ciudad y prueba automática: solapes en % (de las parejas de coches a menos de 8 m, cuántas se meten una en otra).
-- Nota: los arcos de la torre tienen forma de U (bajan a 14 m en el centro), como antes; si en la realidad deben ser al revés, decirlo.
+
+## Arreglos 2026-11-04 (tarde) — HECHOS
+- [x] Capturas para Claude (solo con jugar.bat en este PC): tecla P → foto + nota + posición y ajustes; el servidor (tools/serve.py) las guarda en `capturas/` (fuera de git). Claude las lee de ahí.
+- [x] Torre: arcos al derecho (TARCH: 30 m en el centro, 6 m junto a las patas); la cámara pasa por debajo de cada arco.
+- [x] Dorsal: al escribir el número aparecen ya los botones de sitio (antes había que cerrar y abrir). Se ajusta solo a la chapa: proyección perpendicular a la superficie (no se estira) y el círculo más grande que cabe sin cristales, bajos ni ruedas (no sale a trozos). Sin barra de tamaño.
+- [x] Puentecillo de la izquierda (494, 1558): una avenida de 17 m acababa en un puente de 9,6 m y su redondel salía sobre el agua con un pretil curvo pegado a la mitad del puente. Ahora junto al agua el redondel de cada calle no es más ancho que la calle con la que se une (roadAtW) y el final de cada tramo sobre el agua lleva pretil. Prueba: 0 huecos al agua y los puentes se cruzan sin chocar.
 - Radio: en el enlace de Claude no funciona (bloquea conexiones externas); usar Netlify o jugar.bat.
 - Netlify en otro PC: protección de equipo; iniciar sesión en app.netlify.com o quitar Visitor access.
 

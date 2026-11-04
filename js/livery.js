@@ -95,11 +95,42 @@ function applyDecals(){if(!car||!carBody||!THREE.DecalGeometry)return;for(const 
   return[new THREE.Vector3(c.x+u*s.x*.3,bb.min.y+s.y*v,bb.min.z),new THREE.Euler(0,PI,rz),new THREE.Vector3(sz,sz,s.z*.5)]};
  if(L.st){const t=stripeTex(L.st,L.sc);if(L.st===3)for(const sd of[0,1])add(t,new THREE.Vector3(sd?bb.max.x:bb.min.x,bb.min.y+s.y*.42,c.z),new THREE.Euler(0,sd?PI/2:-PI/2,PI/2),new THREE.Vector3(s.y*1.2,s.z*1.05,s.x*.8));
   else add(t,new THREE.Vector3(c.x,bb.max.y,c.z),new THREE.Euler(-PI/2,0,0),new THREE.Vector3(s.x*.9,s.z*1.05,s.y*2.2))}
- // Dorsal: en los sitios elegidos (np: lados, capó, techo, detrás; por defecto los dos lados y el capó) y con su tamaño (ns)
- if(L.num){const t=numTex(L.num,L.nc),k=L.ns||1;for(const sd of(L.np||[0,1,2]))add(t,...side(sd,0,sd<2?.42:sd===4?.55:.5,(sd<2?s.y*.5:sd===4?s.y*.42:s.x*.45)*k))}
+ // Dorsal: en los sitios elegidos (np: lados, capó, techo, detrás; por defecto los dos lados y el capó). Cada uno se ajusta a la
+ // chapa (fitNum): se proyecta perpendicular a la superficie de ese punto, así no se estira en el capó inclinado ni en los lados
+ // curvos, y se encoge hasta que el círculo cabe entero en chapa sin cristales, pasos de rueda ni bajos, así no sale a trozos
+ if(L.num){const t=numTex(L.num,L.nc);pm.material.side=THREE.DoubleSide;pm.updateMatrixWorld(true);NUMW=WHEELS.map(q=>new THREE.Box3().setFromObject(q.o).expandByScalar(.04));
+  // Hasta qué profundidad desde la caja del coche puede estar la chapa de cada sitio (así el del techo no acaba en el capó
+  // a través del hueco del parabrisas)
+  NUMD=[s.x*.3,s.x*.3,99,s.y*.2,s.z*.15];
+  for(const sd of(L.np||[0,1,2])){const f=fitNum(pm,side,sd,sd<2?.45:sd===4?.55:.5,sd<2?Math.min(s.y*.62,s.z*.3):sd===4?Math.min(s.y*.5,s.x*.4):s.x*.5);if(f)add(t,...f)}}
  for(const k of L.stk){if(k.ci!==undefined?!CUS.some(q=>q.id===k.ci):STK[k.i].hide)continue;const[p,r,z]=side(k.sd,k.u,k.v,s.y*.55*k.s,k.r);add(k.ci!==undefined?cusTex(k.ci):stkTex(k.i),p,r,z)}
  car.position.copy(P);car.rotation.copy(R);car.updateMatrixWorld(true)}
 
+// Ajuste del dorsal a la carrocería (pm, en coordenadas del coche). Devuelve [posición, giro, tamaño] para DecalGeometry o null
+// NUMW: cajas de las ruedas (en los lados el dorsal no puede quedar detrás de una rueda) · NUMD: profundidad máxima de cada sitio
+// NUMC: resultados ya calculados de cada modelo y sitio (la forma no cambia al cambiar colores)
+const RCN=new THREE.Raycaster(),NUMC=new Map();let NUMW=[],NUMD=[];
+// Busca por una rejilla de puntos de ese sitio (más adelante, atrás, arriba, abajo) el que deja el círculo más grande; los más
+// cercanos al sitio de siempre ganan si el tamaño es casi igual
+function fitNum(pm,side,sd,v,s0){const key=cur.f+"|"+sd;if(NUMC.has(key)){const r=NUMC.get(key);return r&&[r[0].clone(),r[1].clone(),r[2].clone()]}
+ const C=[],rg=(a,b,st)=>{const o=[];for(let x=a;x<=b+1e-6;x+=st)o.push(+x.toFixed(3));return o};
+ const U=sd<2?rg(-.5,.5,.125):sd===4?rg(-.6,.6,.2):rg(-1,1,.25),V=sd<2?rg(.25,.7,.05):sd===4?rg(.3,.8,.1):[v];
+ for(const u of U)for(const vv of V)C.push([u,vv,Math.abs(u)+Math.abs(vv-v)*2]);C.sort((a,b)=>a[2]-b[2]);
+ let best=null;for(const[u,vv]of C){const f=fitNum1(pm,side,sd,u,vv,s0,best?best[2].x*1.06:.14);if(f)best=f}
+ NUMC.set(key,best);return best&&[best[0].clone(),best[1].clone(),best[2].clone()]}
+function fitNum1(pm,side,sd,u,v,s0,need){const[p0,e0]=side(sd,u,v,s0),q=new THREE.Quaternion().setFromEuler(e0),out=new THREE.Vector3(0,0,1).applyQuaternion(q),up0=new THREE.Vector3(0,1,0).applyQuaternion(q);
+ const cast=(o,d)=>{RCN.set(o,d);RCN.far=8;return RCN.intersectObject(pm,false)[0]};
+ const h0=cast(p0.clone().addScaledVector(out,3),out.clone().negate());if(!h0||h0.distance-3>NUMD[sd])return null;
+ // Normal media alrededor del punto (la chapa es curva)
+ const n=new THREE.Vector3(),ax=new THREE.Vector3().crossVectors(up0,out);
+ for(const[a,b]of[[0,0],[1,0],[-1,0],[0,1],[0,-1]]){const o=h0.point.clone().addScaledVector(ax,a*.06).addScaledVector(up0,b*.06).addScaledVector(out,3),h=cast(o,out.clone().negate());if(h){const fn=h.face.normal.clone();if(fn.dot(out)<0)fn.negate();n.add(fn)}}
+ n.normalize();const y=up0.clone().addScaledVector(n,-n.dot(up0)).normalize(),x=new THREE.Vector3().crossVectors(y,n);
+ // ¿Cabe un círculo de tamaño s? Todo en chapa (sin huecos de cristal ni bajos), casi en el mismo plano y sin ruedas delante
+ const fits=s=>{for(const[r,m]of[[.47,14],[.28,8]])for(let i=0;i<m;i++){const a=i/m*PI*2,P=h0.point.clone().addScaledVector(x,Math.cos(a)*r*s).addScaledVector(y,Math.sin(a)*r*s);
+   if(sd<2&&NUMW.some(b=>P.y<b.max.y&&P.z>b.min.z&&P.z<b.max.z))return false;const h=cast(P.clone().addScaledVector(n,1),n.clone().negate());
+   if(!h||Math.abs(h.distance-1)>s*.1+.02||Math.abs(h.face.normal.dot(n))<.88)return false}return true};
+ if(need>s0||!fits(need))return null;let lo=need,hi=s0;if(fits(hi))lo=hi;else for(let it=0;it<5;it++){const m=(lo+hi)/2;if(fits(m))lo=m;else hi=m}
+ return[h0.point.clone(),new THREE.Euler().setFromRotationMatrix(new THREE.Matrix4().makeBasis(x,y,n)),new THREE.Vector3(lo,lo,Math.max(.3,lo*.6))]}
 // --- Concesionario "Tokyo Drive Motors" ---
 // Fondo del editor: la ciudad (el coche donde esté) o la sala de exposición, construida aparte, 300 m por debajo del mapa:
 // suelo brillante, plataforma giratoria, paredes blancas con el logotipo, tiras de luz y techo con paneles luminosos
@@ -161,11 +192,12 @@ function drawLiv(){const P=$("livP"),L=LIV[livK];P.innerHTML=`<h1>${T("Calcoman�
  sec("Color del cristal");r=row();[[undefined,"Original"],[0x7fb2e6,"Azulado"],[0x7fd6a8,"Verde"],[0x5a5e66,"Ahumado"],[0xe6c46a,"Dorado"]].forEach(([v,t])=>btn(r,t,L.gc===v,()=>{livSet({gc:v});drawLiv()}));
  sec("Parachoques y bajos");sw(row(),L.bc,c=>{livSet({bc:c});drawLiv()},true);
  sec("Franjas");r=row();STRIPES.forEach((t,i)=>btn(r,t,L.st===i,()=>{livSet({st:i});drawLiv()}));if(L.st)sw(row(),L.sc,c=>livSet({sc:c}));
- sec("Dorsal (número de carreras)");r=row();const ni=document.createElement("input");ni.type="number";ni.min=0;ni.max=99;ni.value=L.num||"";ni.placeholder=T("Sin número");ni.oninput=()=>livSet({num:Math.max(0,Math.min(99,+ni.value||0))});r.appendChild(ni);
+ sec("Dorsal (número de carreras)");r=row();const ni=document.createElement("input");ni.type="number";ni.min=0;ni.max=99;ni.value=L.num||"";ni.placeholder=T("Sin número");ni.oninput=()=>{const was=!!L.num;livSet({num:Math.max(0,Math.min(99,+ni.value||0))});
+  // Al poner o quitar el número aparecen o se van las opciones de color y sitio (y el cuadro sigue activo para seguir escribiendo)
+  if(was!==!!L.num){drawLiv();const n2=P.querySelector("input[type=number]");if(n2)n2.focus()}};r.appendChild(ni);
  if(L.num){sw(row(),L.nc,c=>livSet({nc:c}));
-  // Dónde va (se pueden marcar varios sitios) y tamaño
-  r=row();const np=L.np||[0,1,2];SIDES.forEach((t,q)=>btn(r,t,np.includes(q),()=>{const a=(L.np||[0,1,2]).slice(),i=a.indexOf(q);if(i>=0)a.splice(i,1);else a.push(q);livSet({np:a.sort()});drawLiv()}));
-  const q=document.createElement("label");q.className="lsl";q.innerHTML=`<span>${T("Tamaño")}</span><input type="range" min=".5" max="2" step=".05" value="${L.ns||1}">`;q.querySelector("input").oninput=e=>livSet({ns:+e.target.value});P.appendChild(q)}
+  // Dónde va (se pueden marcar varios sitios); el tamaño se ajusta solo a la chapa de cada sitio
+  r=row();const np=L.np||[0,1,2];SIDES.forEach((t,q)=>btn(r,t,np.includes(q),()=>{const a=(L.np||[0,1,2]).slice(),i=a.indexOf(q);if(i>=0)a.splice(i,1);else a.push(q);livSet({np:a.sort()});drawLiv()}))}
  sec("Pegatinas");{const p=document.createElement("p");p.style.cssText="font-size:11px;margin:0 0 6px";p.textContent=T("Las 11 primeras están dibujadas para el juego. Personaje Hachi: HachiStudio (CC0). Chica anime redonda: «Anime Girl» de Niabot (CC BY 3.0).");P.appendChild(p)}
  const g=document.createElement("div");g.className="stkg";STK.forEach((s,i)=>{if(s.hide)return;const b=document.createElement("button");b.title=T(s.n);const cv=document.createElement("canvas");cv.width=cv.height=64;const x=cv.getContext("2d");x.scale(.25,.25);s.d(x);b.appendChild(cv);
   b.onclick=()=>{L.stk.push({i,sd:0,u:0,v:.5,s:1,r:0});livSel=L.stk.length-1;saveLiv();applyDecals();drawLiv()};g.appendChild(b)});P.appendChild(g);
