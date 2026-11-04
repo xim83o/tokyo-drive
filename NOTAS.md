@@ -93,6 +93,12 @@ Pedido por el usuario (todo con permiso ya dado; descargas permitidas: partes de
 - Radio: en el enlace de Claude no funciona (bloquea conexiones externas); usar Netlify o jugar.bat.
 - Netlify en otro PC: protección de equipo; iniciar sesión en app.netlify.com o quitar Visitor access.
 
+## Templo y béisbol más llenos + puente de la bahía (2026-11-04, noche) — HECHO
+- [x] Templo: grava gris (con tinte azulado que compensa la luz cálida), muro bajo de tejas (ocre con cinco rayas blancas) por el lado de la calle con huecos en los caminos y la puerta, pagoda de 5 pisos y campanario (cada uno con valla baja de piedra), fuente para lavarse las manos junto al camino principal, puesto de amuletos y tablillas de deseos junto al templo.
+- [x] La puerta roja del templo estaba girada 90° (lo largo iba a lo largo del camino); ahora cruza el camino.
+- [x] Béisbol: banquillos azules, marcador (港区グラウンド) detrás del centro, 6 torres de focos que de noche se encienden e iluminan el césped, muro con anuncios inventados y malla encima, árboles alrededor y camino de baldosas desde la calle más cercana.
+- [x] Puente de la esquina de abajo a la derecha (la bahía): el agua de la bahía chocaba como un edificio también debajo del puente y la calle se estrechaba. Ahora el agua no cuenta bajo las calles, su orilla deja hueco donde entra una calle y los puentes llevan pretil a los lados.
+
 
 ## Pendiente / ideas
 - Autopista Shuto elevada.

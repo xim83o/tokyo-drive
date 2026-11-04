@@ -87,6 +87,8 @@ function decorate(){const tr=[],lp=[],sg=[],vm=[],up=[],wires=[],rnd=rng(11),TMA
  const free=(x,z,m)=>x>5&&z>5&&x<W-5&&z<W-5&&roadAt(x,z)<0&&groundD(x,z)>m+.25&&!blockedAt(x,z,m);
  const tree=(x,z,sp)=>{if(tr.length<TMAX&&free(x,z,.8)){tr.push([x,z,.8+rnd()*.5,rnd()*PI,sp!==undefined?sp:rnd()<.7?1:2]);addCirc(x,z,.35)}};
  for(let i=0;i<MAP.trees.length;i+=2)tree(MAP.trees[i],MAP.trees[i+1]);
+ // Árboles alrededor del campo de béisbol (places.js; ese cálculo también deja hueco a los focos y al marcador)
+ try{const B=bbLayout();if(B)for(const[x,z]of B.trees)tree(x,z,1)}catch(e){console.error(e)}
  for(const r of MAP.roads){const hw=r.w/2,p=r.p;let acc=rnd()*30,side=1,pa=rnd()*30,last=null,vacc=rnd()*40;
   for(let i=2;i<p.length;i+=2){const ax=p[i-2],az=p[i-1],bx=p[i],bz=p[i+1],L=Math.hypot(bx-ax,bz-az)||1,ux=(bx-ax)/L,uz=(bz-az)/L;
    for(let t=0;t<L;t+=2){acc+=2;pa+=2;vacc+=2;const x=ax+ux*t,z=az+uz*t;
