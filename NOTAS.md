@@ -57,27 +57,25 @@ Pedido por el usuario (todo con permiso ya dado; descargas permitidas: partes de
 - [x] Radio (radio.js): radio-browser.info, solo https, botón 📻 / ⏭ / tecla R, país, estilo y volumen en Ajustes → Sonido. Sin comprobar si el enlace del móvil permite conectarse a las emisoras.
 - Guardado para más adelante: contrarrelojes y radares, modo foto, autopista Shuto conducible.
 
-## SIGUIENTE TANDA (acordada el 2026-11-04, esperar a que el usuario diga "empieza")
-1. Línea de carrocería (calcomanías) sobre el parabrisas en los coches que no son el rojo: revisar bodyCells/glass por modelo.
-2. Cielo raro en calidad Media.
-3. Carreteras un 20 % más anchas (sin meterse en edificios).
-4. La cámara se acerca al cruzarse con un coche en sentido contrario (camHit con NPC): que solo reaccione si tapa de verdad.
-5. Árboles a los que les faltan texturas: buscar la causa.
-6. Torre de Tokio con colisión en la celosía/estructura, pero que se pueda pasar por debajo entre las patas.
-7. Primera persona: el volante atraviesa el parabrisas, se ven piezas del coche por dentro; hacer interior sencillo (salpicadero, volante, marcos).
-8. Dorsal: elegir dónde (lados, capó, techo, detrás), tamaño, uno o varios sitios.
-9. Lago que sale con asfalto (la capa de asfalto de debajo no se salta MAP.water) y agua en la esquina "Parque".
-10. Edificios que pisan la calzada (no solo el eje): los NPC los atraviesan.
-11. Tejados a dos aguas mal puestos (casa abajo a la izquierda): si la planta no es rectangular, tejado plano.
-12. Carteles/finales de calle sin salida marcados en el mapa grande (el usuario no los encuentra).
-13. Puente a la izquierda del mapa: aún queda un hueco al agua.
-14. Simulador: cambiar "parejas cercanas" por solapes en %.
+## Tanda 2026-11-04 — HECHA (commit 8c240ef y siguientes; publicada en el enlace del móvil)
+- [x] 1. Calcomanías sobre el cristal: el Hypercar tomaba la casilla gris de los alerones como cristal; ahora bodyCells prefiere la casilla clara azulada (0,3) de los cristales.
+- [x] 2. Cielo en Media/Baja: la esfera del cielo (900 m) quedaba más lejos que cam.far (800 m) y se cortaba; ahora se escala para caber.
+- [x] 3. Calles un 20 % más anchas (r.w×1,2 al cargar, después de elegir el concesionario); se siguen estrechando si tocan un edificio.
+- [x] 4. Cámara: con los coches solo choca si el punto cae dentro de su caja real (antes círculo de 2,5 m).
+- [x] 5. Árboles "sin textura": eran los sencillos (colores lisos), que salen en Baja/Media y a más de 260 m. Ahora llevan moteado de hojas en el shader y en Media los de menos de 140 m son detallados.
+- [x] 6. Torre: las piezas de las caras por debajo de los arcos se quitan (se pasa entre las patas, junto a FootTown); choque con cápsulas en las patas; la cámara solo choca con las patas por debajo de 14 m.
+- [x] 7. Primera persona: interior sencillo (salpicadero, cuadro, volante con radios, puertas, montantes, techo y capó del color del coche) y la carrocería de fuera oculta en esa cámara.
+- [x] 8. Dorsal: botones Izquierda/Derecha/Capó/Techo/Detrás (varios a la vez, LIV.np) y tamaño (LIV.ns).
+- [x] 9. Estanques sin asfalto (la capa de asfalto de debajo se salta MAP.water en trozos de 4 m). El "Parque" del borde derecho tiene un estanque que en OSM sigue fuera del mapa: dentro del mapa ya se ve el agua.
+- [x] 10. Se quitan los edificios que pisan los carriles (eje y franja de cada sentido con el ancho de un coche): ~580 casas. Quedan 2 casas pequeñas y 2 piezas de templo junto a callejones (casos raros en curvas).
+- [x] 11. Tejado a dos aguas solo si la planta es un rectángulo de verdad (todos los vértices en el borde de su caja).
+- [x] 12. Mapa grande: cuadradito azul con la T en cada final sin salida (aparcamiento o redondel) y punto azul en cada señal de entrada; nombre al pasar el ratón.
+- [x] 13. Canal: muros curvos en los recodos y uniones (ahí estaba el hueco), bordes del canal en trozos de 0,5 m, pretil en cualquier borde de calzada sobre el agua y apertura de puentes en diagonal. Prueba: 0 huecos y los 13 puentes se cruzan sin chocar.
+- [x] 14. Simulador, vista de la ciudad y prueba automática: solapes en % (de las parejas de coches a menos de 8 m, cuántas se meten una en otra).
+- Nota: los arcos de la torre tienen forma de U (bajan a 14 m en el centro), como antes; si en la realidad deben ser al revés, decirlo.
 - Radio: en el enlace de Claude no funciona (bloquea conexiones externas); usar Netlify o jugar.bat.
 - Netlify en otro PC: protección de equipo; iniciar sesión en app.netlify.com o quitar Visitor access.
 
-## Pendiente de arreglar (avisado por el usuario, 2026-11-03 noche)
-- Un lago sale como asfalto en vez de agua: probablemente la capa de asfalto de debajo (casillas de 20 m en loadWorld) solo se salta el canal y no los estanques/lagos (MAP.water). Hacer que también se salte el agua.
-- En la esquina del mapa donde pone "Parque" quizá debería haber agua (comprobar si hay un polígono de agua o de bahía y si se dibuja).
 
 ## Pendiente / ideas
 - Autopista Shuto elevada.
