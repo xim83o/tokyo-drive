@@ -57,6 +57,24 @@ Pedido por el usuario (todo con permiso ya dado; descargas permitidas: partes de
 - [x] Radio (radio.js): radio-browser.info, solo https, botón 📻 / ⏭ / tecla R, país, estilo y volumen en Ajustes → Sonido. Sin comprobar si el enlace del móvil permite conectarse a las emisoras.
 - Guardado para más adelante: contrarrelojes y radares, modo foto, autopista Shuto conducible.
 
+## SIGUIENTE TANDA (acordada el 2026-11-04, esperar a que el usuario diga "empieza")
+1. Línea de carrocería (calcomanías) sobre el parabrisas en los coches que no son el rojo: revisar bodyCells/glass por modelo.
+2. Cielo raro en calidad Media.
+3. Carreteras un 20 % más anchas (sin meterse en edificios).
+4. La cámara se acerca al cruzarse con un coche en sentido contrario (camHit con NPC): que solo reaccione si tapa de verdad.
+5. Árboles a los que les faltan texturas: buscar la causa.
+6. Torre de Tokio con colisión en la celosía/estructura, pero que se pueda pasar por debajo entre las patas.
+7. Primera persona: el volante atraviesa el parabrisas, se ven piezas del coche por dentro; hacer interior sencillo (salpicadero, volante, marcos).
+8. Dorsal: elegir dónde (lados, capó, techo, detrás), tamaño, uno o varios sitios.
+9. Lago que sale con asfalto (la capa de asfalto de debajo no se salta MAP.water) y agua en la esquina "Parque".
+10. Edificios que pisan la calzada (no solo el eje): los NPC los atraviesan.
+11. Tejados a dos aguas mal puestos (casa abajo a la izquierda): si la planta no es rectangular, tejado plano.
+12. Carteles/finales de calle sin salida marcados en el mapa grande (el usuario no los encuentra).
+13. Puente a la izquierda del mapa: aún queda un hueco al agua.
+14. Simulador: cambiar "parejas cercanas" por solapes en %.
+- Radio: en el enlace de Claude no funciona (bloquea conexiones externas); usar Netlify o jugar.bat.
+- Netlify en otro PC: protección de equipo; iniciar sesión en app.netlify.com o quitar Visitor access.
+
 ## Pendiente de arreglar (avisado por el usuario, 2026-11-03 noche)
 - Un lago sale como asfalto en vez de agua: probablemente la capa de asfalto de debajo (casillas de 20 m en loadWorld) solo se salta el canal y no los estanques/lagos (MAP.water). Hacer que también se salte el agua.
 - En la esquina del mapa donde pone "Parque" quizá debería haber agua (comprobar si hay un polígono de agua o de bahía y si se dibuja).
