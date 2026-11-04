@@ -50,7 +50,46 @@ const hipG=t=>new THREE.CylinderGeometry(t,1,1,4,1).rotateY(Math.PI/4),cylG=(a,b
 // Luces de los sitios por la noche (env.js): [material, valor de día, aumento de noche] y [material, opacidad de noche]
 NM.plN=[];NM.plO=[];
 
-function buildPlaces(){try{buildTemple()}catch(e){console.error(e)}try{buildDrift()}catch(e){console.error(e)}try{buildBaseball()}catch(e){console.error(e)}}
+function buildPlaces(){try{buildTemple()}catch(e){console.error(e)}try{buildDrift()}catch(e){console.error(e)}try{buildBaseball()}catch(e){console.error(e)}try{buildMegaTower()}catch(e){console.error(e)}}
+
+// --- Megatorre de la empresa inventada Kurogane (黒鉄): monolito negro de 300 m, diseño propio, en la explanada del sur junto a la avenida ---
+// Cinco cuerpos escalonados de cristal oscuro, aristas y franjas de neón rojo, pantallas gigantes y corona con mástil
+const MGT={x:1364,z:1608,ry:.35,done:false};
+// Reserva el sitio antes de decorate, para que no salgan árboles ni farolas dentro de la torre
+function megaSite(){if(MGT.done)return;MGT.done=true;rectPoly(MGT.x,MGT.z,MGT.ry,27.5,27.5,300)}
+function buildMegaTower(){megaSite();const{x,z,ry}=MGT,W=M4(x,CURB,z,ry),TR=[[27,0,26],[22,26,118],[18,118,196],[14,196,252],[10,252,284]];
+ // Fachada: ventanas oscuras; algunas encendidas (mismo dibujo en el mapa de color y en el de luz)
+ const cells=[];{const r=rng(77);for(let j=0;j<64;j++)for(let i=0;i<32;i++){const q=r();cells.push(q<.13?(r()<.2?"#ff3a3a":"#ffd9a8"):null)}}
+ const draw=(em)=>(g,w,h)=>{g.fillStyle=em?"#000":"#0b0d12";g.fillRect(0,0,w,h);cells.forEach((c,k)=>{const i=k%32,j=(k/32)|0;if(em&&!c)return;g.fillStyle=em?c:c?"#3b404a":"#171c25";g.fillRect(i*16+2,j*16+3,12,9)});
+   if(!em){g.fillStyle="#05060a";for(let i=0;i<32;i+=4)g.fillRect(i*16,0,2,h);for(let j=0;j<64;j+=8)g.fillRect(0,j*16,w,2)}};
+ const wm=new THREE.MeshLambertMaterial({map:canvasTex(512,1024,draw(false),true),emissiveMap:canvasTex(512,1024,draw(true),true),emissive:0xffffff,emissiveIntensity:.02,envMap:SKYCUBE,reflectivity:.25,side:THREE.DoubleSide});NM.win.push(wm);NM.plN.push([wm,.02,1.2]);
+ {const pos=[],uv=[];for(const[hs,y0,y1]of TR){const C=[[-hs,hs],[hs,hs],[hs,-hs],[-hs,-hs]];for(let k=0;k<4;k++){const A=lw(x,z,ry,...C[k]),B2=lw(x,z,ry,...C[(k+1)%4]),a=CURB+y0,b=CURB+y1,U=2*hs/28,v0=y0/84,v1=y1/84;
+   pos.push(A[0],a,A[1],B2[0],a,B2[1],B2[0],b,B2[1],A[0],a,A[1],B2[0],b,B2[1],A[0],b,A[1]);uv.push(0,v0,U,v0,U,v1,0,v0,U,v1,0,v1)}}
+  const g=new THREE.BufferGeometry();g.setAttribute("position",new THREE.Float32BufferAttribute(pos,3));g.setAttribute("uv",new THREE.Float32BufferAttribute(uv,2));g.computeVertexNormals();const m=new THREE.Mesh(g,wm);m.castShadow=m.receiveShadow=true;sc.add(m)}
+ // Cornisas, tejados y corona
+ const B=vcBuild(),RK="#0a0b10";for(const[hs,,y1]of TR)B.at(W,PBOX,RK,0,y1,0,2*hs+1.2,1,2*hs+1.2);
+ for(const u of[-8,8])for(const v of[-8,8])B.at(W,PBOX,RK,u,290,v,1.6,12,1.6);B.at(W,PBOX,RK,0,296,0,18,.8,18);B.at(W,PBOX,RK,0,287,0,9,6,9);B.at(W,cylG(.15,1,8),"#22252c",0,289.5,0,1,21,1);B.mesh();
+ // Neón rojo: aristas de cada cuerpo, banda bajo cada cornisa y dos franjas por cara
+ const G=[],gb=(sx,sy,sz,lx,ly,lz)=>G.push(PBOX.clone().applyMatrix4(W.clone().multiply(M4(lx,ly,lz,0,sx,sy,sz))));
+ TR.forEach(([hs,y0,y1],t)=>{const h=y1-y0,m=(y0+y1)/2,e=hs+.15;for(const s of[-1,1])for(const u of[-1,1])gb(.7,h,.7,s*e,m,u*e);
+  for(const s of[-1,1]){gb(2*hs+.6,.8,.4,0,y1-1.1,s*(hs+.2));gb(.4,.8,2*hs+.6,s*(hs+.2),y1-1.1,0)}
+  if(t>0&&t<4)for(const s of[-1,1])for(const u of[-1,1]){gb(.5,h-8,.3,u*hs*.5,m,s*(hs+.15));gb(.3,h-8,.5,s*(hs+.15),m,u*hs*.5)}});
+ for(const s of[-1,1]){gb(18.4,.5,.3,0,296.5,s*9.1);gb(.3,.5,18.4,s*9.1,296.5,0)}gb(.8,.8,.8,0,300,0);
+ const rm=new THREE.MeshLambertMaterial({color:0x500a0c,emissive:0xff1622,emissiveIntensity:.8});NM.plN.push([rm,.8,1.7]);sc.add(new THREE.Mesh(mergeGeo(G),rm));
+ // Cara k: 0 +z, 1 +x, 2 -z, 3 -x. Plano pegado a esa cara del cuerpo de medio ancho hs
+ const onFace=(mat,w,h,k,hs,y,off)=>{const a=k*PI/2,q=lw(x,z,ry,Math.sin(a)*(hs+.3)+Math.cos(a)*(off||0),Math.cos(a)*(hs+.3)-Math.sin(a)*(off||0)),m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),mat);m.position.set(q[0],CURB+y,q[1]);m.rotation.y=ry+a;sc.add(m);return m};
+ // Pantallas gigantes (los mismos anuncios inventados de la ciudad, se redibujan desde env.js)
+ const led=[0,1].map(i=>{const cv=document.createElement("canvas");cv.width=320;cv.height=180;const t=new THREE.CanvasTexture(cv),m=new THREE.MeshBasicMaterial({map:t,toneMapped:false});NM.led.push({g:cv.getContext("2d"),t,ph:i*2.3+.4});NM.ledT.push(m);return m});
+ for(let k=0;k<4;k++){onFace(led[k%2],40,22.5,k,27,13);if(k%2===0)onFace(led[1-(k/2)],34,19,k,22,92)}
+ // Logo y nombre de la empresa, y letrero vertical
+ const lt=canvasTex(512,640,(g,w)=>{g.fillStyle="#06070b";g.fillRect(0,0,w,640);g.strokeStyle=g.fillStyle="#ff2a32";g.lineWidth=22;g.lineJoin="miter";const c=256,cy=220,R=165;g.beginPath();for(let i=0;i<6;i++){const a=PI/6+i*PI/3;g[i?"lineTo":"moveTo"](c+Math.cos(a)*R,cy+Math.sin(a)*R)}g.closePath();g.stroke();
+  g.beginPath();g.moveTo(c-85,cy+95);g.lineTo(c-30,cy-110);g.lineTo(c+10,cy-110);g.lineTo(c-45,cy+95);g.closePath();g.fill();g.beginPath();g.moveTo(c+85,cy+95);g.lineTo(c-5,cy-20);g.lineTo(c+35,cy-20);g.lineTo(c+125,cy+95);g.closePath();g.fill();
+  g.textAlign="center";g.textBaseline="middle";g.font="bold 74px Arial,sans-serif";g.fillText("KUROGANE",c,520);g.font="bold 42px 'Yu Gothic','Meiryo',sans-serif";g.fillText("黒鉄",c,595)});
+ const lm=new THREE.MeshLambertMaterial({map:lt,emissiveMap:lt,emissive:0xffffff,emissiveIntensity:.7});NM.plN.push([lm,.7,1.6]);for(let k=0;k<4;k++)onFace(lm,20,25,k,14,228);
+ const bt=canvasTex(128,1024,(g,w,h)=>{g.fillStyle="#06070b";g.fillRect(0,0,w,h);g.fillStyle="#ff2a32";g.font="bold 200px 'Yu Gothic','Meiryo',sans-serif";g.textAlign="center";g.textBaseline="middle";[..."黒鉄重工"].forEach((c,i)=>g.fillText(c,64,128+i*256,120))});
+ const bm=new THREE.MeshLambertMaterial({map:bt,emissiveMap:bt,emissive:0xffffff,emissiveIntensity:.6});NM.plN.push([bm,.6,1.5]);for(const k of[1,3])onFace(bm,7.5,60,k,18,157);
+ // En el mapa, como un edificio más
+ const R=[];for(const[u,v]of[[-27,-27],[27,-27],[27,27],[-27,27]])R.push(...lw(x,z,ry,u,v));MAP.buildings.push({p:R,h:300})}
 
 // --- Patio del templo ---
 function buildTemple(){const area=R=>{let A=0;for(let i=0,j=R.length-2;i<R.length;j=i,i+=2)A+=R[j]*R[i+1]-R[i]*R[j+1];return Math.abs(A)/2};

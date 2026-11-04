@@ -99,6 +99,7 @@ Pedido por el usuario (todo con permiso ya dado; descargas permitidas: partes de
 - [x] Béisbol: banquillos azules, marcador (港区グラウンド) detrás del centro, 6 torres de focos que de noche se encienden e iluminan el césped, muro con anuncios inventados y malla encima, árboles alrededor y camino de baldosas desde la calle más cercana.
 - [x] Puente de la esquina de abajo a la derecha (la bahía): el agua de la bahía chocaba como un edificio también debajo del puente y la calle se estrechaba. Ahora el agua no cuenta bajo las calles, su orilla deja hueco donde entra una calle y los puentes llevan pretil a los lados.
 - [x] Primera persona: quitado el limpiaparabrisas (a petición del usuario). Las gotas de lluvia siguen en el cristal y se van solas.
+- [x] Megatorre Kurogane (黒鉄, empresa inventada y diseño propio, no copia de ningún juego) en la explanada del sur (1364, 1608): monolito negro escalonado de 300 m, neón rojo, ventanas encendidas de noche, 6 pantallas LED gigantes, logo y letrero vertical (js/places.js, buildMegaTower).
 
 
 ## Pendiente / ideas
