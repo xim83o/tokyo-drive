@@ -126,7 +126,7 @@ function trafficTest(sec){const dt=1/20,cnt=NCNT[npcLvl],st=new Map(),prev=new M
    const pl=prev.get(n);if(pl&&pl!==n.lane&&pl.rev===n.lane&&GN[pl.to].out.filter(q=>q!==pl.rev).length>0)uturn++;prev.set(n,n.lane);
    for(let q=k+1;q<cnt;q++){const o=NPC[q];if(!o.lane||o.mode||(o.x-n.x)**2+(o.z-n.z)**2>64)continue;checks++;const b=boxHit(n.x,n.z,n.h,n.w||1.8,n.l,o.x,o.z,o.h,o.w||1.8,o.l);if(b&&b.p>.4)over++}}}
  const mv=NPC.slice(0,cnt).filter(n=>n.lane&&n.v>1).length;
- return{segundos:sec,coches:cnt,enMarcha:mv,atascadosMas40s:stuck.size,solapes:over,parejasCercanas:checks,cambiosDeSentido:uturn}}
+ return{segundos:sec,coches:cnt,enMarcha:mv,atascadosMas40s:stuck.size,solapes:over,"solapes %":(checks?over/checks*100:0).toFixed(2)+" %",cambiosDeSentido:uturn}}
 // --- Normas en los cruces (en Japón se circula por la izquierda) ---
 // Giro en el próximo cruce: >0 izquierda, <0 derecha (cruzando el carril contrario)
 const turnA=n=>{const L=n.lane,q=L.p.length,a0=Math.atan2(L.p[q-2]-L.p[q-4],L.p[q-1]-L.p[q-3]),M=n.nx;return M?ad(Math.atan2(M.p[2]-M.p[0],M.p[3]-M.p[1]),a0):0};

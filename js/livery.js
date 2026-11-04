@@ -95,7 +95,8 @@ function applyDecals(){if(!car||!carBody||!THREE.DecalGeometry)return;for(const 
   return[new THREE.Vector3(c.x+u*s.x*.3,bb.min.y+s.y*v,bb.min.z),new THREE.Euler(0,PI,rz),new THREE.Vector3(sz,sz,s.z*.5)]};
  if(L.st){const t=stripeTex(L.st,L.sc);if(L.st===3)for(const sd of[0,1])add(t,new THREE.Vector3(sd?bb.max.x:bb.min.x,bb.min.y+s.y*.42,c.z),new THREE.Euler(0,sd?PI/2:-PI/2,PI/2),new THREE.Vector3(s.y*1.2,s.z*1.05,s.x*.8));
   else add(t,new THREE.Vector3(c.x,bb.max.y,c.z),new THREE.Euler(-PI/2,0,0),new THREE.Vector3(s.x*.9,s.z*1.05,s.y*2.2))}
- if(L.num){const t=numTex(L.num,L.nc);for(const sd of[0,1])add(t,...side(sd,0,.42,s.y*.5));add(t,...side(2,0,.5,s.x*.45))}
+ // Dorsal: en los sitios elegidos (np: lados, capó, techo, detrás; por defecto los dos lados y el capó) y con su tamaño (ns)
+ if(L.num){const t=numTex(L.num,L.nc),k=L.ns||1;for(const sd of(L.np||[0,1,2]))add(t,...side(sd,0,sd<2?.42:sd===4?.55:.5,(sd<2?s.y*.5:sd===4?s.y*.42:s.x*.45)*k))}
  for(const k of L.stk){if(k.ci!==undefined?!CUS.some(q=>q.id===k.ci):STK[k.i].hide)continue;const[p,r,z]=side(k.sd,k.u,k.v,s.y*.55*k.s,k.r);add(k.ci!==undefined?cusTex(k.ci):stkTex(k.i),p,r,z)}
  car.position.copy(P);car.rotation.copy(R);car.updateMatrixWorld(true)}
 
@@ -160,7 +161,11 @@ function drawLiv(){const P=$("livP"),L=LIV[livK];P.innerHTML=`<h1>${T("Calcoman�
  sec("Color del cristal");r=row();[[undefined,"Original"],[0x7fb2e6,"Azulado"],[0x7fd6a8,"Verde"],[0x5a5e66,"Ahumado"],[0xe6c46a,"Dorado"]].forEach(([v,t])=>btn(r,t,L.gc===v,()=>{livSet({gc:v});drawLiv()}));
  sec("Parachoques y bajos");sw(row(),L.bc,c=>{livSet({bc:c});drawLiv()},true);
  sec("Franjas");r=row();STRIPES.forEach((t,i)=>btn(r,t,L.st===i,()=>{livSet({st:i});drawLiv()}));if(L.st)sw(row(),L.sc,c=>livSet({sc:c}));
- sec("Dorsal (número de carreras)");r=row();const ni=document.createElement("input");ni.type="number";ni.min=0;ni.max=99;ni.value=L.num||"";ni.placeholder=T("Sin número");ni.oninput=()=>livSet({num:Math.max(0,Math.min(99,+ni.value||0))});r.appendChild(ni);if(L.num)sw(row(),L.nc,c=>livSet({nc:c}));
+ sec("Dorsal (número de carreras)");r=row();const ni=document.createElement("input");ni.type="number";ni.min=0;ni.max=99;ni.value=L.num||"";ni.placeholder=T("Sin número");ni.oninput=()=>livSet({num:Math.max(0,Math.min(99,+ni.value||0))});r.appendChild(ni);
+ if(L.num){sw(row(),L.nc,c=>livSet({nc:c}));
+  // Dónde va (se pueden marcar varios sitios) y tamaño
+  r=row();const np=L.np||[0,1,2];SIDES.forEach((t,q)=>btn(r,t,np.includes(q),()=>{const a=(L.np||[0,1,2]).slice(),i=a.indexOf(q);if(i>=0)a.splice(i,1);else a.push(q);livSet({np:a.sort()});drawLiv()}));
+  const q=document.createElement("label");q.className="lsl";q.innerHTML=`<span>${T("Tamaño")}</span><input type="range" min=".5" max="2" step=".05" value="${L.ns||1}">`;q.querySelector("input").oninput=e=>livSet({ns:+e.target.value});P.appendChild(q)}
  sec("Pegatinas");{const p=document.createElement("p");p.style.cssText="font-size:11px;margin:0 0 6px";p.textContent=T("Las 11 primeras están dibujadas para el juego. Personaje Hachi: HachiStudio (CC0). Chica anime redonda: «Anime Girl» de Niabot (CC BY 3.0).");P.appendChild(p)}
  const g=document.createElement("div");g.className="stkg";STK.forEach((s,i)=>{if(s.hide)return;const b=document.createElement("button");b.title=T(s.n);const cv=document.createElement("canvas");cv.width=cv.height=64;const x=cv.getContext("2d");x.scale(.25,.25);s.d(x);b.appendChild(cv);
   b.onclick=()=>{L.stk.push({i,sd:0,u:0,v:.5,s:1,r:0});livSel=L.stk.length-1;saveLiv();applyDecals();drawLiv()};g.appendChild(b)});P.appendChild(g);

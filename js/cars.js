@@ -40,7 +40,12 @@ function bodyCells(scene,paint){const A={},B={};let H=0;scene.updateMatrixWorld(
   for(let i=0;i<p.count;i+=3){a.fromBufferAttribute(p,i).applyMatrix4(o.matrixWorld);b.fromBufferAttribute(p,i+1).applyMatrix4(o.matrixWorld);c.fromBufferAttribute(p,i+2).applyMatrix4(o.matrixWorld);n.subVectors(b,a).cross(c.clone().sub(a));const ar=n.length();n.normalize();
    const k=Math.floor((uv.getX(i)+uv.getX(i+1)+uv.getX(i+2))/3*8)+","+Math.floor((uv.getY(i)+uv.getY(i+1)+uv.getY(i+2))/3*4);if(k===paint+",1")continue;const y=(a.y+b.y+c.y)/3;
    if(y>H*.55&&Math.abs(n.y)<.8)A[k]=(A[k]||0)+ar;if(y<H*.4)B[k]=(B[k]||0)+ar}});
- const top=O=>{let best=null,bv=0;for(const k in O)if(O[k]>bv){bv=O[k];best=k}return best};const glass=top(A);if(glass)delete B[glass];return{glass,trim:top(B)}}
+ const top=O=>{let best=null,bv=0;for(const k in O)if(O[k]>bv){bv=O[k];best=k}return best};
+ // Los cristales del Car Kit son de color claro azulado (casilla 0,3 en casi todos): se prefiere una casilla así; si no hay, la de más área.
+ // (Antes el Hypercar tomaba la gris de los alerones como cristal y las calcomanías se pegaban en la cúpula)
+ let glass=null;if(CMAP){const g=document.createElement("canvas").getContext("2d");g.canvas.width=g.canvas.height=512;g.drawImage(CMAP,0,0);const L={};
+  for(const k in A){const[c,r]=k.split(",").map(Number),d=g.getImageData(c*64+32,r*128+64,1,1).data;if(d[0]*.3+d[1]*.59+d[2]*.11>200&&d[2]>=d[0])L[k]=A[k]}glass=top(L)}
+ if(!glass)glass=top(A);if(glass)delete B[glass];return{glass,trim:top(B)}}
 const PTEX=new Map();
 // Textura de la paleta con la pintura (col), y opcionalmente el color del cristal (gc), su tintado (tint 0-1) y el de los bajos (bc)
 function paintTex(n,col,o){o=o||{};const M=MODELS[n],key=n+"|"+col+"|"+(o.tint||0)+"|"+o.gc+"|"+o.bc;if(PTEX.has(key))return PTEX.get(key);const cv=document.createElement("canvas");cv.width=cv.height=512;const g=cv.getContext("2d");g.drawImage(CMAP,0,0);
@@ -74,14 +79,28 @@ function buildCar(k){carK=k;cur=CARS[k];if(car)sc.remove(car);car=new THREE.Grou
   const bx=(a,b,c,col,x,y,z)=>{const m=new THREE.Mesh(new THREE.BoxGeometry(a,b,c),new THREE.MeshLambertMaterial({color:col}));m.position.set(x,y,z);car.add(m);return m};
   bx(w,.55,l,cur.c,0,.5,0);bx(w*.85,.45,l*.45,0x15222f,0,1,-.1*l)}
  cur.ey=h*.82;
- const dm=new THREE.MeshLambertMaterial({color:0x15171d});intG=new THREE.Group();car.add(intG);
- const db=new THREE.Mesh(new THREE.BoxGeometry(w*.8,.2,.4),dm);db.position.set(0,cur.ey-.25,.85);intG.add(db);
- // Parabrisas visto desde dentro: montantes, borde del techo y cristal donde caen las gotas de lluvia (weather.js)
- {const ey=cur.ey,L=Math.hypot(.4,.47),ang=-Math.atan2(.4,.47),y=ey+.065,z=.42,pm=new THREE.MeshLambertMaterial({color:0x1b1d22});
+ // Interior sencillo para la cámara de primera persona (la carrocería de fuera se oculta en esa cámara, ver main.js): todo queda
+ // detrás del parabrisas. La cámara va en x = -0,38 (volante a la derecha, como en Japón), a la altura ey y 0,1 m por delante del centro
+ const dm=new THREE.MeshLambertMaterial({color:0x15171d}),pm=new THREE.MeshLambertMaterial({color:0x1b1d22}),sm=new THREE.MeshLambertMaterial({color:0x2a2c33}),
+  bm=new THREE.MeshPhongMaterial({color:carPaint(k),shininess:60,specular:0x333333});intG=new THREE.Group();car.add(intG);
+ const bx2=(a,b,c,m,x,y,z,rx)=>{const o=new THREE.Mesh(new THREE.BoxGeometry(a,b,c),m);o.position.set(x,y,z);if(rx)o.rotation.x=rx;intG.add(o);return o};
+ {const ey=cur.ey,cx=-.38,wz0=.92,wy0=ey-.26,wz1=.3,wy1=ey+.3,L=Math.hypot(wz0-wz1,wy1-wy0),ang=-Math.atan2(wz0-wz1,wy1-wy0),y=(wy0+wy1)/2,z=(wz0+wz1)/2;
+  // Parabrisas (donde caen las gotas de lluvia, weather.js), montantes, borde del techo, techo y montantes de las puertas
   WSH=new THREE.Mesh(new THREE.PlaneGeometry(w*.9,L),WSM);WSH.position.set(0,y,z);WSH.rotation.x=ang;WSH.renderOrder=3;WSH.visible=false;intG.add(WSH);
-  for(const s of[-1,1]){const p=new THREE.Mesh(new THREE.BoxGeometry(.08,L+.04,.08),pm);p.position.set(s*w*.46,y,z);p.rotation.x=ang;intG.add(p)}
-  const hd=new THREE.Mesh(new THREE.BoxGeometry(w*.96,.1,.14),pm);hd.position.set(0,ey+.31,.2);intG.add(hd)}
- const wgp=new THREE.Group();wgp.position.set(-w*.2,cur.ey-.2,.6);wgp.rotation.x=-.9;whl=new THREE.Mesh(new THREE.TorusGeometry(.17,.02,6,16),dm);wgp.add(whl);intG.add(wgp);intG.visible=false;
+  for(const s of[-1,1]){bx2(.09,L+.04,.09,pm,s*w*.45,y,z,ang);bx2(.08,.48,.12,pm,s*w*.45,ey+.06,-.45);
+   // Puertas: panel por debajo de la ventanilla
+   bx2(.06,.42,1.35,sm,s*(w/2-.08),ey-.36,.05)}
+  bx2(w*.94,.1,.14,pm,0,wy1+.03,wz1-.02);bx2(w*.94,.04,.75,sm,0,wy1+.06,-.12);bx2(.22,.07,.03,dm,0,wy1-.06,wz1+.02);
+  // Salpicadero bajo el parabrisas, con el cuadro de relojes delante del volante
+  bx2(w*.92,.26,.42,dm,0,ey-.41,.72);bx2(.4,.09,.1,pm,cx,ey-.25,.6,-.4);
+  // Capó (del color del coche), que se ve por el parabrisas
+  const hl=Math.max(.6,cur.l/2-1.05);bx2(w*.92,.06,hl,bm,0,ey-.34,.93+hl/2,.06);
+  // Volante: aro, centro y radios, casi vertical delante del conductor
+  const wgp=new THREE.Group();wgp.position.set(cx,ey-.23,.47);wgp.rotation.x=-.35;whl=new THREE.Group();wgp.add(whl);
+  whl.add(new THREE.Mesh(new THREE.TorusGeometry(.17,.022,8,24),dm));whl.add(new THREE.Mesh(new THREE.CylinderGeometry(.05,.05,.04,12).rotateX(PI/2),pm));
+  for(const a of[0,PI*.5+.5,PI*1.5-.5]){const sp=new THREE.Mesh(new THREE.BoxGeometry(.15,.025,.015),pm);sp.position.set(Math.cos(a)*.085,Math.sin(a)*.085,0);sp.rotation.z=a;whl.add(sp)}
+  bx2(.07,.07,.2,dm,cx,ey-.3,.58,-.35);intG.add(wgp)}
+ intG.visible=false;
  car.add(blob(w,l));sc.add(car);if(typeof applyDecals==="function")applyDecals();if(spawned){car.position.set(px,bodyY,pz);car.rotation.set(pitch,h,roll)}}
 // Ruedas: giran con la velocidad y las delanteras se orientan con el volante
 function wheelSpin(dt){const vf=vx*Math.sin(h)+vz*Math.cos(h),r=cur.wr||.36;for(const q of WHEELS){q.o.rotation.x+=vf*dt/r;q.o.rotation.y=q.f?stV*.45:0}}

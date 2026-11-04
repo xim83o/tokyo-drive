@@ -1,11 +1,12 @@
 // Mobiliario urbano: árboles (OSM, parques y aceras), farolas con su charco de luz nocturno, señales de velocidad,
 // máquinas expendedoras y postes eléctricos con cables (muy típicos de las calles pequeñas de Tokio)
-let lampN=0;const LAMPS=[],TREES=[],TREEH=[],TREEG={};
+let lampN=0;const LAMPS=[],TREES=[],TREEH=[],TREEG={},DEADM=[];   // DEADM: calles sin salida y sus señales, para el mapa grande (ui.js)
 // Nivel de detalle de los árboles (cada 0,3 s). Baja y Media: solo la mitad de los árboles, sencillos. Alta y Ultra: detallados a
 // menos de 260 m (Ultra 400 m) y sencillos más lejos. Un árbol se oculta en su malla poniendo su escala a cero
 const _to=new THREE.Object3D(),_tz=new THREE.Matrix4().makeScale(0,0,0),_tc=new THREE.Color();
-function treeLod(){if(!TREES.length)return;const lv=qLevel(),R=lv>=3?400:260,P=cam.position,dirty=new Set(),hi=[[],[],[]];
- for(const t of TREES){const near=lv>=2&&Math.hypot(t.e[0]-P.x,t.e[2]-P.z)<R,want=near?"hi":(lv<2&&t.odd?"no":"lo");if(near)hi[t.s].push(t);if(want===t.st)continue;
+// (Media: detallados a menos de 140 m; Baja: ninguno)
+function treeLod(){if(!TREES.length)return;const lv=qLevel(),R=lv>=3?400:lv===2?260:140,P=cam.position,dirty=new Set(),hi=[[],[],[]];
+ for(const t of TREES){const near=lv>=1&&Math.hypot(t.e[0]-P.x,t.e[2]-P.z)<R,want=near?"hi":(lv<2&&t.odd?"no":"lo");if(near)hi[t.s].push(t);if(want===t.st)continue;
   if(want==="lo"){const e=t.e,s=e[4];_to.position.set(e[0],e[1],e[2]);_to.rotation.set(0,e[3],0);_to.scale.set(s,e[5],s);_to.updateMatrix();t.m.setMatrixAt(t.j,_to.matrix)}else t.m.setMatrixAt(t.j,_tz);t.st=want;dirty.add(t.m)}
  for(const m of dirty)m.instanceMatrix.needsUpdate=true;
  TREEH.forEach((H,s)=>{const L=hi[s];L.forEach((t,i)=>{const e=t.e,k=e[4];_to.position.set(e[0],e[1],e[2]);_to.rotation.set(0,e[3],0);_to.scale.set(k,e[5],k);_to.updateMatrix();H.w.setMatrixAt(i,_to.matrix);H.l.setMatrixAt(i,_to.matrix);H.l.setColorAt(i,_tc.set(e[6]))});
@@ -66,7 +67,8 @@ function placeParked(){if(!PARK.length)return;const ln=[],sg=[],r=rng(77);
    for(let o=-P.pw+1.5;o<P.pw-1.2;o+=2.6){if(r()<.45||!CMAP)continue;const K=NPCK[(r()*5)|0];if(!MODELS[K.f])continue;const x=P.x+P.ux*9.3+lx*o,z=P.z+P.uz*9.3+lz*o,
      m=modelInst(K.f,4.2,K.paint?NCOL[(r()*NCOL.length)|0]:undefined,true),g=new THREE.Group();g.add(m.s);g.position.set(x,0,z);g.rotation.y=Math.atan2(-P.ux,-P.uz);sc.add(g);
      addCirc(x+P.ux*1.1,z+P.uz*1.1,.95);addCirc(x-P.ux*1.1,z-P.uz*1.1,.95)}}
-  else sg.push([P.x+lx*(P.pw+.8),CURB,P.z+lz*(P.pw+.8),Math.atan2(-P.ux,-P.uz)])}
+  else sg.push([P.x+lx*(P.pw+.8),CURB,P.z+lz*(P.pw+.8),Math.atan2(-P.ux,-P.uz)]);
+  DEADM.push({x:P.x,z:P.z,n:T(P.t==="p"?"Aparcamiento (sin salida)":"Calle sin salida"),c:"#3d7be0",dead:1})}
  if(ln.length)mkMesh(ln,new THREE.MeshLambertMaterial({color:0xf2f2f2,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-6}));
  deadSigns(sg)}
 // Señal japonesa de calle sin salida (行き止まり): poste y placa azul con la "T" blanca
@@ -78,7 +80,7 @@ function deadSigns(sg){if(!sg.length)return;if(!DEADT)DEADT=canvasTex(64,64,g=>{
 function placeDeadSigns(){if(typeof markTraps!=="function"||!LANES.length)return;if(!TRAPS)markTraps();const sg=[],done=new Set();
  for(const L of LANES){if(!L.trap||L.internal||done.has(L.ri))continue;if(!GN[L.from].out.some(q=>!q.trap&&q!==L))continue;
   const[x,z,a]=lanePos(L,Math.min(L.s1,L.s0+4)),lx=Math.cos(a),lz=-Math.sin(a),d=L.w/2-Math.abs(L.off)+.9,sx=x+lx*d,sz=z+lz*d;
-  if(roadAt(sx,sz)>=0||inBuilding(sx,sz))continue;done.add(L.ri);sg.push([sx,CURB,sz,a+PI])}
+  if(roadAt(sx,sz)>=0||inBuilding(sx,sz))continue;done.add(L.ri);sg.push([sx,CURB,sz,a+PI]);DEADM.push({x:sx,z:sz,n:T("Señal de calle sin salida"),c:"#3d7be0",dead:2})}
  deadSigns(sg)}
 function decorate(){const tr=[],lp=[],sg=[],vm=[],up=[],wires=[],rnd=rng(11),TMAX=MOBILE?1800:3500;
  // Solo sobre acera dibujada (no en franjas estrechas entre calles), fuera de edificios y obstáculos
@@ -106,6 +108,12 @@ function decorate(){const tr=[],lp=[],sg=[],vm=[],up=[],wires=[],rnd=rng(11),TMA
  // Tres especies hechas de varios volúmenes irregulares con colores de otoño: ginkgo (amarillo, típico de las avenidas de Tokio),
  // árbol de copa redonda (zelkova) y conífera. Cada especie es una sola malla instanciada; la mitad "extra" solo en calidad alta
  const SP=[treeGeo(0),treeGeo(1),treeGeo(2)],tm=new THREE.MeshLambertMaterial({vertexColors:true}),TT=[0xfff0c0,0xe8ffe0,0xffffff,0xd8f0d0];
+ // Los árboles sencillos no tienen textura (solo colores lisos por cara): se les añade un moteado de hojas calculado en el shader con
+ // la posición en el mundo, así de lejos (y en calidad Baja/Media) no parecen bloques de color
+ tm.onBeforeCompile=sh=>{sh.vertexShader=sh.vertexShader.replace("#include <common>","#include <common>\nvarying vec3 vTW;").replace("#include <begin_vertex>","#include <begin_vertex>\nvec4 tw=vec4(transformed,1.);\n#ifdef USE_INSTANCING\ntw=instanceMatrix*tw;\n#endif\nvTW=(modelMatrix*tw).xyz;");
+  sh.fragmentShader=sh.fragmentShader.replace("#include <common>","#include <common>\nvarying vec3 vTW;float lh3(vec3 p){return fract(sin(dot(p,vec3(12.9898,78.233,37.719)))*43758.5453);}").replace("#include <color_fragment>",`#include <color_fragment>
+  {vec3 q=vTW*5.;float n=lh3(floor(q))*.6+lh3(floor(q*2.3+7.))*.4;float lf=step(.05,diffuseColor.g-diffuseColor.b*.6)+step(.12,diffuseColor.r-diffuseColor.b);diffuseColor.rgb*=mix(1.,.7+n*.55,clamp(lf,0.,1.));}`)};
+ tm.customProgramCacheKey=()=>"leafn";
  // Árboles sencillos por zonas de 800 m (todos; cada árbol recuerda su malla y su índice para poder ocultarlo) y, por especie,
  // una sola malla de árboles detallados con los cercanos, que treeLod rellena al moverse
  const bark=new THREE.MeshLambertMaterial({color:0x5a4332});

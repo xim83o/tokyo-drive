@@ -7,13 +7,15 @@ function devHud(html){let e=$("devHud");if(!e){e=document.createElement("div");e
 function devSave(){DV.keep={px,pz,h}}
 function devBack(){devHud("");SCN=null;DV.scn=null;if(DV.keep){px=DV.keep.px;pz=DV.keep.pz;h=DV.keep.h;DV.keep=null}for(const n of NPC){npcRst(n);n.lane=null}resume()}
 // --- Vista de la ciudad: cámara desde arriba alrededor de tu coche, tráfico a x1-x10 y contadores ---
-function startCity(){closeSettings();devSave();state="devcity";$("ov").hidden=true;hudVis(false);DV.spd=1;DV.stuck.clear();DV.t=0;devCityHud()}
+function startCity(){closeSettings();devSave();state="devcity";$("ov").hidden=true;hudVis(false);DV.spd=1;DV.stuck.clear();DV.t=0;DV.ov=DV.pr=0;devCityHud()}
 function devCityHud(){devHud(`<b>Vista de la ciudad</b> · velocidad ${[1,2,5,10].map(s=>`<button onclick="DV.spd=${s};devCityHud()" class="${DV.spd===s?"on":""}">x${s}</button>`).join("")}
  <button onclick="devBack()">Salir</button><div id="devCnt"></div>`)}
-function devCityTick(dt){const st=Math.max(1,DV.spd);for(let i=0;i<st;i++){npcs(dt);DV.t+=dt}const cnt=NCNT[npcLvl];let mv=0,stop=0,stk=0,ov=0;
+// Solapes en %: de cada 100 parejas de coches a menos de 8 m, cuántas se meten una dentro de otra (ahora y acumulado desde que se abrió)
+function devCityTick(dt){const st=Math.max(1,DV.spd);for(let i=0;i<st;i++){npcs(dt);DV.t+=dt}const cnt=NCNT[npcLvl];let mv=0,stop=0,stk=0,ov=0,pr=0;
  for(let k=0;k<cnt;k++){const n=NPC[k];if(!n.lane)continue;if(n.v>1)mv++;else stop++;const s=n.v<.3?(DV.stuck.get(n)||0)+dt*st:0;DV.stuck.set(n,s);if(s>40)stk++;
-  for(let q=k+1;q<cnt;q++){const o=NPC[q];if(!o.lane||n.mode||o.mode||(o.x-n.x)**2+(o.z-n.z)**2>64)continue;const b=boxHit(n.x,n.z,n.h,n.w||1.8,n.l,o.x,o.z,o.h,o.w||1.8,o.l);if(b&&b.p>.4)ov++}}
- const c=$("devCnt");if(c)c.innerHTML=`Tiempo simulado ${DV.t|0} s · en marcha <b>${mv}</b> · parados ${stop} · atascados +40 s <b style="color:${stk?"#ff6b6b":"#7dff9a"}">${stk}</b> · solapes ahora <b style="color:${ov?"#ff6b6b":"#7dff9a"}">${ov}</b>`;
+  for(let q=k+1;q<cnt;q++){const o=NPC[q];if(!o.lane||n.mode||o.mode||(o.x-n.x)**2+(o.z-n.z)**2>64)continue;pr++;const b=boxHit(n.x,n.z,n.h,n.w||1.8,n.l,o.x,o.z,o.h,o.w||1.8,o.l);if(b&&b.p>.4)ov++}}
+ DV.ov=(DV.ov||0)+ov;DV.pr=(DV.pr||0)+pr;const pc=v=>v.toFixed(1)+" %",now=pr?ov/pr*100:0,tot=DV.pr?DV.ov/DV.pr*100:0;
+ const c=$("devCnt");if(c)c.innerHTML=`Tiempo simulado ${DV.t|0} s · en marcha <b>${mv}</b> · parados ${stop} · atascados +40 s <b style="color:${stk?"#ff6b6b":"#7dff9a"}">${stk}</b> · solapes ahora <b style="color:${ov?"#ff6b6b":"#7dff9a"}">${pc(now)}</b> · en total <b style="color:${tot>1?"#ff6b6b":"#7dff9a"}">${pc(tot)}</b>`;
  cam.position.set(px,380,pz+60);cam.lookAt(px,0,pz);cam.fov=60;cam.updateProjectionMatrix();sc.fog.far=4000}
 // --- Prueba automática con informe ---
 function devTest(){const P=$("setP");P.innerHTML="<h1>Prueba automática</h1><p>Simulando 5 minutos de tráfico…</p>";setTimeout(()=>{devSave();const r=trafficTest(300);if(DV.keep){px=DV.keep.px;pz=DV.keep.pz;DV.keep=null}
@@ -42,9 +44,10 @@ function devPlay(){const S=DV.scn,g=GN[S.node],inc=g.inc.filter(L=>!L.internal);
 function devScnHud(){devHud(`<b>Situación</b> · velocidad ${[.5,1,2,5].map(s=>`<button onclick="DV.spd=${s};devScnHud()" class="${DV.spd===s?"on":""}">x${s}</button>`).join("")}
  <button onclick="devPlay()">↺ Repetir</button><button onclick="state='set';devBackToEditor()">Editar</button><button onclick="devBack()">Salir</button><div id="devCnt"></div>`)}
 function devBackToEditor(){devHud("");SCN=null;openSettings();setTab="dev";devScnUI()}
-function devScnTick(dt){const st=DV.spd,sub=st<1?1:st,d=dt*(st<1?st:1);for(let i=0;i<sub;i++){npcs(d);SCN.t+=d}let ov=0,inside=0,done=0;
+function devScnTick(dt){const st=DV.spd,sub=st<1?1:st,d=dt*(st<1?st:1);for(let i=0;i<sub;i++){npcs(d);SCN.t+=d}let ov=0,inside=0,done=0,pr=0;
  const gi=GN.indexOf(SCN.g);for(const n of SCN.cars){n.g.visible=true;if(n.tr&&n.tr.node===gi){inside++;n._in=true}else if(n._in)n._done=true;if(n._done)done++}
- for(let a=0;a<SCN.cars.length;a++)for(let b=a+1;b<SCN.cars.length;b++){const n=SCN.cars[a],o=SCN.cars[b],h2=boxHit(n.x,n.z,n.h,n.w||1.8,n.l,o.x,o.z,o.h,o.w||1.8,o.l);if(h2&&h2.p>.4)ov++}
- const c=$("devCnt");if(c)c.innerHTML=`${SCN.t.toFixed(1)} s · cruzando ${inside} · ya han cruzado <b>${done}</b> de ${SCN.cars.length} · solapes <b style="color:${ov?"#ff6b6b":"#7dff9a"}">${ov}</b>`+
+ for(let a=0;a<SCN.cars.length;a++)for(let b=a+1;b<SCN.cars.length;b++){const n=SCN.cars[a],o=SCN.cars[b];if((o.x-n.x)**2+(o.z-n.z)**2>64)continue;pr++;const h2=boxHit(n.x,n.z,n.h,n.w||1.8,n.l,o.x,o.z,o.h,o.w||1.8,o.l);if(h2&&h2.p>.4)ov++}
+ SCN.ov=(SCN.ov||0)+ov;SCN.pr=(SCN.pr||0)+pr;const sp=SCN.pr?SCN.ov/SCN.pr*100:0;
+ const c=$("devCnt");if(c)c.innerHTML=`${SCN.t.toFixed(1)} s · cruzando ${inside} · ya han cruzado <b>${done}</b> de ${SCN.cars.length} · solapes <b style="color:${sp?"#ff6b6b":"#7dff9a"}">${sp.toFixed(1)} %</b>`+
   SCN.cars.map((n,i)=>` · ${i+1}: ${(n.v*3.6)|0} km/h`).join("");
  cam.position.set(SCN.g.x,55,SCN.g.z+20);cam.lookAt(SCN.g.x,0,SCN.g.z);cam.fov=60;cam.updateProjectionMatrix();sc.fog.far=FOGF}

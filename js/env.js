@@ -79,6 +79,8 @@ function envUpdate(dt){HOUR=hourNow();const e=Math.sin((HOUR-6)/12*PI),day=sstep
  _c.copy(PAL.nTop).lerp(PAL.dTop,day).lerp(PAL.kTop,dusk*.55).lerp(PAL.rain,rn*.6*day);SKYU.top.value.copy(_c);
  _c2.copy(PAL.nHor).lerp(PAL.dHor,day).lerp(PAL.kHor,dusk*.6*(1-rn)).lerp(PAL.rain,rn*.7*day);SKYU.hor.value.copy(_c2);
  sc.fog.color.copy(_c2);sc.background=_c2;stars.material.opacity=Math.max(0,NF-.3)*1.2*(1-WEA.cloud);sky.position.copy(cam.position);stars.position.copy(cam.position);
+ // La esfera del cielo (900 m) debe quedar dentro de la distancia de visión de la cámara: en Media/Baja se cortaba y se veía raro
+ {const k=Math.min(1,cam.far*.9/900);sky.scale.setScalar(k);stars.scale.setScalar(k)}
  // Sol (o luna de noche) que sigue al jugador para que las sombras cubran la zona cercana
  const az=(HOUR-12)/12*PI,el=day>0?Math.max(.18,Math.asin(Math.max(-1,Math.min(1,e)))):.9,dx=Math.cos(el)*Math.sin(az),dy=Math.sin(el),dz=Math.cos(el)*Math.cos(az)*.6+.4;
  sun.position.set(px+dx*400,dy*400,pz+dz*400);sun.target.position.set(px,0,pz);sun.target.updateMatrixWorld();

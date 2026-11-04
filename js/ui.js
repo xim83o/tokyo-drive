@@ -37,6 +37,10 @@ function landmarks(){if(LMK||!ready)return LMK;LMK=[{x:TX,z:TZ,n:T("Torre de Tok
 function drawMap(){const S=mapS(),[ox,oz]=mapO();mx.setTransform(1,0,0,1,0,0);mx.fillStyle="#1c1f26";mx.fillRect(0,0,640,640);
  mx.setTransform(S,0,0,S,-ox*S,-oz*S);if(mapImg)mx.drawImage(mapImg,0,0);mx.setTransform(1,0,0,1,0,0);
  const P=(x,z)=>[(x-ox)*S,(z-oz)*S];mx.textAlign="center";mx.textBaseline="bottom";
+ // Calles sin salida: cuadradito azul con la "T" blanca de la señal (行き止まり) en el final y punto azul en la señal de la entrada
+ for(const d of DEADM){const[x,y]=P(d.x,d.z);if(x<-10||y<-10||x>650||y>650)continue;mx.fillStyle=d.c;mx.strokeStyle="#fff";mx.lineWidth=1.5;
+  if(d.dead===1){const r=4+Math.min(3,mapV.z);mx.fillRect(x-r,y-r,r*2,r*2);mx.strokeRect(x-r,y-r,r*2,r*2);mx.fillStyle="#fff";mx.fillRect(x-r*.6,y-r*.6,r*1.2,r*.35);mx.fillRect(x-r*.17,y-r*.6,r*.34,r*1.2)}
+  else{mx.beginPath();mx.arc(x,y,2.5+mapV.z*.4,0,7);mx.fill();mx.stroke()}}
  // Lugares: un círculo de su color; el nombre solo aparece al pasar el ratón por encima (o al tocarlo en el móvil)
  for(const l of landmarks()||[]){if(l.n.includes("🎨"))continue;const[x,y]=P(l.x,l.z);mx.fillStyle=l.c;mx.strokeStyle="#fff";mx.lineWidth=2;mx.beginPath();mx.arc(x,y,l.s?6:8,0,7);mx.fill();mx.stroke()}
  if(mHov){const[x,y]=P(mHov.x,mHov.z);mx.font="600 13px system-ui";const w=mx.measureText(mHov.n).width+14;mx.fillStyle="rgba(0,0,0,.8)";mx.fillRect(x-w/2,y-36,w,22);mx.fillStyle=mHov.c;mx.textBaseline="middle";mx.fillText(mHov.n,x,y-25);mx.textBaseline="bottom"}
@@ -50,7 +54,7 @@ function drawMap(){const S=mapS(),[ox,oz]=mapO();mx.setTransform(1,0,0,1,0,0);mx
 let mDrag=null,mMoved=false,mHov=null;const mPts=new Map();
 // Lugar bajo el puntero (a menos de 14 px en pantalla)
 function mapHit(e){const r=mp.getBoundingClientRect(),S=mapS(),[ox,oz]=mapO(),k=640/r.width,sx=(e.clientX-r.left)*k,sy=(e.clientY-r.top)*k;let best=null,bd=14;
- for(const l of landmarks()||[]){const d=Math.hypot((l.x-ox)*S-sx,(l.z-oz)*S-sy);if(d<bd){bd=d;best=l}}return best}
+ for(const l of(landmarks()||[]).concat(DEADM)){const d=Math.hypot((l.x-ox)*S-sx,(l.z-oz)*S-sy)+(l.dead?4:0);if(d<bd){bd=d;best=l}}return best}
 mp.addEventListener("mousemove",e=>{if(mPts.size)return;const l=mapHit(e);if(l!==mHov){mHov=l;drawMap()}});
 mp.addEventListener("mouseleave",()=>{if(mHov){mHov=null;drawMap()}});
 const mWorld=e=>{const r=mp.getBoundingClientRect(),S=mapS(),[ox,oz]=mapO();return[ox+(e.clientX-r.left)/r.width*640/S,oz+(e.clientY-r.top)/r.height*640/S]};

@@ -9,8 +9,14 @@ function startSpec(){if(!spawned)return;closeSettings();SPEC.x=px-Math.sin(h)*20
 // y la cámara, la cámara se acerca al coche
 function camHit(x,y,z){if(camBlocked(x,y,z))return true;const c=gq(x,z);
  for(const k of c.o){const b=k*3,r=CI[b+2]+.6;if(y<10&&(x-CI[b])**2+(z-CI[b+1])**2<r*r)return true}
- for(const n of NPC)if(n.g.visible&&y<2.4&&(x-n.x)**2+(z-n.z)**2<6.5)return true;
- const u=(x-TX)*Math.cos(TA)+(z-TZ)*Math.sin(TA),v=-(x-TX)*Math.sin(TA)+(z-TZ)*Math.cos(TA),w=y<250?37*Math.exp(-y/86)+3.5:3;return Math.abs(u)<w&&Math.abs(v)<w&&y<333}
+ // Coches: solo si el punto cae dentro de su caja de verdad (largo, ancho y alto, con un margen pequeño). Antes era un círculo de 2,5 m
+ // y la cámara se acercaba al cruzarse con un coche en sentido contrario aunque no tapara nada
+ for(const n of NPC){if(!n.g.visible||y>(n.l>5?2.9:1.9))continue;const dx=x-n.x,dz=z-n.z;if(dx*dx+dz*dz>16)continue;const s=Math.sin(n.h),c=Math.cos(n.h);
+  if(Math.abs(dx*s+dz*c)<n.l/2+.25&&Math.abs(dx*c-dz*s)<(n.w||1.8)/2+.25)return true}
+ const u=(x-TX)*Math.cos(TA)+(z-TZ)*Math.sin(TA),v=-(x-TX)*Math.sin(TA)+(z-TZ)*Math.cos(TA),w=y<250?37*Math.exp(-y/86)+3.5:3;
+ // Torre: por debajo de los arcos (14 m) solo cuentan las patas, para que la cámara pueda pasar por debajo entre ellas
+ if(y<14){const a=w-.7,du=Math.abs(Math.abs(u)-a),dv=Math.abs(Math.abs(v)-a);return du<3.2&&dv<3.2}
+ return Math.abs(u)<w&&Math.abs(v)<w&&y<333}
 function clipCam(){if(!ready)return;const tx=px,ty=1.4+bodyY,tz=pz,P=cam.position;let ok=1;
  for(let k=2;k<=20;k++){const f=k/20;if(camHit(tx+(P.x-tx)*f,ty+(P.y-ty)*f,tz+(P.z-tz)*f)){ok=(k-1)/20*.92;break}}
  if(ok<1)P.set(tx+(P.x-tx)*ok,ty+(P.y-ty)*ok,tz+(P.z-tz)*ok);P.y=Math.max(P.y,CURB+.35)}
@@ -23,7 +29,8 @@ function loop(n){requestAnimationFrame(loop);const dt=Math.min(.05,(n-last)/1e3)
   gearCalc(dt);hud(kmh,gearL,rpmD);effects(dt);audio();
   const cin=idle>15;camH+=ad(h,camH)*Math.min(1,dt*(mode<2||cin?3.5:20));
   const fx=Math.sin(camH),fz=Math.cos(camH),hx=Math.sin(h),hz=Math.cos(h);let fv=65+Math.min(22,sp*.3);cam.up.set(0,1,0);
-  if(intG)intG.visible=mode===3&&!cin;if(whl)whl.rotation.z=stV*1.2;if(cin!==lastCin){lastCin=cin;hudVis(!cin)}
+  // Primera persona: interior sencillo y la carrocería de fuera (con calcomanías, luces y sombra) oculta para no ver piezas por dentro
+  if(intG){const ins=mode===3&&!cin;intG.visible=ins;for(const o of car.children)if(o!==intG)o.visible=!ins}if(whl)whl.rotation.z=stV*1.2;if(cin!==lastCin){lastCin=cin;hudVis(!cin)}
   if(cin){ca+=dt*.3;const cv2=Math.floor((idle-15)/7)%5,rx=-Math.cos(h),rz=Math.sin(h);
    if(cv2==0){cam.position.set(px+Math.sin(ca)*11,3.5,pz+Math.cos(ca)*11);LK.set(px,1,pz);fv=50}
    else if(cv2==1){cam.position.set(px+hx*9+rx*Math.sin(ca)*2,.9,pz+hz*9+rz*Math.sin(ca)*2);LK.set(px,.8,pz);fv=60}
@@ -35,7 +42,7 @@ function loop(n){requestAnimationFrame(loop);const dt=Math.min(.05,(n-last)/1e3)
   else if(mode==2){cam.position.set(px+hx*1.5,1.1+bodyY,pz+hz*1.5);cam.lookAt(px+hx*20,1.2+bodyY,pz+hz*20)}
   else{cam.position.set(px+hx*.1-Math.cos(h)*.38,cur.ey+bodyY,pz+hz*.1+Math.sin(h)*.38);cam.lookAt(px+hx*20,cur.ey+bodyY,pz+hz*20)}
   cam.fov=fv;cam.updateProjectionMatrix();mini()}
- else{audio(true);t0+=dt*.1;sc.fog.far=FOGF;sc.fog.near=FOGF*.2;
+ else{audio(true);t0+=dt*.1;if(intG&&intG.visible){intG.visible=false;for(const o of car.children)if(o!==intG)o.visible=true}sc.fog.far=FOGF;sc.fog.near=FOGF*.2;
   // En ajustes con la partida empezada, la imagen se queda quieta (pausa)
   if(state==="set"&&spawned&&setPrev==="play"){}
   // Modo espectador: cámara libre (WASD mover, Q/E bajar y subir, flechas o arrastrar para girar, Mayús rápido, Esc salir); el tráfico sigue

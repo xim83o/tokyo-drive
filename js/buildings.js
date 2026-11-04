@@ -187,7 +187,10 @@ function buildBuildings(){const CH=500,ch=new Map(),c=new THREE.Color(),R0=rng(3
   // Casas bajas casi rectangulares: tejado a dos aguas (sin pretil ni cosas en el tejado)
   let pitch=false;
   if(!ft&&!isK&&!Rs&&type!==3&&h<=12&&A<320&&R0()<.85){const ob=obb(R);let a=ob.a,hu=ob.hu,hv=ob.hv;if(hv>hu){const t=hu;hu=hv;hv=t;a+=PI/2}
-   if(4*hu*hv<A*1.3){pitch=true;const ov=.45,rh=Math.min(2.6,hv*.65),ca=Math.cos(a),sa=Math.sin(a),W2=(u,v,y)=>[ob.cx+u*ca-v*sa,y,ob.cz+u*sa+v*ca];
+   // Solo si la planta es de verdad un rectángulo: ocupa casi toda su caja y todos sus vértices están en el borde de la caja (una
+   // planta en L o con entrantes lleva tejado plano; antes salían tejados a dos aguas que sobresalían o dejaban huecos)
+   let rect=4*hu*hv<A*1.12;if(rect){const ca=Math.cos(a),sa=Math.sin(a);for(let i=0;i<R.length&&rect;i+=2){const dx=R[i]-ob.cx,dz=R[i+1]-ob.cz,u=dx*ca+dz*sa,v=-dx*sa+dz*ca;if(Math.min(hu-Math.abs(u),hv-Math.abs(v))>.9)rect=false}}
+   if(rect){pitch=true;const ov=.45,rh=Math.min(2.6,hv*.65),ca=Math.cos(a),sa=Math.sin(a),W2=(u,v,y)=>[ob.cx+u*ca-v*sa,y,ob.cz+u*sa+v*ca];
     const rcol=new THREE.Color(RFC[bi%RFC.length]),U=hu+ov,V=hv+ov,Ri=[];
     const P2=(arr,col,...v)=>{for(const q of v)arr.p.push(...q);for(let k=0;k<v.length;k++)arr.c.push(col.r,col.g,col.b)};
     for(const sv of[-1,1]){const e0=W2(-U,sv*V,h-.25),e1=W2(U,sv*V,h-.25),r0=W2(-U,0,h+rh),r1=W2(U,0,h+rh);P2(o.r,rcol,e0,e1,r1,e0,r1,r0)}
