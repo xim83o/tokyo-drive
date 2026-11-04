@@ -99,7 +99,15 @@ Pedido por el usuario (todo con permiso ya dado; descargas permitidas: partes de
 - [x] Béisbol: banquillos azules, marcador (港区グラウンド) detrás del centro, 6 torres de focos que de noche se encienden e iluminan el césped, muro con anuncios inventados y malla encima, árboles alrededor y camino de baldosas desde la calle más cercana.
 - [x] Puente de la esquina de abajo a la derecha (la bahía): el agua de la bahía chocaba como un edificio también debajo del puente y la calle se estrechaba. Ahora el agua no cuenta bajo las calles, su orilla deja hueco donde entra una calle y los puentes llevan pretil a los lados.
 - [x] Primera persona: quitado el limpiaparabrisas (a petición del usuario). Las gotas de lluvia siguen en el cristal y se van solas.
-- [x] Megatorre Kurogane (黒鉄, empresa inventada y diseño propio, no copia de ningún juego) en la explanada del sur (1364, 1608): monolito negro escalonado de 300 m, neón rojo, ventanas encendidas de noche, 6 pantallas LED gigantes, logo y letrero vertical (js/places.js, buildMegaTower).
+- [x] Megatorre Kurogane (黒鉄, empresa inventada y diseño propio, no copia de ningún juego) en la explanada del sur (1364, 1608): monolito negro escalonado de 300 m, neón rojo, ventanas encendidas de noche, 6 pantallas LED gigantes, logo y letrero vertical (js/places.js, buildMegaTower). Marcada en rojo en el mapa, con su nombre.
+
+## Capturas del 2026-11-04 (noche, 4) — HECHAS
+- [x] Rascacielos de 105 m que tapaba la torre Kurogane: trasladado al parque, a unos 125 m (world.js, al cargar).
+- [x] Autopista cortada cerca de (465, 2310): el canal viene partido en los datos (hueco de 14 m); el tablero ahora sigue seguido por encima.
+- [x] Autopista y vías elevadas: la autopista sube de 12 a 16 m en todo su recorrido (no solo en el cruce) y las vías llevan grava, traviesas y raíles.
+- [x] Trenes decorativos en las vías elevadas: rutas de borde a borde del mapa, sale uno cada 45 s en una línea libre (4 coches) y desaparece al llegar al borde (places.js, buildTrains).
+- [x] Zona de derrape: sin árboles, con circuito de neumáticos, contenedores, camión, luces portátiles, grada, coches viejos y más marcas. Sin carteles.
+- [x] Conos de la zona: el coche los tira y vuelven a su sitio a los 12 s si no estás encima (conesTick).
 
 
 ## Pendiente / ideas

@@ -128,6 +128,8 @@ async function loadWorld(){
    for(let k=0;k<=n;k++)for(const o of offs){const x=ax+(bx-ax)*k/n+lx*o,z=az+(bz-az)*k/n+lz*o,l=G.get(key(Math.floor(x/20),Math.floor(z/20)));if(!l)continue;for(const b of l)if(!b.del&&x>b.bb[0]&&x<b.bb[2]&&z>b.bb[1]&&z<b.bb[3]&&inPoly(b.p,x,z))b.del=1}}}
   MAP.buildings=MAP.buildings.filter(b=>!b.del)}
  // Edificios primero: las calles se estrechan donde se meterían en uno, y los adornos comprueban si caen dentro
+ // El rascacielos de 105 m que tapaba la megatorre Kurogane (places.js) se traslada a un sitio libre del parque, a unos 125 m de ella
+ {const b=MAP.buildings.find(q=>q.h>100&&q.h<110&&Math.hypot(q.p[0]-1350,q.p[1]-1547)<80);if(b)for(let i=0;i<b.p.length;i+=2){b.p[i]+=106;b.p[i+1]-=27}}
  // (el agua se añade después de las calles: si no, las calles que cruzan una bahía o un lago se estrechaban como junto a un edificio)
  for(const b of MAP.buildings)addPoly(b.p,b.h);
  // Calzada a 0 m (la acera queda 15 cm más alta). Cada tramo guarda su medio ancho (r.hw) ya ajustado
@@ -182,11 +184,13 @@ async function loadWorld(){
  // borde), en sus últimos 60 m baja hasta el suelo en vez de acabar en el aire. Cuando el mapa sea más grande habrá que alargarla
  // Pilares: las vías paralelas los comparten (antes cada vía ponía los suyos cada 28 m y salía un bosque de pilares) y ninguno cae
  // en la calzada, en un edificio ni a menos de 10 m de otro: se busca sitio un poco antes o después y, si no hay, ese tramo va sin pilar
- const ba=[],rl=[],dk=[],pil=[],RE=[];MAP.rails.forEach(r=>{const p=r.p;RE.push([p[0],p[1]],[p[p.length-2],p[p.length-1]])});
+ const ba=[],rl=[],dk=[],dkuv=[],pil=[],RE=[];MAP.rails.forEach(r=>{const p=r.p;RE.push([p[0],p[1]],[p[p.length-2],p[p.length-1]])});
  const tri3=(a,ax,ay,az,bx,by,bz,cx,cy,cz)=>{if((bz-az)*(cx-ax)-(bx-ax)*(cz-az)<0)a.push(ax,ay,az,cx,cy,cz,bx,by,bz);else a.push(ax,ay,az,bx,by,bz,cx,cy,cz)};
- const ribY=(a,p,ys,hw)=>{for(let i=2;i<p.length;i+=2){const ax=p[i-2],az=p[i-1],bx=p[i],bz=p[i+1],l=Math.hypot(bx-ax,bz-az)||1,lx=(bz-az)/l*hw,lz=-(bx-ax)/l*hw,y0=ys[i/2-1],y1=ys[i/2];
-   tri3(a,ax+lx,y0,az+lz,bx+lx,y1,bz+lz,bx-lx,y1,bz-lz);tri3(a,ax+lx,y0,az+lz,bx-lx,y1,bz-lz,ax-lx,y0,az-lz)}
-  for(let i=0;i<p.length;i+=2)for(let k=0;k<10;k++){const a0=k/10*PI*2,a1=(k+1)/10*PI*2;flatTri(a,ys[i/2],p[i],p[i+1],p[i]+Math.cos(a0)*hw,p[i+1]+Math.sin(a0)*hw,p[i]+Math.cos(a1)*hw,p[i+1]+Math.sin(a1)*hw)}};
+ // Tablero de la vía con coordenadas de textura (traviesas y grava a lo largo; los redondeles de las uniones van un poco más bajos, en color hormigón)
+ const ribY=(a,uv,p,ys,hw)=>{let d=0;const tq=(A,B,C)=>{const fl=(B[2]-A[2])*(C[0]-A[0])-(B[0]-A[0])*(C[2]-A[2])<0;for(const q of fl?[A,C,B]:[A,B,C]){a.push(q[0],q[1],q[2]);uv.push(q[3],q[4])}};
+  for(let i=2;i<p.length;i+=2){const ax=p[i-2],az=p[i-1],bx=p[i],bz=p[i+1],l=Math.hypot(bx-ax,bz-az)||1,lx=(bz-az)/l*hw,lz=-(bx-ax)/l*hw,y0=ys[i/2-1],y1=ys[i/2],v0=d/3,v1=(d+l)/3;d+=l;
+   const A=[ax+lx,y0,az+lz,0,v0],B=[bx+lx,y1,bz+lz,0,v1],C=[bx-lx,y1,bz-lz,1,v1],D=[ax-lx,y0,az-lz,1,v0];tq(A,B,C);tq(A,C,D)}
+  for(let i=0;i<p.length;i+=2)for(let k=0;k<10;k++){const a0=k/10*PI*2,a1=(k+1)/10*PI*2,n=a.length;flatTri(a,ys[i/2]-.03,p[i],p[i+1],p[i]+Math.cos(a0)*hw,p[i+1]+Math.sin(a0)*hw,p[i]+Math.cos(a1)*hw,p[i+1]+Math.sin(a1)*hw);for(let q=n;q<a.length;q+=3)uv.push(.02,.5)}};
  const okP=(x,z)=>!inBuilding(x,z)&&[[0,0],[1.4,0],[-1.4,0],[0,1.4],[0,-1.4]].every(([u,v])=>roadAt(x+u,z+v)<0)&&!pil.some(q=>(q[0]-x)**2+(q[2]-z)**2<100);
  for(const r of MAP.rails){let p=r.p;
   if(!r.b){ribbon(ba,p,1.6,CURB+.03,true);for(const s of[-.72,.72])for(let i=2;i<p.length;i+=2){const l=Math.hypot(p[i]-p[i-2],p[i+1]-p[i-1])||1,lx=(p[i+1]-p[i-1])/l*s,lz=-(p[i]-p[i-2])/l*s;quad(rl,p[i-2]+lx,p[i-1]+lz,p[i]+lx,p[i+1]+lz,.06,CURB+.15)}
@@ -198,19 +202,23 @@ async function loadWorld(){
   if(ramp[0]||ramp[1]){const q=[p[0],p[1]];for(let i=2;i<p.length;i+=2){const n=Math.ceil(Math.hypot(p[i]-p[i-2],p[i+1]-p[i-1])/4);for(let k=1;k<=n;k++)q.push(p[i-2]+(p[i]-p[i-2])*k/n,p[i-1]+(p[i+1]-p[i-1])*k/n)}p=new Float32Array(q)}
   const D=[0];for(let i=2;i<p.length;i+=2)D.push(D[D.length-1]+Math.hypot(p[i]-p[i-2],p[i+1]-p[i-1]));const TL=D[D.length-1],RL=Math.min(60,TL*.45);
   const ys=D.map(d=>{let f=1;if(ramp[0])f=Math.min(f,d/RL);if(ramp[1])f=Math.min(f,(TL-d)/RL);f=Math.max(0,Math.min(1,f));return CURB+.05+(7.5-CURB-.05)*f*f*(3-2*f)});
-  ribY(dk,p,ys,2.2);for(const s of[-.72,.72]){const o=[];for(let i=0;i<p.length;i+=2){const j=Math.min(i,p.length-4),l=Math.hypot(p[j+2]-p[j],p[j+3]-p[j+1])||1;o.push(p[i]+(p[j+3]-p[j+1])/l*s,p[i+1]-(p[j+2]-p[j])/l*s)}
-   for(let i=2;i<o.length;i+=2){const l=Math.hypot(o[i]-o[i-2],o[i+1]-o[i-1])||1,lx=(o[i+1]-o[i-1])/l*.06,lz=-(o[i]-o[i-2])/l*.06,y0=ys[i/2-1]+.12,y1=ys[i/2]+.12;tri3(rl,o[i-2]+lx,y0,o[i-1]+lz,o[i]+lx,y1,o[i+1]+lz,o[i]-lx,y1,o[i+1]-lz);tri3(rl,o[i-2]+lx,y0,o[i-1]+lz,o[i]-lx,y1,o[i+1]-lz,o[i-2]-lx,y0,o[i-1]-lz)}}
+  ELV.push({p,ys});ribY(dk,dkuv,p,ys,2.2);for(const s of[-.72,.72]){const o=[];for(let i=0;i<p.length;i+=2){const j=Math.min(i,p.length-4),l=Math.hypot(p[j+2]-p[j],p[j+3]-p[j+1])||1;o.push(p[i]+(p[j+3]-p[j+1])/l*s,p[i+1]-(p[j+2]-p[j])/l*s)}
+   for(let i=2;i<o.length;i+=2){const l=Math.hypot(o[i]-o[i-2],o[i+1]-o[i-1])||1,lx=(o[i+1]-o[i-1])/l*.07,lz=-(o[i]-o[i-2])/l*.07,y0=ys[i/2-1]+.12,y1=ys[i/2]+.12;tri3(rl,o[i-2]+lx,y0,o[i-1]+lz,o[i]+lx,y1,o[i+1]+lz,o[i]-lx,y1,o[i+1]-lz);tri3(rl,o[i-2]+lx,y0,o[i-1]+lz,o[i]-lx,y1,o[i+1]-lz,o[i-2]-lx,y0,o[i-1]-lz)}}
   // Rampa: a la altura de un coche, la parte baja choca como un muro (no se puede subir a la vía)
   for(let i=2;i<p.length;i+=2)if(Math.min(ys[i/2-1],ys[i/2])<2.5)addCaps(p[i-2],p[i-1],p[i],p[i+1],2.2);
   const at=d=>{let i=1;while(i<D.length-1&&D[i]<d)i++;const f=(d-D[i-1])/((D[i]-D[i-1])||1);return[p[i*2-2]+(p[i*2]-p[i*2-2])*f,p[i*2-1]+(p[i*2+1]-p[i*2-1])*f,ys[i-1]+(ys[i]-ys[i-1])*f]};
   for(let d=14;d<TL;d+=28)for(const o of[0,3,-3,6,-6,9,-9]){const dd=d+o;if(dd<0||dd>TL)continue;const[x,z,y]=at(dd);if(y<3)break;if(okP(x,z)){pil.push([x,0,z,0,1,(y-.05)/7.5]);break}}}
- if(ba.length)mkMesh(ba,flat(0x6b6158),-1);if(rl.length)mkMesh(rl,new THREE.MeshLambertMaterial({color:0x2c2c30}));
- if(dk.length){mkMesh(dk,new THREE.MeshLambertMaterial({color:0x8e9096,side:THREE.DoubleSide}),0,null,2);
+ if(ba.length)mkMesh(ba,flat(0x6b6158),-1);if(rl.length)mkMesh(rl,new THREE.MeshLambertMaterial({color:0x8d939b,side:THREE.DoubleSide}));
+ // Vías elevadas: bordes de hormigón, grava oscura y traviesas, para que no se confundan con una carretera
+ if(dk.length){const tt=canvasTex(128,128,(g,w)=>{g.fillStyle="#6e7074";g.fillRect(0,0,w,w);g.fillStyle="#3f3e3b";g.fillRect(16,0,96,w);const r=rng(21);for(let i=0;i<2600;i++){const v=40+r()*50|0;g.fillStyle=`rgb(${v},${v},${v-3})`;g.fillRect(16+r()*94,r()*w,2,2)}g.fillStyle="#2a2522";for(let j=0;j<5;j++)g.fillRect(24,j*25.6+7,80,12)},true);
+  mkMesh(dk,new THREE.MeshLambertMaterial({map:tt,side:THREE.DoubleSide}),0,{uv:dkuv},2);
   inst(new THREE.CylinderGeometry(.8,.8,7.5,8).translate(0,3.75,0),new THREE.MeshLambertMaterial({color:0x8e9096}),pil,0,true);for(const q of pil)addCirc(q[0],q[2],.8)}
  buildBuildings();buildTower();decorate();buildPlaces();drawMapImg();ready=true}
 
 let ROADMAT=null,GROUNDMAT=null;
 // ¿Dentro de un estanque o de la bahía?
+// Vías elevadas (cada tramo con sus puntos y alturas): de aquí salen las rutas de los trenes (places.js)
+const ELV=[];
 function inWater(x,z){for(const R of MAP.water)if(inPoly(R,x,z))return true;return false}
 // Distancia al borde del canal (negativa dentro del cauce)
 // ¿Ese trozo del borde del canal queda abierto (puente)? Los dos extremos y el centro tienen que estar sobre la calzada, y también
@@ -283,13 +291,14 @@ function buildGround(){const GS=MOBILE?4:3,N=Math.ceil(W/GS)+1,SD=new Float32Arr
 // muros de hormigón a los lados con barandilla, puentes donde lo cruza una calle (vigas debajo y pretiles a los lados) y, encima,
 // la autopista elevada sobre pilares como en la realidad (de adorno: no se puede subir)
 const WATERU={uTime:{value:0},uNightW:{value:0}};let WATERM=null;
-function buildCanal(){if(!MAP.rivers.length)return;const wa=[],wl=[],rl=[],gi=[],hw=[],hd=[],hs=[],pil=[],WY=-2.4;
+function buildCanal(){if(!MAP.rivers.length)return;const wa=[],wl=[],rl=[],gi=[],hw=[],hd=[],hs=[],pil=[],WY=-2.4,HY=16,FE=[];   // HY: altura del tablero, bien por encima de las vías elevadas (7,5 m) y de sus trenes
  const vq=(a,x0,z0,x1,z1,y0,y1)=>a.push(x0,y0,z0,x1,y0,z1,x1,y1,z1,x0,y0,z0,x1,y1,z1,x0,y1,z0);
  for(const r of MAP.rivers){const p=r.p,h2=r.w/2,ns=p.length/2,MT=[];
   // Dirección del borde de la autopista en cada vértice (media de los dos tramos, alargada para que el ancho se mantenga en la curva)
   {const nr=v=>{const L=Math.hypot(p[v*2+2]-p[v*2],p[v*2+3]-p[v*2+1])||1;return[(p[v*2+3]-p[v*2+1])/L,-(p[v*2+2]-p[v*2])/L]};
    for(let v=0;v<ns;v++){const a=v>0?nr(v-1):null,b=v<ns-1?nr(v):null,ref=a||b;let mx=(a?a[0]:0)+(b?b[0]:0),mz=(a?a[1]:0)+(b?b[1]:0);const l=Math.hypot(mx,mz)||1;mx/=l;mz/=l;
-    const sc=1/Math.max(.5,mx*ref[0]+mz*ref[1]);MT.push(mx*sc,mz*sc)}}
+    const sc=1/Math.max(.5,mx*ref[0]+mz*ref[1]);MT.push(mx*sc,mz*sc)}
+   FE.push({x:p[0],z:p[1],m:[MT[0],MT[1]]},{x:p[ns*2-2],z:p[ns*2-1],m:[MT[ns*2-2],MT[ns*2-1]]})}
   ribbon(wa,p,h2+.3,WY,true);riverCaps(r,(x0,z0,x1,z1)=>{vq(wl,x0,z0,x1,z1,WY-.6,CURB);vq(rl,x0,z0,x1,z1,CURB,CURB+1.1)});
   for(let i=2;i<p.length;i+=2){const ax=p[i-2],az=p[i-1],bx=p[i],bz=p[i+1],L=Math.hypot(bx-ax,bz-az)||1,lx=(bz-az)/L,lz=-(bx-ax)/L,n=Math.ceil(L/.5);
    for(const s of[-1,1])for(let k=0;k<n;k++){const x0=ax+(bx-ax)*k/n+lx*h2*s,z0=az+(bz-az)*k/n+lz*h2*s,x1=ax+(bx-ax)*(k+1)/n+lx*h2*s,z1=az+(bz-az)*(k+1)/n+lz*h2*s,road=bankOpen(x0,z0,x1,z1,lx*s,lz*s);
@@ -297,10 +306,14 @@ function buildCanal(){if(!MAP.rivers.length)return;const wa=[],wl=[],rl=[],gi=[]
    // Autopista elevada: tablero de 13 m a 12 m de altura, pretiles y pilares en el centro del cauce
    // (bordes a inglete en cada vértice: antes cada tramo era un rectángulo y en las curvas las esquinas salían en pico)
    {const E=(v,s)=>[p[v*2]+MT[v*2]*6.5*s,p[v*2+1]+MT[v*2+1]*6.5*s],v0=i/2-1,v1=i/2,A0=E(v0,1),A1=E(v1,1),B0=E(v0,-1),B1=E(v1,-1);
-    for(const[a,y]of[[hd,12],[hs,11.2]]){flatTri(a,y,A0[0],A0[1],A1[0],A1[1],B1[0],B1[1]);flatTri(a,y,A0[0],A0[1],B1[0],B1[1],B0[0],B0[1])}
-    vq(hw,A0[0],A0[1],A1[0],A1[1],11.2,13.1);vq(hw,B0[0],B0[1],B1[0],B1[1],11.2,13.1)}
+    for(const[a,y]of[[hd,HY],[hs,HY-.8]]){flatTri(a,y,A0[0],A0[1],A1[0],A1[1],B1[0],B1[1]);flatTri(a,y,A0[0],A0[1],B1[0],B1[1],B0[0],B0[1])}
+    vq(hw,A0[0],A0[1],A1[0],A1[1],HY-.8,HY+1.1);vq(hw,B0[0],B0[1],B1[0],B1[1],HY-.8,HY+1.1)}
    // (ningún pilar sobre una calle: en las curvas del canal puede coincidir con un puente)
    for(let t=16;t<L;t+=34){const x=ax+(bx-ax)*t/L,z=az+(bz-az)*t/L;if([[0,0],[3,0],[-3,0],[0,3],[0,-3]].every(([u,v])=>roadAt(x+u,z+v)<0))pil.push([x,0,z,Math.atan2(bx-ax,bz-az)])}}}
+ // El canal de los datos a veces viene partido en dos (hueco de unos 14 m donde lo cruza una calle): la autopista sigue seguida por encima
+ {const free=FE.filter(a=>!FE.some(b=>b!==a&&Math.hypot(a.x-b.x,a.z-b.z)<1));free.forEach((a,i)=>{for(let j=i+1;j<free.length;j++){const b=free[j];if(Math.hypot(a.x-b.x,a.z-b.z)>30)continue;
+   const E=(q,s)=>[q.x+q.m[0]*6.5*s,q.z+q.m[1]*6.5*s],sg=Math.hypot(a.m[0]+b.m[0],a.m[1]+b.m[1])>Math.hypot(a.m[0]-b.m[0],a.m[1]-b.m[1])?1:-1,A0=E(a,1),B0=E(a,-1),A1=E(b,sg),B1=E(b,-sg);
+   for(const[t,y]of[[hd,HY],[hs,HY-.8]]){flatTri(t,y,A0[0],A0[1],A1[0],A1[1],B1[0],B1[1]);flatTri(t,y,A0[0],A0[1],B1[0],B1[1],B0[0],B0[1])}vq(hw,A0[0],A0[1],A1[0],A1[1],HY-.8,HY+1.1);vq(hw,B0[0],B0[1],B1[0],B1[1],HY-.8,HY+1.1)}})}
  // Puentes: tramos de calle por encima del agua
  for(let k=0;k<RSG.length;k+=6){const ax=RSG[k],az=RSG[k+1],bx=RSG[k+2],bz=RSG[k+3],w2=RSG[k+4],L=Math.hypot(bx-ax,bz-az)||1,lx=(bz-az)/L,lz=-(bx-ax)/L,n=Math.ceil(L);
   // Solo es puente si la calle cruza el canal (no si va paralela al borde, que pondría barrera a un lado de toda la calle). Los
@@ -346,7 +359,7 @@ function buildCanal(){if(!MAP.rivers.length)return;const wa=[],wl=[],rl=[],gi=[]
  // Autopista: asfalto arriba (con la misma textura que las calles), hormigón debajo y a los lados
  for(const m of mkMeshZ(hd,ROADMAT,0,1)){worldUV2(m);const q=m.geometry.attributes.position.array,uv=new Float32Array(q.length/3*2);for(let i=0,j=0;i<q.length;i+=3,j+=2){uv[j]=q[i]/7;uv[j+1]=q[i+2]/7}m.geometry.setAttribute("uv",new THREE.BufferAttribute(uv,2))}
  mkMeshZ(hs,conc,0,2);mkMeshZ(hw,conc,0,2);
- inst(new THREE.BoxGeometry(2.6,11.2-WY,4).translate(0,(11.2+WY)/2,0),new THREE.MeshLambertMaterial({color:0x9a9c9f}),pil,0,true)}
+ inst(new THREE.BoxGeometry(2.6,HY-.8-WY,4).translate(0,(HY-.8+WY)/2,0),new THREE.MeshLambertMaterial({color:0x9a9c9f}),pil,0,true)}
 // Imagen del mapa (1 píxel = 1 m) para el mapa de aparición y el fondo del minimapa
 function drawMapImg(){const c=document.createElement("canvas");c.width=c.height=W;const g=c.getContext("2d"),poly=(R)=>{g.beginPath();g.moveTo(R[0],R[1]);for(let i=2;i<R.length;i+=2)g.lineTo(R[i],R[i+1]);g.closePath();g.fill()},
  line=(p,w)=>{g.lineWidth=w;g.beginPath();g.moveTo(p[0],p[1]);for(let i=2;i<p.length;i+=2)g.lineTo(p[i],p[i+1]);g.stroke()};
@@ -354,5 +367,7 @@ function drawMapImg(){const c=document.createElement("canvas");c.width=c.height=
  g.fillStyle=g.strokeStyle="#2c5f8c";for(const R of MAP.water)poly(R);g.lineCap=g.lineJoin="round";for(const r of MAP.rivers)line(r.p,r.w);
  g.strokeStyle="#6b5a4a";for(const r of MAP.rails)line(r.p,3);g.strokeStyle="#9aa0ad";for(const r of MAP.roads)line(r.p,r.w);
  // Edificios: templos en rojo, FootTown en blanco y los rascacielos más claros cuanto más altos
- for(const b of MAP.buildings){g.fillStyle=b.k===1||b.k===3?"#c2452f":b.k===2?"#e8e8e4":b.h>100?"#5a6170":b.h>50?"#3a3e48":"#22242a";poly(b.p)}
- g.fillStyle="#ff4a2a";g.strokeStyle="#fff";g.lineWidth=4;g.beginPath();g.moveTo(TX,TZ-34);g.lineTo(TX+28,TZ+20);g.lineTo(TX-28,TZ+20);g.closePath();g.fill();g.stroke();mapImg=c}
+ for(const b of MAP.buildings){g.fillStyle=b.c?b.c:b.k===1||b.k===3?"#c2452f":b.k===2?"#e8e8e4":b.h>100?"#5a6170":b.h>50?"#3a3e48":"#22242a";poly(b.p)}
+ g.fillStyle="#ff4a2a";g.strokeStyle="#fff";g.lineWidth=4;g.beginPath();g.moveTo(TX,TZ-34);g.lineTo(TX+28,TZ+20);g.lineTo(TX-28,TZ+20);g.closePath();g.fill();g.stroke();
+ // Torre Kurogane: rombo rojo
+ g.fillStyle="#ff2a32";g.beginPath();g.moveTo(MGT.x,MGT.z-34);g.lineTo(MGT.x+26,MGT.z);g.lineTo(MGT.x,MGT.z+34);g.lineTo(MGT.x-26,MGT.z);g.closePath();g.fill();g.stroke();mapImg=c}

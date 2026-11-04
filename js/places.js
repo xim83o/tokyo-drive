@@ -50,7 +50,7 @@ const hipG=t=>new THREE.CylinderGeometry(t,1,1,4,1).rotateY(Math.PI/4),cylG=(a,b
 // Luces de los sitios por la noche (env.js): [material, valor de día, aumento de noche] y [material, opacidad de noche]
 NM.plN=[];NM.plO=[];
 
-function buildPlaces(){try{buildTemple()}catch(e){console.error(e)}try{buildDrift()}catch(e){console.error(e)}try{buildBaseball()}catch(e){console.error(e)}try{buildMegaTower()}catch(e){console.error(e)}}
+function buildPlaces(){try{buildTemple()}catch(e){console.error(e)}try{buildDrift()}catch(e){console.error(e)}try{buildBaseball()}catch(e){console.error(e)}try{buildMegaTower()}catch(e){console.error(e)}try{buildTrains()}catch(e){console.error(e)}}
 
 // --- Megatorre de la empresa inventada Kurogane (黒鉄): monolito negro de 300 m, diseño propio, en la explanada del sur junto a la avenida ---
 // Cinco cuerpos escalonados de cristal oscuro, aristas y franjas de neón rojo, pantallas gigantes y corona con mástil
@@ -89,7 +89,7 @@ function buildMegaTower(){megaSite();const{x,z,ry}=MGT,W=M4(x,CURB,z,ry),TR=[[27
  const bt=canvasTex(128,1024,(g,w,h)=>{g.fillStyle="#06070b";g.fillRect(0,0,w,h);g.fillStyle="#ff2a32";g.font="bold 200px 'Yu Gothic','Meiryo',sans-serif";g.textAlign="center";g.textBaseline="middle";[..."黒鉄重工"].forEach((c,i)=>g.fillText(c,64,128+i*256,120))});
  const bm=new THREE.MeshLambertMaterial({map:bt,emissiveMap:bt,emissive:0xffffff,emissiveIntensity:.6});NM.plN.push([bm,.6,1.5]);for(const k of[1,3])onFace(bm,7.5,60,k,18,157);
  // En el mapa, como un edificio más
- const R=[];for(const[u,v]of[[-27,-27],[27,-27],[27,27],[-27,27]])R.push(...lw(x,z,ry,u,v));MAP.buildings.push({p:R,h:300})}
+ const R=[];for(const[u,v]of[[-27,-27],[27,-27],[27,27],[-27,27]])R.push(...lw(x,z,ry,u,v));MAP.buildings.push({p:R,h:300,c:"#ff2a32"})}
 
 // --- Patio del templo ---
 function buildTemple(){const area=R=>{let A=0;for(let i=0,j=R.length-2;i<R.length;j=i,i+=2)A+=R[j]*R[i+1]-R[i]*R[j+1];return Math.abs(A)/2};
@@ -228,25 +228,89 @@ function templeGate(x,z,a){const G=new THREE.Group(),red=new THREE.MeshLambertMa
  const c=Math.cos(G.rotation.y),s=Math.sin(G.rotation.y);for(const u of[-W2,-2.4,2.4,W2])for(const v of[-D2,D2])addCirc(x+u*c+v*s,z-u*s+v*c,.6)}
 
 // --- Zona de derrape (sin carteles: se nota por las marcas, los conos y los neumáticos) ---
-function buildDrift(){const cx=1553,cz=1155;let best=null;
- // La explanada grande y vacía al sureste del templo (la de la captura): la región libre más grande cerca de ese punto
- const set=placeCells([[cx,cz],[cx+20,cz],[cx-20,cz],[cx,cz+20],[cx,cz-20]],cx,cz,150);if(set.size<200)return;PLC.drift=set;
+// La explanada grande y vacía al sureste del templo (la de la captura): la región libre más grande cerca de ese punto.
+// Se calcula antes de decorate, para que no salgan árboles dentro
+function driftSite(){if(PLC.drift!==undefined)return PLC.drift;const cx=1553,cz=1155,set=placeCells([[cx,cz],[cx+20,cz],[cx-20,cz],[cx,cz+20],[cx,cz-20]],cx,cz,150);PLC.drift=set.size<200?null:set;return PLC.drift}
+function buildDrift(){const set=driftSite();if(!set)return;
  const tex=canvasTex(1024,1024,(g,w)=>{g.fillStyle="#46484d";g.fillRect(0,0,w,w);const r=rng(99);for(let i=0;i<30000;i++){const v=58+r()*36|0;g.fillStyle=`rgba(${v},${v},${v+3},.6)`;g.fillRect(r()*w,r()*w,1+r()*1.5,1+r()*1.5)}
   // Rayas de aparcamiento viejas y casi borradas
   g.strokeStyle="rgba(220,220,210,.07)";g.lineWidth=4;for(let x=40;x<w;x+=80){g.beginPath();g.moveTo(x,60);g.lineTo(x,260);g.stroke()}
   // Marcas de neumático: círculos (donuts), curvas largas y ochos
   g.lineCap="round";const arc=(x,y,R,a0,a1,al)=>{for(const o of[-9,9]){g.strokeStyle=`rgba(10,10,12,${al})`;g.lineWidth=7;g.beginPath();g.arc(x,y,R+o,a0,a1);g.stroke()}};
-  for(let i=0;i<3;i++)arc(r()*w,r()*w,35+r()*30,0,PI*2,.08+r()*.07);
-  for(let i=0;i<6;i++){const a=r()*PI*2;arc(r()*w,r()*w,120+r()*260,a,a+.5+r()*1.2,.06+r()*.08)}
-  {const x=r()*w,y=r()*w,R=40;arc(x-R,y,R,0,PI*2,.09);arc(x+R,y,R,0,PI*2,.09)}},true);
+  for(let i=0;i<8;i++)arc(r()*w,r()*w,35+r()*30,0,PI*2,.1+r()*.08);
+  for(let i=0;i<18;i++){const a=r()*PI*2;arc(r()*w,r()*w,120+r()*260,a,a+.5+r()*1.2,.08+r()*.1)}
+  for(let i=0;i<3;i++){const x=r()*w,y=r()*w,R=40;arc(x-R,y,R,0,PI*2,.11);arc(x+R,y,R,0,PI*2,.11)}},true);
  cellMesh(set,plMat(tex),110,.014);
- // Conos y neumáticos: en unos pocos sitios, como si alguien hubiera montado un recorrido y se hubiera ido
- const cells=[...set],r=rng(5),cones=[],tires=[];const pick=()=>{const o=cells[Math.floor(r()*cells.length)];return[(o%GSN)*GSS+GSS/2,((o/GSN)|0)*GSS+GSS/2]};
- for(let k=0;k<4;k++){const[x,z]=pick(),a=r()*PI*2;for(let i=0;i<6;i++){const X=x+Math.sin(a)*i*7,Z=z+Math.cos(a)*i*7;if(cellIn(set,X,Z))cones.push([X,CURB,Z,r()*PI,1,1,r()<.15?0xffffff:0xff6a1a])}}
- for(let k=0;k<5;k++){const[x,z]=pick();for(let i=0;i<3;i++){const X=x+(i%2)*.7,Z=z+(i>1?.6:0);if(!cellIn(set,X,Z))continue;const h=2+Math.floor(r()*3);for(let j=0;j<h;j++)tires.push([X,CURB+j*.26,Z,r()*PI]);addCirc(X,Z,.45)}}
+ driftProps(set)}
+// Todo lo que hay en la zona: circuito de neumáticos, conos que se pueden tirar, contenedores y camión, luces portátiles, grada y coches viejos
+function driftProps(set){const N=GSN,cells=[...set],r=rng(5);let sx=0,sz=0;for(const o of cells){sx+=(o%N)*GSS+GSS/2;sz+=((o/N)|0)*GSS+GSS/2}const cx=sx/cells.length,cz=sz/cells.length;
+ // Circuito: dos óvalos de neumáticos con huecos para entrar y salir
+ const tires=[],wall=(rx,rz,a0,a1)=>{let last=null;const n=Math.ceil((a1-a0)*Math.max(rx,rz)/.8);for(let i=0;i<=n;i++){const a=a0+(a1-a0)*i/n,X=cx+Math.cos(a)*rx,Z=cz+Math.sin(a)*rz;if(!cellIn(set,X,Z)||blockedAt(X,Z,.5)){last=null;continue}
+   const col=i%7===0?0xe8e8e4:0x1d1e21;for(let j=0;j<2;j++)tires.push([X,CURB+j*.26,Z,r()*PI,1,1,col]);if(last)addCaps(last[0],last[1],X,Z,.42);last=[X,Z]}};
+ for(const[a,b]of[[.25,2.6],[3.4,5.8]])wall(46,28,a,b);for(const[a,b]of[[.6,1.9],[2.6,4.1],[4.7,5.7]])wall(74,54,a,b);
+ // Sitios despejados fuera del circuito (distancia de cada casilla al borde de la zona)
+ const DT=new Map();{let q=[];for(const o of set)if([1,-1,N,-N].some(d=>!set.has(o+d))){DT.set(o,1);q.push(o)}while(q.length){const nq=[];for(const c of q){const v=DT.get(c);for(const d of[1,-1,N,-N]){const e=c+d;if(set.has(e)&&!DT.has(e)){DT.set(e,v+1);nq.push(e)}}}q=nq}}
+ const used=[],out=(x,z)=>((x-cx)/80)**2+((z-cz)/60)**2>1;
+ const spot=(hr,tx,tz)=>{let best=null,bs=1e9;for(const[o,v]of DT){if((v-.5)*GSS<hr)continue;const x=(o%N)*GSS+GSS/2,z=((o/N)|0)*GSS+GSS/2,s=Math.hypot(x-tx,z-tz);if(s>=bs||!out(x,z)||used.some(u=>Math.hypot(u[0]-x,u[1]-z)<u[2]+hr+1)||blockedAt(x,z,hr))continue;best=[x,z];bs=s}
+  if(best){used.push([best[0],best[1],hr]);best.push(Math.atan2(cx-best[0],cz-best[1]))}return best};
+ // Contenedores (con chapa ondulada, color por contenedor) en dos montones y un camión al lado de uno
+ const ct=[],B=vcBuild(),cc=[0xb5402c,0x2c6a8a,0x3f7a4a,0xc98a2a,0x7d8288],yard=(q)=>{if(!q)return;const[x,z,a]=q;for(let i=0;i<3;i++){const u=-2.8+i*2.8,p=lw(x,z,a,u,0);ct.push([p[0],CURB+1.3,p[1],a,1,1,cc[(r()*cc.length)|0]])}for(let i=0;i<2;i++){const p=lw(x,z,a,-1.4+i*2.8,0);ct.push([p[0],CURB+3.9,p[1],a,1,1,cc[(r()*cc.length)|0]])}rectPoly(x,z,a,4.3,6.2,5.2)};
+ yard(spot(8,cx-120,cz-40));yard(spot(8,cx+120,cz+70));
+ const tk=spot(9,cx+120,cz-70);if(tk){const[x,z,a]=tk,W=M4(x,CURB,z,a);B.at(W,PBOX,"#d9dadc",0,1.9,4.9,2.4,2.4,2.2);B.at(W,PBOX,"#20242c",0,2.45,6.02,2.2,.9,.06);B.at(W,PBOX,"#3a3d42",0,.9,-.5,2.4,.3,12.4);for(const v of[5,-3,-4.6])for(const s of[-1,1])B.add(cylG(.5,.5,12).rotateZ(PI/2),"#17181b",W.clone().multiply(M4(s*1.05,.5,v,0,.42,1,1)));
+  const p=lw(x,z,a,0,-1.6);ct.push([p[0],CURB+2.35,p[1],a,1,1,cc[1]]);rectPoly(x,z,a,1.4,6.4,4)}
+ if(ct.length)inst(new THREE.BoxGeometry(2.44,2.6,12.2),new THREE.MeshLambertMaterial({map:canvasTex(128,32,(g,w,h)=>{g.fillStyle="#fff";g.fillRect(0,0,w,h);g.fillStyle="#b4b4b4";for(let i=0;i<w;i+=8)g.fillRect(i,0,3,h)})}),ct,0,true);
+ // Luces portátiles: mástil, panel de focos y charco de luz en el suelo por la noche
+ const{lm,gm,gt}=plLamp(),pm=new THREE.MeshBasicMaterial({map:gt,color:0xfff0d8,transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-3,polygonOffsetUnits:-4});NM.plO.push([pm,.65]);
+ for(const[tx,tz]of[[-90,-68],[90,-68],[90,68],[-90,68]]){const q=spot(2,cx+tx,cz+tz);if(!q)continue;const[x,z,a]=q,W=M4(x,CURB,z,a);B.at(W,PBOX,"#c99a2a",0,.5,0,1.6,1,2.6);B.at(W,cylG(.08,.14,8),"#6d7178",0,6,0,1,10,1);addCirc(x,z,1.2);
+  const G=new THREE.Group();G.position.set(x,CURB+11.2,z);G.rotation.y=a;const H=new THREE.Group();H.rotation.x=.45;G.add(H);const pn=new THREE.Mesh(new THREE.PlaneGeometry(2.6,1.7),lm);pn.position.z=.1;H.add(pn);const bk=new THREE.Mesh(new THREE.BoxGeometry(2.8,1.9,.15),new THREE.MeshLambertMaterial({color:0x33363c}));H.add(bk);sc.add(G);
+  const s=new THREE.Sprite(gm);s.position.set(x,CURB+11,z);s.scale.set(8,8,1);sc.add(s);const f=lw(x,z,a,0,22),gp=new THREE.Mesh(new THREE.PlaneGeometry(66,66).rotateX(-PI/2),pm);gp.position.set(f[0],CURB+.05,f[1]);sc.add(gp)}
+ // Grada metálica pequeña, mirando al circuito
+ const gs=spot(9,cx,cz-120);if(gs){const[x,z,a]=gs,W=M4(x,CURB,z,a);for(let k=0;k<5;k++)B.at(W,PBOX,k%2?"#8d9298":"#a6abb1",0,.35+k*.45,2.4-k*1.1,17,.12+k*.9,1.1);for(const u of[-8.2,0,8.2])B.at(W,PBOX,"#5c6068",u,1.6,-2.6,.14,3.2,.14);B.at(W,PBOX,"#5c6068",0,3.05,-2.8,17,.1,.1);rectPoly(x,z,a,8.6,3,2.6)}
+ // Coches viejos aparcados
+ for(const[tx,tz,c]of[[-110,20,"#7a3a2c"],[-100,70,"#4a5560"],[110,10,"#8a8466"],[40,-100,"#384a3c"],[-40,100,"#6b6f74"]]){const q=spot(3.2,cx+tx,cz+tz);if(!q)continue;const[x,z]=q,a=q[2]+1.2,W=M4(x,CURB,z,a);B.at(W,PBOX,c,0,.6,0,1.8,.6,4.3);B.at(W,PBOX,c,0,1.15,-.25,1.55,.55,2.1);B.at(W,PBOX,"#14171c",0,1.17,-.25,1.58,.32,2.14);for(const u of[-.82,.82])for(const v of[-1.35,1.35])B.add(cylG(.32,.32,10).rotateZ(PI/2),"#17181b",W.clone().multiply(M4(u,.32,v,0,.6,1,1)));rectPoly(x,z,a,1,2.3,1.6)}
+ B.mesh();
+ // Conos: filas de slalom y marcando el circuito. No chocan: el coche los tira (conesTick) y vuelven a su sitio al rato
+ const cones=[];for(let a=.1;a<6.2;a+=.26){const X=cx+Math.cos(a)*60,Z=cz+Math.sin(a)*41;if(cellIn(set,X,Z)&&!blockedAt(X,Z,.6))cones.push([X,CURB,Z,r()*PI,1,1,a*4%1<.15?0xffffff:0xff6a1a])}
+ for(let k=0;k<6;k++){const o=cells[Math.floor(r()*cells.length)],x=(o%N)*GSS+GSS/2,z=((o/N)|0)*GSS+GSS/2,a=r()*PI*2;for(let i=0;i<6;i++){const X=x+Math.sin(a)*i*7,Z=z+Math.cos(a)*i*7;if(cellIn(set,X,Z)&&!blockedAt(X,Z,.6))cones.push([X,CURB,Z,r()*PI,1,1,r()<.15?0xffffff:0xff6a1a])}}
  const cg=mergeGeo([new THREE.BoxGeometry(.42,.04,.42).translate(0,.02,0),new THREE.ConeGeometry(.17,.68,12).translate(0,.38,0)]);
- inst(cg,new THREE.MeshLambertMaterial({color:0xffffff}),cones,0,true);
- inst(new THREE.TorusGeometry(.3,.12,6,14).rotateX(PI/2).translate(0,.12,0),new THREE.MeshLambertMaterial({color:0x1d1e21}),tires,0,true)}
+ CN.m=inst(cg,new THREE.MeshLambertMaterial({color:0xffffff}),cones,0,true);CN.m.frustumCulled=false;CN.cx=cx;CN.cz=cz;CN.l=cones.map(e=>({x:e[0],z:e[2],hx:e[0],hz:e[2],y:CURB,a:e[3],fly:false,vx:0,vy:0,vz:0,rx:0,rz:0,sx:0,sz:0,t:0}));
+ inst(new THREE.TorusGeometry(.3,.12,6,14).rotateX(PI/2).translate(0,.12,0),new THREE.MeshLambertMaterial({color:0xffffff}),tires,0,true)}
+const CN={m:null,l:[],cx:0,cz:0},_co=new THREE.Object3D();
+// El coche tira los conos que toca (salen en la dirección del golpe, rebotan en el suelo) y a los 12 s vuelven a su sitio si el coche no está encima
+function conesTick(dt){if(!CN.m)return;const near=state==="play"&&Math.hypot(px-CN.cx,pz-CN.cz)<190,sp=Math.hypot(vx,vz),fx=Math.sin(h),fz=Math.cos(h);let dirty=false;
+ CN.l.forEach((c,i)=>{if(!c.fly){if(!near||sp<1)return;const dx=c.x-px,dz=c.z-pz;if(dx*dx+dz*dz>25)return;const f=dx*fx+dz*fz,s=dx*fz-dz*fx;if(Math.abs(f)>cur.l/2+.25||Math.abs(s)>cur.w/2+.25)return;
+   const k=(Math.random()-.5)*.5;c.fly=true;c.t=0;c.vx=vx*.85+fz*s*1.5+k*sp*.4;c.vz=vz*.85-fx*s*1.5-k*sp*.4;c.vy=2+Math.min(7,sp*.22);c.sx=(Math.random()-.5)*14;c.sz=(Math.random()-.5)*14}
+  else{c.t+=dt;c.vy-=9.8*dt;c.x+=c.vx*dt;c.y+=c.vy*dt;c.z+=c.vz*dt;c.rx+=c.sx*dt;c.rz+=c.sz*dt;if(c.y<CURB){c.y=CURB;c.vy*=-.35;c.vx*=.6;c.vz*=.6;c.sx*=.6;c.sz*=.6}
+   if(c.t>12&&Math.hypot(c.hx-px,c.hz-pz)>8){c.fly=false;c.x=c.hx;c.z=c.hz;c.y=CURB;c.rx=c.rz=0}}
+  _co.position.set(c.x,c.y,c.z);_co.rotation.set(c.rx,c.a,c.rz);_co.scale.set(1,1,1);_co.updateMatrix();CN.m.setMatrixAt(i,_co.matrix);dirty=true});
+ if(dirty)CN.m.instanceMatrix.needsUpdate=true}
+// --- Trenes: recorren las vías elevadas de borde a borde del mapa y desaparecen al llegar (decorativos). Sale uno cada 45 s en una línea libre ---
+const TRN={routes:[],pool:[],t:40};
+function buildTrains(){const key=(x,z)=>Math.round(x)+"_"+Math.round(z),nd=new Map();ELV.forEach((r,i)=>{const p=r.p,n=p.length;for(const[k,e]of[[key(p[0],p[1]),0],[key(p[n-2],p[n-1]),1]]){if(!nd.has(k))nd.set(k,[]);nd.get(k).push([i,e])}});
+ const seen=new Set(),ed=(x,z)=>Math.min(x,z,W-x,W-z);
+ for(const[,l]of nd){if(l.length!==1)continue;let[i,e]=l[0];if(seen.has(i))continue;const pts=[];
+  for(;;){seen.add(i);const r=ELV[i],n=r.p.length/2;for(let k=0;k<n;k++){const q=e?n-1-k:k;if(!pts.length||Math.hypot(pts[pts.length-1][0]-r.p[q*2],pts[pts.length-1][2]-r.p[q*2+1])>.5)pts.push([r.p[q*2],r.ys[q],r.p[q*2+1]])}
+   const lq=pts[pts.length-1],nx=(nd.get(key(lq[0],lq[2]))||[]).find(([j])=>!seen.has(j));if(!nx)break;i=nx[0];e=nx[1]}
+  const D=[0];for(let k=1;k<pts.length;k++)D.push(D[k-1]+Math.hypot(pts[k][0]-pts[k-1][0],pts[k][2]-pts[k-1][2]));const a=pts[0],b=pts[pts.length-1];
+  if(D[D.length-1]>600&&ed(a[0],a[2])<45&&ed(b[0],b[2])<45)TRN.routes.push({pts,D,L:D[D.length-1],busy:false})}
+ if(!TRN.routes.length)return;
+ // Coche de tren inventado: blanco con banda azul y ventanas
+ const st=canvasTex(512,64,(g,w,h)=>{g.fillStyle="#e6e8ea";g.fillRect(0,0,w,h);g.fillStyle="#1f5fa8";g.fillRect(0,44,w,10);g.fillStyle="#1c2430";for(let i=0;i<14;i++)g.fillRect(14+i*35,12,24,22);g.fillStyle="#3a4048";for(const x of[120,250,380])g.fillRect(x,10,20,44)});
+ const S=new THREE.MeshLambertMaterial({map:st}),R=new THREE.MeshLambertMaterial({color:0xaeb2b6}),F=new THREE.MeshLambertMaterial({color:0x1f5fa8}),geo=new THREE.BoxGeometry(2.8,3.1,20);
+ // (los lados son las caras ±X; la textura va a lo largo)
+ for(let i=0;i<4;i++){const cars=[];for(let k=0;k<4;k++){const m=new THREE.Mesh(geo,[S,S,R,R,F,F]);m.visible=false;m.castShadow=true;sc.add(m);cars.push(m)}TRN.pool.push({cars,r:null,d:0,dir:1})}}
+const _pa=new THREE.Vector3(),_pb=new THREE.Vector3();
+function routeAt(r,s,o){const D=r.D;let a=0,b=D.length-1;while(b-a>1){const m=(a+b)>>1;if(D[m]<=s)a=m;else b=m}const f=(s-D[a])/((D[b]-D[a])||1),p=r.pts[a],q=r.pts[b];return o.set(p[0]+(q[0]-p[0])*f,p[1]+(q[1]-p[1])*f+1.75,p[2]+(q[2]-p[2])*f)}
+function trainsTick(dt){if(!TRN.routes.length)return;TRN.t+=dt;if(TRN.t>45){const f=TRN.routes.filter(r=>!r.busy),t=TRN.pool.find(q=>!q.r);if(f.length&&t){TRN.t=0;t.r=f[Math.floor(Math.random()*f.length)];t.r.busy=true;t.d=0;t.dir=Math.random()<.5?1:-1}}
+ for(const t of TRN.pool){if(!t.r)continue;const r=t.r;t.d+=22*dt;t.cars.forEach((m,k)=>{const s=t.d-k*20.6-10;if(s<10||s>r.L-10){m.visible=false;return}const u=t.dir>0?s:r.L-s,e=t.dir;routeAt(r,u+9*e,_pa);routeAt(r,u-9*e,_pb);m.visible=true;m.position.addVectors(_pa,_pb).multiplyScalar(.5);m.lookAt(_pa)});
+  if(t.d-3*20.6-10>r.L){r.busy=false;t.r=null;for(const m of t.cars)m.visible=false}}}
+function placesTick(dt){conesTick(dt);trainsTick(dt)}
+// Focos: material del panel, resplandor de noche y su textura (compartidos por el campo de béisbol y la zona de derrape)
+let PLL=null;
+function plLamp(){if(PLL)return PLL;const lt=canvasTex(256,160,(g,w,h)=>{g.fillStyle="#2a2d33";g.fillRect(0,0,w,h);for(let j=0;j<4;j++)for(let i=0;i<6;i++){const x=22+i*42.4,y=22+j*38.6,gr=g.createRadialGradient(x,y,2,x,y,16);gr.addColorStop(0,"#ffffff");gr.addColorStop(.6,"#d8d8d0");gr.addColorStop(1,"#8a8c90");g.fillStyle=gr;g.beginPath();g.arc(x,y,16,0,PI*2);g.fill()}});
+ const lm=new THREE.MeshLambertMaterial({map:lt,emissiveMap:lt,emissive:0xfff3d8,emissiveIntensity:0,side:THREE.DoubleSide});NM.plN.push([lm,0,2.4]);
+ const gt=canvasTex(128,128,(g,w)=>{const gr=g.createRadialGradient(64,64,0,64,64,64);gr.addColorStop(0,"rgba(255,255,255,1)");gr.addColorStop(.25,"rgba(255,245,220,.5)");gr.addColorStop(1,"rgba(255,240,210,0)");g.fillStyle=gr;g.fillRect(0,0,w,w)});
+ const gm=new THREE.SpriteMaterial({map:gt,color:0xfff2d0,transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false});NM.plO.push([gm,.75]);PLL={lm,gm,gt};return PLL}
 
 // --- Campo de béisbol ---
 // Disposición del campo (la usan decorate, para plantar los árboles de alrededor, y buildBaseball): el campo, el camino de entrada
@@ -341,10 +405,7 @@ function buildBaseball(){const BB=bbLayout();if(!BB)return;const{O,U,V,ul,vl,L,p
  {const[x,z]=L(17,1.9);dugout(x,z,Math.atan2(V[0],V[1]))}{const[x,z]=L(1.9,17);dugout(x,z,Math.atan2(U[0],U[1]))}
  // Torres de focos: poste, plataforma y panel de focos inclinado hacia el campo; de noche se encienden y el césped se ilumina
  if(tw.length){const C=L(ul*.42,vl*.5);
-  const lt=canvasTex(256,160,(g,w,h)=>{g.fillStyle="#2a2d33";g.fillRect(0,0,w,h);for(let j=0;j<4;j++)for(let i=0;i<6;i++){const x=22+i*42.4,y=22+j*38.6,gr=g.createRadialGradient(x,y,2,x,y,16);gr.addColorStop(0,"#ffffff");gr.addColorStop(.6,"#d8d8d0");gr.addColorStop(1,"#8a8c90");g.fillStyle=gr;g.beginPath();g.arc(x,y,16,0,PI*2);g.fill()}});
-  const lm=new THREE.MeshLambertMaterial({map:lt,emissiveMap:lt,emissive:0xfff3d8,emissiveIntensity:0});NM.plN.push([lm,0,2.4]);
-  const gt=canvasTex(128,128,(g,w)=>{const gr=g.createRadialGradient(64,64,0,64,64,64);gr.addColorStop(0,"rgba(255,255,255,1)");gr.addColorStop(.25,"rgba(255,245,220,.5)");gr.addColorStop(1,"rgba(255,240,210,0)");g.fillStyle=gr;g.fillRect(0,0,w,w)});
-  const gm=new THREE.SpriteMaterial({map:gt,color:0xfff2d0,transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false});NM.plO.push([gm,.75]);
+  const{lm,gm}=plLamp();
   const fm=new THREE.MeshLambertMaterial({color:0x6d7178});
   for(const[x,z]of tw){const ry=Math.atan2(C[0]-x,C[1]-z),W=M4(x,CURB,z,ry);
    B.at(W,cylG(.22,.42,8),"#8d9298",0,13,0,1,26,1);B.at(W,PBOX,"#6d7178",0,24.7,.4,5.4,.15,1.8);for(const s of[-1,1])B.at(W,PBOX,"#6d7178",s*2.6,25.3,1.25,.05,1.2,.05);

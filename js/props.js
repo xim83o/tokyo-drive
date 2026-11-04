@@ -85,7 +85,7 @@ function placeDeadSigns(){if(typeof markTraps!=="function"||!LANES.length)return
 function decorate(){const tr=[],lp=[],sg=[],vm=[],up=[],wires=[],rnd=rng(11),TMAX=MOBILE?1800:3500;
  // Solo sobre acera dibujada (no en franjas estrechas entre calles), fuera de edificios y obstáculos
  const free=(x,z,m)=>x>5&&z>5&&x<W-5&&z<W-5&&roadAt(x,z)<0&&groundD(x,z)>m+.25&&!blockedAt(x,z,m);
- const tree=(x,z,sp)=>{if(tr.length<TMAX&&free(x,z,.8)){tr.push([x,z,.8+rnd()*.5,rnd()*PI,sp!==undefined?sp:rnd()<.7?1:2]);addCirc(x,z,.35)}};
+ const drz=driftSite(),tree=(x,z,sp)=>{if(tr.length<TMAX&&free(x,z,.8)&&!(drz&&cellIn(drz,x,z))){tr.push([x,z,.8+rnd()*.5,rnd()*PI,sp!==undefined?sp:rnd()<.7?1:2]);addCirc(x,z,.35)}};
  try{megaSite()}catch(e){console.error(e)}
  for(let i=0;i<MAP.trees.length;i+=2)tree(MAP.trees[i],MAP.trees[i+1]);
  // Árboles alrededor del campo de béisbol (places.js; ese cálculo también deja hueco a los focos y al marcador)
