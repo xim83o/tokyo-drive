@@ -84,6 +84,7 @@ Pedido por el usuario (todo con permiso ya dado; descargas permitidas: partes de
 
 ## Pendiente / ideas
 - Autopista Shuto elevada.
+- Más coches para elegir (apuntado el 2026-11-04): ampliar la lista de coches del juego más adelante.
 - Modelos 3D de coches libres (hypercar = hypercar, drift = estilo japonés…), pedir permiso por cada descarga.
 - Calcomanías: packs sencillos + editor tipo Motorfest (franjas, dorsales, colores, llantas, cristales), estilo anime de licencia libre.
 - Daños visibles y hitbox de caja cuando estén los coches definitivos.
