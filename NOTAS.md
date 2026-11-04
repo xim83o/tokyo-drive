@@ -98,6 +98,7 @@ Pedido por el usuario (todo con permiso ya dado; descargas permitidas: partes de
 - [x] La puerta roja del templo estaba girada 90° (lo largo iba a lo largo del camino); ahora cruza el camino.
 - [x] Béisbol: banquillos azules, marcador (港区グラウンド) detrás del centro, 6 torres de focos que de noche se encienden e iluminan el césped, muro con anuncios inventados y malla encima, árboles alrededor y camino de baldosas desde la calle más cercana.
 - [x] Puente de la esquina de abajo a la derecha (la bahía): el agua de la bahía chocaba como un edificio también debajo del puente y la calle se estrechaba. Ahora el agua no cuenta bajo las calles, su orilla deja hueco donde entra una calle y los puentes llevan pretil a los lados.
+- [x] Primera persona: quitado el limpiaparabrisas (a petición del usuario). Las gotas de lluvia siguen en el cristal y se van solas.
 
 
 ## Pendiente / ideas

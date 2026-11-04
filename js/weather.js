@@ -15,19 +15,17 @@ function buildRain(n){if(rainMesh){sc.remove(rainMesh);rainMesh.geometry.dispose
 const SPR=[];let sprI=0;
 function sprayInit(){const t=canvasTex(32,32,(g)=>{const gr=g.createRadialGradient(16,16,0,16,16,16);gr.addColorStop(0,"rgba(255,255,255,.8)");gr.addColorStop(1,"rgba(255,255,255,0)");g.fillStyle=gr;g.fillRect(0,0,32,32)});
  for(let k=0;k<40;k++){const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,opacity:0,depthWrite:false,color:0xd8dde2}));s.visible=false;sc.add(s);SPR.push({s,l:9,vx:0,vy:0,vz:0})}}
-// Gotas en el parabrisas (solo cámara interior): se dibujan en el cristal del coche (cars.js) y el limpiaparabrisas las barre.
+// Gotas en el parabrisas (solo cámara interior): se dibujan en el cristal del coche (cars.js) y se van solas al cabo de unos segundos.
 // Con velocidad, el aire las empuja hacia arriba y hacia los lados
-const DROPS=[];const dctx=DCV.getContext("2d");let wipA=0,wipD=1;
+const DROPS=[];const dctx=DCV.getContext("2d");
 function drawDrops(dt,on){if(WSH)WSH.visible=on;if(!on){DROPS.length=0;return}const w=DCV.width,h=DCV.height,sp=Math.hypot(vx,vz);
  if(Math.random()<WEA.rain*dt*60*.7)DROPS.push({x:Math.random()*w,y:Math.random()*h,r:3+Math.random()*7,v:0,life:5+Math.random()*5});
- // Limpiaparabrisas: barre de un lado a otro con la lluvia (pivote abajo)
- const L=h*1.05,cx=w*.5,cy=h+8;wipA+=wipD*dt*(1.4+WEA.rain);if(wipA>1){wipA=1;wipD=-1}if(wipA<0){wipA=0;wipD=1}const a=-PI*(.1+.8*(.5-.5*Math.cos(wipA*PI)));
  dctx.clearRect(0,0,w,h);dctx.fillStyle="rgba(150,170,190,.05)";dctx.fillRect(0,0,w,h);
  for(let i=DROPS.length-1;i>=0;i--){const d=DROPS[i];d.life-=dt;d.v+=(d.r>5?30:6)*dt-sp*.05;d.y+=d.v*dt;d.x+=sp*.25*(d.x/w-.5)*dt*20;
-  const da=Math.atan2(d.y-cy,d.x-cx),dd=Math.hypot(d.x-cx,d.y-cy);if(d.life<0||d.y>h+10||d.y<-10||(dd<L&&Math.abs(da-a)<.09)){DROPS.splice(i,1);continue}
+  if(d.life<0||d.y>h+10||d.y<-10){DROPS.splice(i,1);continue}
   const g=dctx.createRadialGradient(d.x-d.r*.3,d.y-d.r*.3,0,d.x,d.y,d.r);g.addColorStop(0,"rgba(255,255,255,.8)");g.addColorStop(.55,"rgba(200,215,230,.45)");g.addColorStop(.85,"rgba(60,70,85,.35)");g.addColorStop(1,"rgba(120,135,150,0)");
   dctx.fillStyle=g;dctx.beginPath();dctx.ellipse(d.x,d.y,d.r*.85,d.r,0,0,7);dctx.fill()}if(DROPS.length>260)DROPS.splice(0,DROPS.length-260);
- dctx.strokeStyle="#111";dctx.lineWidth=7;dctx.lineCap="round";dctx.beginPath();dctx.moveTo(cx,cy);dctx.lineTo(cx+Math.cos(a)*L,cy+Math.sin(a)*L);dctx.stroke();DTEX.needsUpdate=true}
+ DTEX.needsUpdate=true}
 let flashT=0;
 function weather(dt){if(!ready)return;if(!SPR.length)sprayInit();const lv=qLevel();if(rainN!==RAINQ[lv])buildRain(RAINQ[lv]);
  // Lluvia objetivo según el modo elegido
