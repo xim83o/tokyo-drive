@@ -49,7 +49,16 @@ function buildMarkings(){const wa=[],ya=[],done=new Set();
   // Línea de detención (mitad izquierda o toda la calle si es de sentido único) y paso de cebra antes del cruce con semáforo
   if(g1.mt===undefined){g1.mt=9;for(const q of g1.inc.concat(g1.out))g1.mt=Math.min(g1.mt,q.t)}
   if(g1.cl>=0||g1.r>0&&L.t>g1.mt){const sl=len-g1.r+.3;for(let o=L.o?-hw+.3:0;o<hw-.3;o+=.5){const A=at(L,sl,o),B=at(L,sl,Math.min(hw-.3,o+.5));if(onlyRoad(A[0],A[1],L.ri,.1)&&onlyRoad(B[0],B[1],L.ri,.1))quad(wa,A[0],A[1],B[0],B[1],.22,.016)}}
-  if(g1.cl>=0&&!L.internal&&len-g1.r>5){const a0=len-g1.r+1.2,a1=a0+4;for(let o=-hw+.6;o<hw-.4;o+=.9){const A=at(L,a0,o),B=at(L,a1,o);if(ok(L,A,B))quad(wa,A[0],A[1],B[0],B[1],.22,.016)}}}
+  // (el paso de cebra sí puede ir encima de otra calle paralela: en las avenidas de doble calzada las dos mitades se solapan y antes
+  // el paso salía cortado, solo en un trozo de la calle)
+  // En las calles de sentido único también en la salida del cruce (si no, en una avenida de doble calzada la mitad que sale del
+  // cruce se quedaba sin paso de cebra)
+  const cw=a0=>{const a1=a0+4,P0=at(L,a0,0),P1=at(L,a1,0),dl=Math.hypot(P1[0]-P0[0],P1[1]-P0[1])||1,ux=(P1[0]-P0[0])/dl,uz=(P1[1]-P0[1])/dl;
+   const okX=([x,z])=>{let mine=false;for(const k of gq(x,z).r){const q=k*6,w=RSG[q+4]-(RSG[q+5]===L.ri?.2:0);if(segD2(x,z,RSG[q],RSG[q+1],RSG[q+2],RSG[q+3])>=w*w)continue;if(RSG[q+5]===L.ri){mine=true;continue}
+    const sx=RSG[q+2]-RSG[q],sz=RSG[q+3]-RSG[q+1],sl=Math.hypot(sx,sz)||1;if(Math.abs((sx*ux+sz*uz)/sl)<.9)return false}return mine};
+   for(let o=-hw+.6;o<hw-.4;o+=.9){const A=at(L,a0,o),B=at(L,a1,o);if(okX(A)&&okX(B))quad(wa,A[0],A[1],B[0],B[1],.22,.016)}};
+  if(g1.cl>=0&&!L.internal&&len-g1.r>5)cw(len-g1.r+1.2);
+  if(L.o&&g0.cl>=0&&!L.internal&&len-g0.r>5)cw(g0.r-5.2)}
  const mm=c=>beamMat(new THREE.MeshLambertMaterial({color:c,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-6}));
  if(wa.length)mkMeshZ(wa,mm(0xe2e2dc),0,1);if(ya.length)mkMeshZ(ya,mm(0xe0b020),0,1)}
 // Ciclo de 24 s por grupo de cruces: un eje 9 s verde + 2 s ámbar, luego el otro

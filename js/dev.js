@@ -12,7 +12,8 @@ function devShot(){if(DV.pause)return;renderFrame();let png;try{png=rd.domElemen
  const r=v=>Math.round(v*100)/100,E={...ENV};delete E.keys;
  const info={fecha:new Date().toLocaleString("es-ES"),pantalla:state,coche:cur&&cur.n,cocheN:carK,posicion:{x:r(px),z:r(pz),rumbo:r(h)},camara:{modo:mode,x:r(cam.position.x),y:r(cam.position.y),z:r(cam.position.z)},
   hora:r(HOUR),estacion:SEASON,trafico:npcLvl,calidad:QUAL[qLevel()].n,ventana:[innerWidth,innerHeight],ajustes:E};
- if(state==="liv")info.calcomanias=LIV[carK];
+ if(state==="liv")info.calcomanias=LIV[carK];if(state==="spec")info.espectador={x:r(SPEC.x),y:r(SPEC.y),z:r(SPEC.z),giro:r(SPEC.a),inclinacion:r(SPEC.p)};
+ {const d=cam.getWorldDirection(new THREE.Vector3());info.camara.mira=[r(d.x),r(d.y),r(d.z)]}
  let d=$("devShot");if(!d){d=document.createElement("div");d.id="devShot";document.body.appendChild(d)}d.hidden=false;
  d.innerHTML=`<b>Captura para Claude</b><img src="${png}"><textarea placeholder="¿Qué está mal? (opcional)"></textarea><div><button class="go">Enviar</button><button>Cancelar</button></div><p></p>`;
  const ta=d.querySelector("textarea"),msg=d.querySelector("p"),bs=d.querySelectorAll("button");ta.focus();

@@ -78,6 +78,18 @@ Pedido por el usuario (todo con permiso ya dado; descargas permitidas: partes de
 - [x] Torre: arcos al derecho (TARCH: 30 m en el centro, 6 m junto a las patas); la cámara pasa por debajo de cada arco.
 - [x] Dorsal: al escribir el número aparecen ya los botones de sitio (antes había que cerrar y abrir). Se ajusta solo a la chapa: proyección perpendicular a la superficie (no se estira) y el círculo más grande que cabe sin cristales, bajos ni ruedas (no sale a trozos). Sin barra de tamaño.
 - [x] Puentecillo de la izquierda (494, 1558): una avenida de 17 m acababa en un puente de 9,6 m y su redondel salía sobre el agua con un pretil curvo pegado a la mitad del puente. Ahora junto al agua el redondel de cada calle no es más ancho que la calle con la que se une (roadAtW) y el final de cada tramo sobre el agua lleva pretil. Prueba: 0 huecos al agua y los puentes se cruzan sin chocar.
+
+## Capturas del 2026-11-04 (11) — HECHAS
+- [x] Casas en la calle: al estrechar una calle se miraba el borde solo en 5 puntos por tramo; ahora cada 2 m, y se quitan los edificios que pisan el ancho mínimo (2,6 m a cada lado del eje).
+- [x] Pasos de cebra: en las avenidas de doble calzada (dos calles de sentido único que se solapan) salían cortados; ahora pueden pisar la otra mitad paralela y se pintan también a la salida del cruce.
+- [x] Pilares de las vías elevadas (no son la autopista): las ~10 vías paralelas comparten pilares, ninguno en la calzada ni a menos de 10 m de otro.
+- [x] Calles sueltas (no unidas a la red): se quitan (4 trozos, entre ellos el de 70 m con aparcamiento junto al canal).
+- [x] Vía elevada que acababa en el aire junto al borde: baja en rampa hasta el suelo en sus últimos 60 m.
+- [x] Autopista sobre el canal: bordes a inglete en las curvas (antes salían picos en las uniones; capturas 9 y 11).
+- [x] Patio del templo (Zōjō-ji, el templo grande más cercano a la torre): grava, camino de losas con farolillos de piedra y puerta roja de dos pisos en la entrada (js/places.js).
+- [x] Zona de derrape disimulada en la gran explanada del este (1553, 1155): asfalto con marcas suaves de neumático, conos y neumáticos apilados, sin carteles.
+- [x] Campo de béisbol en el campo de deporte rectangular (1139, 945): diamante, césped a franjas, líneas, red detrás de la meta, vallas al fondo y gradas.
+- [x] Capturas: ahora guardan también hacia dónde mira la cámara (y la posición del espectador).
 - Radio: en el enlace de Claude no funciona (bloquea conexiones externas); usar Netlify o jugar.bat.
 - Netlify en otro PC: protección de equipo; iniciar sesión en app.netlify.com o quitar Visitor access.
 
@@ -85,6 +97,7 @@ Pedido por el usuario (todo con permiso ya dado; descargas permitidas: partes de
 ## Pendiente / ideas
 - Autopista Shuto elevada.
 - Más coches para elegir (apuntado el 2026-11-04): ampliar la lista de coches del juego más adelante.
+- Mapa más grande (futuro): el ramal que ahora baja en rampa hasta el suelo junto al borde derecho (captura 6 del 2026-11-04) es en realidad una vía de tren elevada (seguramente el monorraíl hacia Haneda), no la autopista. Habrá que alargarla para que siga por el mapa nuevo. Lo mismo con la autopista conducible.
 - Modelos 3D de coches libres (hypercar = hypercar, drift = estilo japonés…), pedir permiso por cada descarga.
 - Calcomanías: packs sencillos + editor tipo Motorfest (franjas, dorsales, colores, llantas, cristales), estilo anime de licencia libre.
 - Daños visibles y hitbox de caja cuando estén los coches definitivos.
