@@ -2,7 +2,7 @@
 const keys={};let prev=[];
 const K=a=>{const k=ENV.keys[a];return!!(keys[k[0]]||(k[1]&&keys[k[1]]))},isK=(a,code)=>ENV.keys[a].includes(code);
 function act(a){initAudio();if(a==="set"){if(state==="set")closeSettings();else if(state==="play"||state==="cars")openSettings();return}
- if(a==="race"&&state==="race"){resume();return}if(a==="photo"&&state==="photo"){photoEnd();return}
+ if(a==="onl"){if(state==="onl")resume();else if(state==="play")onlOpen();return}if(a==="race"&&state==="race"){resume();return}if(a==="photo"&&state==="photo"){photoEnd();return}
  if(state!=="play")return;if(a==="map")show("map");else if(a==="cars")show("cars");else if(a==="cam")mode=(mode+1)%4;else if(a==="race")raceMenu();else if(a==="photo")photoStart()}
 addEventListener("keydown",e=>{if(rebind){e.preventDefault();rebind(e.code);return}
  // Escribiendo en un cuadro de texto (nota de la captura, número del dorsal…) las teclas no mueven el coche ni abren menús

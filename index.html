@@ -15,6 +15,7 @@
  <button class="tb mob" onclick="act('cars')">🚘</button>
  <button class="tb" onclick="act('race')" title="Carreras">🏁</button>
  <button class="tb" onclick="act('photo')" title="Modo foto">📷</button>
+ <button class="tb" onclick="act('onl')" title="En línea">🌐</button>
  <button class="tb" id="rad" onclick="initAudio();radioToggle()">📻</button>
  <button class="tb" onclick="initAudio();if(!RADIO.on)radioToggle();else radioNext(1)">⏭</button>
  <button class="tb" id="snd" onclick="initAudio();setMute(!mute)">🔊</button>
@@ -37,6 +38,7 @@
  <div class="pn" id="livP" hidden></div>
  <div class="pn" id="raceP" hidden></div>
  <div class="pn" id="garP" hidden></div>
+ <div class="pn" id="onlP" hidden></div>
 </div>
 <div id="raceH" hidden><span id="rcT">0:00.000</span><span id="rcD"></span><small id="rcCp"></small><small id="rcGh" onclick="ghostToggle()"></small></div>
 <div id="rcC" hidden></div>
@@ -74,6 +76,8 @@
 <script src="js/livery.js"></script>
 <script src="js/seasons.js"></script>
 <script src="js/places.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="js/online.js"></script>
 <script src="js/race.js"></script>
 <script src="js/garage.js"></script>
 <script src="js/dev.js"></script>

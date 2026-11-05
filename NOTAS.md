@@ -132,8 +132,12 @@ Pedido por el usuario (todo con permiso ya dado; descargas permitidas: partes de
 - [x] Calidad Realista (env.js, pasada REALS): sombras de contacto, reflejos en el suelo y color de cine. RTX real no existe en el navegador.
 - [x] Reflejos en el asfalto mojado en calidad Alta o más. Sonidos de ambiente por código (ambAudio): viento, ciudad y trenes, con su volumen en Ajustes.
 
+## Tanda 5 — HECHA (js/online.js, botón 🌐)
+- [x] Salas con código de 5 letras, hasta 6 jugadores, con Supabase Realtime (sin cuenta, sin choques entre coches). Cada uno ve su tráfico, hora y clima.
+- [x] Cuenta y partidas en la nube (calcomanías, garaje, tiempos e imágenes), con guardado automático cada minuto. Tabla en tools/supabase.sql; hay que pegarla una vez en Supabase.
+- En el enlace de Claude no funciona lo en línea (bloquea conexiones externas): usar GitHub Pages o jugar.bat.
+
 ## Próximas tandas elegidas por el usuario (2026-11-05) — sin empezar
-- Multijugador (entra en la tanda 5).
 - Sistema de puntos, y al final repasar la interfaz: el usuario la explicará cuando acabe todo.
 - Cuentas, nube y salas de multijugador: un solo servicio con plan gratuito (tipo Supabase); la cuenta la crea el usuario.
 - Orden: 1) carreras, contrarreloj, fantasma, repetición y modo foto; 2) coche y garaje; 3) autopista; 4) gráficos y sonido; 5) nube y multijugador.
