@@ -17,11 +17,11 @@ function step(dt,i){thrL=i.t;brkL=i.b;stV+=(i.s-stV)*Math.min(1,dt*10);
  slipV=Math.abs(vl);const vl0=vl;vl*=Math.exp(-rg*dt);vf=(vf>=0?1:-1)*Math.sqrt(vf*vf+(vl0*vl0-vl*vl)*.9);vf=Math.max(-14,Math.min(cur.vm,vf));
  vx=fx*vf+rx*vl;vz=fz*vf+rz*vl;const sv=Math.hypot(vx,vz);if(sv>cur.vm){vx*=cur.vm/sv;vz*=cur.vm/sv}
  // Movimiento en subpasos de 0,4 m como máximo para no atravesar paredes a mucha velocidad
- const n=Math.max(1,Math.ceil(Math.hypot(vx,vz)*dt/.4));for(let k=0;k<n;k++){px+=vx*dt/n;pz+=vz*dt/n;carHit(dt)}
+ hwyEnter();const n=Math.max(1,Math.ceil(Math.hypot(vx,vz)*dt/.4));for(let k=0;k<n;k++){px+=vx*dt/n;pz+=vz*dt/n;if(HWL.on)hwyHit(dt);else carHit(dt)}
  // Borde del mapa: muro invisible (la niebla lo tapa)
  if(px<8||px>W-8){px=Math.max(8,Math.min(W-8,px));vx=0}if(pz<8||pz>W-8){pz=Math.max(8,Math.min(W-8,pz));vz=0}
  // Si el coche acaba en el agua (fuera de un puente), se hunde y reaparece en la calle más cercana
- if(ready&&roadAt(px,pz)<0&&(riverD(px,pz)<-1||inWater(px,pz))){spawnAt(nearestRoad(px,pz,false));vx=vz=0;if(typeof thump==="function")thump(8)}
+ if(ready&&!HWL.on&&roadAt(px,pz)<0&&(riverD(px,pz)<-1||inWater(px,pz))){spawnAt(nearestRoad(px,pz,false));vx=vz=0;if(typeof thump==="function")thump(8)}
  suspension(dt)}
 // Hitbox del coche: tres círculos del ancho del coche repartidos a lo largo, contra los bordes reales de edificios, agua, vías y postes
 const CO={x:0,z:0};
@@ -35,7 +35,7 @@ function carHit(dt){if(!ready)return;const fx=Math.sin(h),fz=Math.cos(h),r=cur.w
 function suspension(dt){if(!ready)return;const c=Math.cos(h),s=Math.sin(h),hw=cur.w/2,hl=cur.l*.32,vf=vx*s+vz*c,sp=Math.abs(vf);let f=0,b=0,lt=0,rt=0;
  for(let k=0;k<4;k++){const sx=k&1?-1:1,sz=k<2?1:-1,x=px+sx*hw*c+sz*hl*s,z=pz-sx*hw*s+sz*hl*c,t=surfH(x,z);
   // Golpe al subir un bordillo: como mucho uno por rueda cada 0,5 s (si la rueda va justo por el borde no frena en cada imagen)
-  const now=performance.now();if(t>WY[k]+.05&&sp>2&&now-CRB[k]>500){CRB[k]=now;const loss=Math.min(.12,.006*sp);vx*=1-loss;vz*=1-loss;bodyV+=Math.min(1.4,.045*sp);if(now-crashT>180){crashT=now;thump(1.5+sp*.35)}}
+  const now=performance.now();if(!HWL.on&&t>WY[k]+.05&&sp>2&&now-CRB[k]>500){CRB[k]=now;const loss=Math.min(.12,.006*sp);vx*=1-loss;vz*=1-loss;bodyV+=Math.min(1.4,.045*sp);if(now-crashT>180){crashT=now;thump(1.5+sp*.35)}}
   WY[k]+=(t-WY[k])*Math.min(1,dt*30);if(sz>0)f+=WY[k];else b+=WY[k];if(sx>0)lt+=WY[k];else rt+=WY[k]}
  bodyV+=(((f+b)/4-bodyY)*160-bodyV*13)*dt;bodyY+=bodyV*dt;
  pitch+=((b-f)/2/(cur.l*.64)-pitch)*Math.min(1,dt*12);roll+=((lt-rt)/2/cur.w-roll)*Math.min(1,dt*12)}

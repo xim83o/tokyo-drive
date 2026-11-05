@@ -26,7 +26,7 @@ function roadAt(x,z){for(const k of gq(x,z).r){const o=k*6;if(segD2(x,z,RSG[o],R
 let GSD=null,GSN=0,GSS=3;
 function groundD(x,z){if(!GSD)return roadAt(x,z)>=0?-1:9;const fx=Math.min(GSN-1.001,Math.max(0,x/GSS)),fz=Math.min(GSN-1.001,Math.max(0,z/GSS)),i=fx|0,j=fz|0,u=fx-i,v=fz-j,o=j*GSN+i;
  return(GSD[o]*(1-u)+GSD[o+1]*u)*(1-v)+(GSD[o+GSN]*(1-u)+GSD[o+GSN+1]*u)*v}
-const surfH=(x,z)=>groundD(x,z)>0?CURB:0;
+const surfH=(x,z)=>HWL.on?hwyY(x,z):groundD(x,z)>0?CURB:0;
 // ¿El punto está solo en la calzada de la calle ri (con margen m) y no en otra? Para pintar las marcas viales sin que se salgan
 function onlyRoad(x,z,ri,m){let mine=false;for(const k of gq(x,z).r){const o=k*6,hw=RSG[o+4]-(RSG[o+5]===ri?m:0);if(segD2(x,z,RSG[o],RSG[o+1],RSG[o+2],RSG[o+3])<hw*hw){if(RSG[o+5]===ri)mine=true;else return false}}return mine}
 function polyAt(x,z){const c=gq(x,z);for(const k of c.p){const b=k*4;if(x>=PLB[b]&&x<=PLB[b+2]&&z>=PLB[b+1]&&z<=PLB[b+3]&&inPoly(PL[k],x,z))return k}return -1}
@@ -298,7 +298,7 @@ function buildGround(){const GS=MOBILE?4:3,N=Math.ceil(W/GS)+1,SD=new Float32Arr
 const WATERU={uTime:{value:0},uNightW:{value:0}};let WATERM=null;
 // ¿Un pilar de la autopista en (x,z) tocaría una vía elevada? (tablero de 4,4 m de ancho más el medio ancho del pilar)
 function onElv(x,z){for(const r of MAP.rails){if(!r.b)continue;const p=r.p;for(let i=2;i<p.length;i+=2)if(segD2(x,z,p[i-2],p[i-1],p[i],p[i+1])<25)return true}return false}
-function buildCanal(){if(!MAP.rivers.length)return;const wa=[],wl=[],rl=[],gi=[],hw=[],hd=[],hs=[],pil=[],WY=-2.4,HY=16,FE=[];   // HY: altura del tablero, bien por encima de las vías elevadas (7,5 m) y de sus trenes
+function buildCanal(){if(!MAP.rivers.length)return;const wa=[],wl=[],rl=[],gi=[],hw=[],hd=[],hs=[],pil=[],WY=-2.4,HY=16,FE=[];   hwyRamps(HY);   // HY: altura del tablero, bien por encima de las vías elevadas (7,5 m) y de sus trenes
  const vq=(a,x0,z0,x1,z1,y0,y1)=>a.push(x0,y0,z0,x1,y0,z1,x1,y1,z1,x0,y0,z0,x1,y1,z1,x0,y1,z0);
  for(const r of MAP.rivers){const p=r.p,h2=r.w/2,ns=p.length/2,MT=[];
   // Dirección del borde de la autopista en cada vértice (media de los dos tramos, alargada para que el ancho se mantenga en la curva)
@@ -314,14 +314,17 @@ function buildCanal(){if(!MAP.rivers.length)return;const wa=[],wl=[],rl=[],gi=[]
    // (bordes a inglete en cada vértice: antes cada tramo era un rectángulo y en las curvas las esquinas salían en pico)
    {const E=(v,s)=>[p[v*2]+MT[v*2]*6.5*s,p[v*2+1]+MT[v*2+1]*6.5*s],v0=i/2-1,v1=i/2,A0=E(v0,1),A1=E(v1,1),B0=E(v0,-1),B1=E(v1,-1);
     for(const[a,y]of[[hd,HY],[hs,HY-.8]]){flatTri(a,y,A0[0],A0[1],A1[0],A1[1],B1[0],B1[1]);flatTri(a,y,A0[0],A0[1],B1[0],B1[1],B0[0],B0[1])}
-    vq(hw,A0[0],A0[1],A1[0],A1[1],HY-.8,HY+1.1);vq(hw,B0[0],B0[1],B1[0],B1[1],HY-.8,HY+1.1)}
+    hwyWall(vq,hw,A0,A1,HY);hwyWall(vq,hw,B0,B1,HY);hwyDeck(ax,az,bx,bz,HY)}
    // (ningún pilar sobre una calle: en las curvas del canal puede coincidir con un puente)
    // (ni sobre una vía elevada: se busca sitio un poco antes o después y, si no hay, ese tramo va sin pilar)
    for(let t=16;t<L;t+=34)for(const o of[0,6,-6,12,-12]){const q=t+o;if(q<0||q>L)continue;const x=ax+(bx-ax)*q/L,z=az+(bz-az)*q/L;if([[0,0],[3,0],[-3,0],[0,3],[0,-3]].every(([u,v])=>roadAt(x+u,z+v)<0)&&!onElv(x,z)){pil.push([x,0,z,Math.atan2(bx-ax,bz-az)]);break}}}}
  // El canal de los datos a veces viene partido en dos (hueco de unos 14 m donde lo cruza una calle): la autopista sigue seguida por encima
  {const free=FE.filter(a=>!FE.some(b=>b!==a&&Math.hypot(a.x-b.x,a.z-b.z)<1));free.forEach((a,i)=>{for(let j=i+1;j<free.length;j++){const b=free[j];if(Math.hypot(a.x-b.x,a.z-b.z)>30)continue;
    const E=(q,s)=>[q.x+q.m[0]*6.5*s,q.z+q.m[1]*6.5*s],sg=Math.hypot(a.m[0]+b.m[0],a.m[1]+b.m[1])>Math.hypot(a.m[0]-b.m[0],a.m[1]-b.m[1])?1:-1,A0=E(a,1),B0=E(a,-1),A1=E(b,sg),B1=E(b,-sg);
-   for(const[t,y]of[[hd,HY],[hs,HY-.8]]){flatTri(t,y,A0[0],A0[1],A1[0],A1[1],B1[0],B1[1]);flatTri(t,y,A0[0],A0[1],B1[0],B1[1],B0[0],B0[1])}vq(hw,A0[0],A0[1],A1[0],A1[1],HY-.8,HY+1.1);vq(hw,B0[0],B0[1],B1[0],B1[1],HY-.8,HY+1.1)}})}
+   for(const[t,y]of[[hd,HY],[hs,HY-.8]]){flatTri(t,y,A0[0],A0[1],A1[0],A1[1],B1[0],B1[1]);flatTri(t,y,A0[0],A0[1],B1[0],B1[1],B0[0],B0[1])}hwyWall(vq,hw,A0,A1,HY);hwyWall(vq,hw,B0,B1,HY);hwyDeck(a.x,a.z,b.x,b.z,HY);a.j=b.j=1}});
+  // Extremos sueltos de la autopista: pretil de cierre
+  for(const a of free)if(!a.j){const P=[a.x+a.m[0]*6.5,a.z+a.m[1]*6.5],Q=[a.x-a.m[0]*6.5,a.z-a.m[1]*6.5];vq(hw,P[0],P[1],Q[0],Q[1],HY-.8,HY+1.1)}
+  hwyGeo(hd,hs,hw,pil,WY,HY)}
  // Puentes: tramos de calle por encima del agua
  for(let k=0;k<RSG.length;k+=6){const ax=RSG[k],az=RSG[k+1],bx=RSG[k+2],bz=RSG[k+3],w2=RSG[k+4],L=Math.hypot(bx-ax,bz-az)||1,lx=(bz-az)/L,lz=-(bx-ax)/L,n=Math.ceil(L);
   // Solo es puente si la calle cruza el canal (no si va paralela al borde, que pondría barrera a un lado de toda la calle). Los
@@ -375,6 +378,7 @@ function drawMapImg(){const c=document.createElement("canvas");c.width=c.height=
  g.fillStyle=g.strokeStyle="#2c5f8c";for(const R of MAP.water)poly(R);g.lineCap=g.lineJoin="round";for(const r of MAP.rivers)line(r.p,r.w);
  g.strokeStyle="#6b5a4a";for(const r of MAP.rails)line(r.p,3);g.strokeStyle="#9aa0ad";for(const r of MAP.roads)line(r.p,r.w);
  // Edificios: templos en rojo, FootTown en blanco y los rascacielos más claros cuanto más altos
+ hwyLines(g,1);
  for(const b of MAP.buildings){g.fillStyle=b.c?b.c:b.k===1||b.k===3?"#c2452f":b.k===2?"#e8e8e4":b.h>100?"#5a6170":b.h>50?"#3a3e48":"#22242a";poly(b.p)}
  g.fillStyle="#ff4a2a";g.strokeStyle="#fff";g.lineWidth=4;g.beginPath();g.moveTo(TX,TZ-34);g.lineTo(TX+28,TZ+20);g.lineTo(TX-28,TZ+20);g.closePath();g.fill();g.stroke();
  // Torre Kurogane: rombo rojo

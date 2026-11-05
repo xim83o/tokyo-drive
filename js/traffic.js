@@ -223,7 +223,7 @@ function npcs(dt){if(!LANES.length)return;TT+=dt;const k2=Math.floor(TT*2);if(k2
     if(vn>.5){const j=1.2*vn/(1/n.m+1/o.m);n.vx-=nx*j/n.m;n.vz-=nz*j/n.m;hitNpc(o,j/o.m,nx,nz,-(dx*Math.sin(o.h)+dz*Math.cos(o.h)));
      if(vn>3&&Math.hypot(n.x-px,n.z-pz)<60&&performance.now()-crashT>250){crashT=performance.now();thump(vn*.6)}}}}
   // Choque con el jugador: impulso según masas. El jugador pierde velocidad y se desvía un poco, sin trompo (estilo Motorfest)
-  const dx=px-n.x,dz=pz-n.z,hp=dx*dx+dz*dz<64&&boxHit(px,pz,h,cur.w,cur.l,n.x,n.z,n.h,n.w||1.8,n.l);
+  const dx=px-n.x,dz=pz-n.z,hp=!HWL.on&&dx*dx+dz*dz<64&&boxHit(px,pz,h,cur.w,cur.l,n.x,n.z,n.h,n.w||1.8,n.l);
   if(hp){const nx=hp.nx,nz=hp.nz;px+=nx*hp.p;pz+=nz*hp.p;
    const [ux,uz]=npcVel(n),vn=(vx-ux)*nx+(vz-uz)*nz;
    if(vn<-.5){const j=-1.2*vn/(1/cur.m+1/n.m),dvp=j/cur.m*.65;vx+=nx*dvp;vz+=nz*dvp;
