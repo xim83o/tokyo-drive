@@ -42,6 +42,21 @@ function imgStk(n,src,cr,round,cred){return{n,cred,src,d:g=>{const im=IMGS[src];
 STK.push(imgStk("Hachi chibi","textures/stickers/hachi-chibi.png",[0,0,285,390]),imgStk("Hachi chibi guiño","textures/stickers/hachi-chibi.png",[570,0,285,390]),imgStk("Hachi chibi risa","textures/stickers/hachi-chibi.png",[855,400,285,390]),
  imgStk("Hachi","textures/stickers/hachi.png",[0,20,430,620]),imgStk("Hachi guiño","textures/stickers/hachi.png",[830,20,430,620]),
  imgStk("Chica anime (Niabot, CC BY 3.0)","textures/stickers/anime-girl-niabot.svg",[505,10,330,330],true,"«Anime Girl» de Niabot, CC BY 3.0"));
+// Pegatinas de los diseños completos (dibujadas por código; marcas y mascota inventadas)
+const NS=STK.length,stkTxt=(g,t,x,y,px,fg,o)=>{g.font=`900 ${px}px 'Yu Gothic','Meiryo',Arial,sans-serif`;g.textAlign="center";g.textBaseline="middle";if(o){g.strokeStyle=o;g.lineWidth=px*.16;g.lineJoin="round";g.strokeText(t,x,y,244)}g.fillStyle=fg;g.fillText(t,x,y,244)};
+const stkPill=(g,bg,y0,h)=>{g.fillStyle=bg;g.beginPath();g.roundRect?g.roundRect(6,y0,244,h,16):g.rect(6,y0,244,h);g.fill()};
+STK.push({n:"Banda policía",d:g=>{g.fillStyle="#14151a";g.fillRect(0,70,256,116);g.fillStyle="#e5173f";g.fillRect(0,176,256,10);stkTxt(g,"POLICE",128,126,64,"#fff")}},
+ {n:"Police",d:g=>{stkTxt(g,"POLICE",128,128,62,"#14151a","#fff")}},
+ {n:"Banda taxi",d:g=>{stkTxt(g,"TAXI",128,84,72,"#14151a","#fff");for(let y=0;y<2;y++)for(let x=0;x<16;x++){g.fillStyle=(x+y)%2?"#14151a":"#fff";g.fillRect(x*16,138+y*16,16,16)}}},
+ {n:"Kaze Soda",d:g=>{stkPill(g,"#1d5fb8",76,104);stkTxt(g,"KAZE SODA",128,128,48,"#fff")}},
+ {n:"Takumi Tires",d:g=>{stkPill(g,"#14151a",76,104);stkTxt(g,"TAKUMI",128,110,42,"#ff8a1e");stkTxt(g,"TIRES",128,152,30,"#fff")}},
+ {n:"Hoshizora Ramen",d:g=>{stkPill(g,"#f2c230",76,104);stkTxt(g,"星空ラーメン",128,128,40,"#2a2420")}},
+ {n:"Tanuki piloto",d:g=>{g.fillStyle="#8a5a34";for(const s of[-1,1]){g.beginPath();g.arc(128+s*70,62,30,0,7);g.fill()}g.beginPath();g.arc(128,132,96,0,7);g.fill();g.fillStyle="#f3e6cf";g.beginPath();g.ellipse(128,168,62,52,0,0,7);g.fill();
+  g.fillStyle="#3a2618";for(const s of[-1,1]){g.beginPath();g.ellipse(128+s*40,130,30,24,s*.4,0,7);g.fill()}g.fillStyle="#fff";for(const s of[-1,1]){g.beginPath();g.arc(128+s*38,128,12,0,7);g.fill()}g.fillStyle="#14151a";for(const s of[-1,1]){g.beginPath();g.arc(128+s*36,130,6,0,7);g.fill()}
+  g.beginPath();g.ellipse(128,160,11,8,0,0,7);g.fill();g.strokeStyle="#14151a";g.lineWidth=5;g.beginPath();g.arc(128,172,18,.3,PI-.3);g.stroke();
+  g.fillStyle="#e5173f";g.fillRect(44,66,168,20);g.fillStyle="#7fd8ff";g.strokeStyle="#14151a";g.lineWidth=6;for(const s of[-1,1]){g.beginPath();g.ellipse(128+s*38,74,28,20,0,0,7);g.fill();g.stroke()}}},
+ {n:"紅蓮",d:g=>{g.font="bold 112px 'Yu Mincho','MS Mincho','Yu Gothic',serif";g.textAlign="center";g.textBaseline="middle";g.strokeStyle="#111";g.lineWidth=14;g.strokeText("紅蓮",128,132);g.fillStyle="#ff3b1f";g.fillText("紅蓮",128,132)}},
+ {n:"Rayas neón",d:g=>{g.lineCap="round";[["#00e5ff",70,14],["#ff2fb3",112,20],["#ffe14a",156,10],["#00e5ff",190,6]].forEach(([c,y,w])=>{g.strokeStyle=c;g.lineWidth=w;g.beginPath();g.moveTo(8,y+24);g.lineTo(248,y-24);g.stroke()})}});
 const STKT=[];const stkTex=i=>STKT[i]||(STKT[i]=canvasTex(256,256,g=>STK[i].d(g)));
 // Imágenes propias del jugador: se reducen a 256 px y se guardan solo en su navegador (td-stk). En las pegatinas van como ci (id)
 let CUS=[];try{CUS=JSON.parse(localStorage.getItem("td-stk")||"[]")}catch(e){}
@@ -65,7 +80,18 @@ function numTex(n,col){const c="#"+new THREE.Color(col).getHexString();return ca
 // Packs ya hechos
 const PACKS=[{n:"Franja negra",o:{st:1,sc:0x111111}},{n:"Rayas de carreras",o:{st:2,sc:0xffffff,num:7,nc:0xffffff}},{n:"Sakura",o:{c:0xffc4dc,st:3,sc:0xe2477d,stk:[{i:2,sd:0,u:.1,v:.5,s:1},{i:2,sd:1,u:.1,v:.5,s:1}]}},
  {n:"Drift Tokio",o:{c:0xf2f2f2,st:3,sc:0xe5173f,tint:.7,stk:[{i:7,sd:0,u:-.15,v:.55,s:1.1},{i:7,sd:1,u:-.15,v:.55,s:1.1},{i:6,sd:2,u:0,v:.5,s:1}]}},
- {n:"Llamas",o:{c:0x1b1c20,stk:[{i:8,sd:0,u:.45,v:.35,s:1.3},{i:8,sd:1,u:.45,v:.35,s:1.3}]}},{n:"Kitsune",o:{c:0xf2f2f2,st:1,sc:0xd61f26,stk:[{i:9,sd:2,u:0,v:.5,s:1}]}}];
+ {n:"Llamas",o:{c:0x1b1c20,stk:[{i:8,sd:0,u:.45,v:.35,s:1.3},{i:8,sd:1,u:.45,v:.35,s:1.3}]}},{n:"Kitsune",o:{c:0xf2f2f2,st:1,sc:0xd61f26,stk:[{i:9,sd:2,u:0,v:.5,s:1}]}},
+ // Diseños completos
+ {n:"🚓 Policía",o:{c:0xf2f2f2,bc:0x14151a,wc:0x14151a,tint:.65,stk:[{i:NS,sd:0,u:0,v:.45,s:1.5},{i:NS,sd:1,u:0,v:.45,s:1.5},{i:NS+1,sd:2,u:0,v:.5,s:1.1},{i:NS+1,sd:3,u:0,v:.5,s:1.1}]}},
+ {n:"🚕 Taxi amarillo",o:{c:0xf5b800,wc:0xd8d8d8,stk:[{i:NS+2,sd:0,u:0,v:.45,s:1.2},{i:NS+2,sd:1,u:0,v:.45,s:1.2},{i:NS+2,sd:3,u:0,v:.5,s:.9}]}},
+ {n:"🚕 Taxi verde",o:{c:0x2f7a52,wc:0xd8d8d8,st:3,sc:0xf2f2f2,stk:[{i:NS+2,sd:0,u:0,v:.45,s:1.2},{i:NS+2,sd:1,u:0,v:.45,s:1.2},{i:NS+2,sd:3,u:0,v:.5,s:.9}]}},
+ {n:"🏁 Carreras azul",o:{c:0x1d5fb8,st:2,sc:0xf2f2f2,num:12,nc:0xffffff,tint:.65,stk:[{i:NS+3,sd:0,u:.3,v:.4,s:.9},{i:NS+3,sd:1,u:.3,v:.4,s:.9},{i:NS+4,sd:0,u:-.3,v:.4,s:.8},{i:NS+4,sd:1,u:-.3,v:.4,s:.8}]}},
+ {n:"🏁 Carreras rojo",o:{c:0xc8102e,st:1,sc:0xf2f2f2,num:27,nc:0xffffff,tint:.65,stk:[{i:NS+5,sd:0,u:.3,v:.4,s:.9},{i:NS+5,sd:1,u:.3,v:.4,s:.9},{i:NS+4,sd:0,u:-.3,v:.4,s:.8},{i:NS+4,sd:1,u:-.3,v:.4,s:.8}]}},
+ {n:"🏁 Rally",o:{c:0xf2f2f2,st:4,sc:0xe5173f,num:7,nc:0xffd400,wc:0xf5b800,stk:[{i:NS+4,sd:0,u:.3,v:.4,s:.9},{i:NS+4,sd:1,u:.3,v:.4,s:.9},{i:NS+3,sd:2,u:0,v:.5,s:1}]}},
+ {n:"🏁 Resistencia",o:{c:0x1b1c20,st:3,sc:0x2fae5a,num:44,nc:0x2fae5a,tint:.9,wc:0x2fae5a,stk:[{i:NS+3,sd:0,u:.3,v:.4,s:.9},{i:NS+3,sd:1,u:.3,v:.4,s:.9},{i:NS+5,sd:2,u:0,v:.5,s:1}]}},
+ {n:"🎌 Tanuki",o:{c:0xffc4dc,st:1,sc:0xf2f2f2,stk:[{i:NS+6,sd:0,u:0,v:.5,s:1.3},{i:NS+6,sd:1,u:0,v:.5,s:1.3},{i:NS+6,sd:2,u:0,v:.5,s:1.2}]}},
+ {n:"🎌 Neón",o:{c:0x2a1650,st:4,sc:0x00e5ff,tint:.9,wc:0xff2fb3,stk:[{i:NS+8,sd:0,u:0,v:.45,s:1.4},{i:NS+8,sd:1,u:0,v:.45,s:1.4},{i:7,sd:2,u:0,v:.5,s:1}]}},
+ {n:"🎌 Guren",o:{c:0x14151a,st:3,sc:0xff3b1f,tint:.9,wc:0xff3b1f,stk:[{i:NS+7,sd:0,u:0,v:.5,s:1.3},{i:NS+7,sd:1,u:0,v:.5,s:1.3},{i:8,sd:2,u:0,v:.3,s:1.1}]}}];
 // Lados donde se pega: 0 izquierda · 1 derecha · 2 capó · 3 techo · 4 detrás
 const SIDES=["Izquierda","Derecha","Capó","Techo","Detrás"];
 const DMAT=new Map();const dmat=t=>{if(!DMAT.has(t))DMAT.set(t,new THREE.MeshPhongMaterial({map:t,transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-4,shininess:60,specular:0x222222}));return DMAT.get(t)};
@@ -185,7 +211,7 @@ function drawLiv(){const P=$("livP"),L=LIV[livK];P.innerHTML=`<h1>${T("Calcoman�
   const i=document.createElement("input");i.type="color";i.value="#"+((cur2===undefined?0xffffff:cur2).toString(16).padStart(6,"0"));i.oninput=()=>f(parseInt(i.value.slice(1),16));r.appendChild(i)};
  let r=row();CARS.forEach((c,i)=>btn(r,c.n,i===livK,()=>{livK=i;livSel=-1;buildCar(i);drawLiv()}));
  sec("Fondo");r=row();[["city","Ciudad"],["dealer","Concesionario"]].forEach(([v,t])=>btn(r,t,livBg===v,()=>{livBg=v;ENV.livbg=v;saveEnv();if(v==="dealer")buildShowroom();drawLiv()}));
- sec("Packs");r=row();PACKS.forEach(p=>btn(r,p.n,false,()=>{LIV[livK]=Object.assign(LIVDEF(),JSON.parse(JSON.stringify(p.o)));saveLiv();buildCar(livK);drawLiv()}));btn(r,"Quitar todo",false,()=>{LIV[livK]=LIVDEF();saveLiv();buildCar(livK);drawLiv()});
+ sec("Diseños completos");r=row();PACKS.forEach(p=>btn(r,p.n,false,()=>{LIV[livK]=Object.assign(LIVDEF(),JSON.parse(JSON.stringify(p.o)));saveLiv();buildCar(livK);drawLiv()}));btn(r,"Quitar todo",false,()=>{LIV[livK]=LIVDEF();saveLiv();buildCar(livK);drawLiv()});
  sec("Color de carrocería");sw(row(),L.c===undefined?CARS[livK].c:L.c,c=>livSet({c:c===undefined?CARS[livK].c:c}));
  sec("Llantas");sw(row(),L.wc,c=>{LIV[livK].wc=c;saveLiv();buildCar(livK)},true);
  sec("Neumáticos");sw(row(),L.tc,c=>{LIV[livK].tc=c;saveLiv();buildCar(livK)},true);

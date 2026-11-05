@@ -123,6 +123,8 @@ Pedido por el usuario (todo con permiso ya dado; descargas permitidas: partes de
 - [x] Pantalla antes de la carrera: tráfico y fantasma; recuerda la última elección, se puede desactivar y el tráfico vuelve al de antes al acabar.
 - [x] Coche nuevo: Kei Van (usa el modelo van del Car Kit, CC0). Garaje (js/garage.js): guarda hasta 20 combinaciones de coche, pintura y calcomanías.
 
+- [x] Diseños completos en el editor de calcomanías (10 nuevos en PACKS): policía, taxis, carreras y anime/drift, con marcas y mascota inventadas.
+
 ## Próximas tandas elegidas por el usuario (2026-11-05) — sin empezar
 - Multijugador (entra en la tanda 5).
 - Sistema de puntos, y al final repasar la interfaz: el usuario la explicará cuando acabe todo.
