@@ -2,8 +2,9 @@
 // Todo se proyecta sobre la carrocería del modelo (DecalGeometry), así sirve para cualquier coche. Se guarda por coche en el navegador.
 // Los diseños de las pegatinas (estilo anime incluido) están dibujados por código: son propios, sin problemas de derechos
 const LIVDEF=()=>({c:undefined,wc:undefined,tint:0,st:0,sc:0xffffff,num:0,nc:0xffffff,stk:[]});
-let LIV=[0,1,2,3].map(LIVDEF);
+let LIV=CARS.map(LIVDEF);
 try{const s=JSON.parse(localStorage.getItem("td-liv")||"null");if(Array.isArray(s))LIV=s.map(o=>Object.assign(LIVDEF(),o))}catch(e){}
+while(LIV.length<CARS.length)LIV.push(LIVDEF());   // (coches añadidos después de guardar)
 const saveLiv=()=>{try{localStorage.setItem("td-liv",JSON.stringify(LIV))}catch(e){}};
 const PAL8=[0xf2f2f2,0x1b1c20,0x8a9097,0xe5173f,0xff7a1a,0xf5b800,0x2fae5a,0x2a6cff,0x6b3fd1,0xff6fb5,0x00b8c8,0x5a3a22];
 // --- Diseños de las pegatinas (lienzo 256×256 con fondo transparente) ---

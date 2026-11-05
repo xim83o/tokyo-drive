@@ -4,7 +4,9 @@
 // rl: régimen máximo del motor (rpm), cambia el tono del sonido · f: modelo 3D (Car Kit de Kenney, CC0, en models/cars; glTF con
 // los datos incrustados y extensión .json porque el enlace del móvil no sirve archivos .glb)
 const CARS=[{n:"Kei Sport",c:0xf5b800,vm:44.4,ac:4.7,gr:8.5,dr:.6,w:1.7,l:3.6,m:850,rl:8500,f:"hatchback-sports"},{n:"Coupé GT",c:0xe5173f,vm:75,ac:7.3,gr:7.5,dr:1,w:1.9,l:4.4,m:1450,rl:7000,f:"sedan-sports"},
- {n:"Hypercar",c:0x2a6cff,vm:97.2,ac:11,gr:6.5,dr:1.2,w:2,l:4.6,m:1400,rl:8500,f:"race-future"},{n:"Drift Spec",c:0xf2f2f2,vm:66.7,ac:6.2,gr:7.5,dr:1.5,w:1.85,l:4.4,m:1300,rl:7800,f:"sedan-sports"}];
+ {n:"Hypercar",c:0x2a6cff,vm:97.2,ac:11,gr:6.5,dr:1.2,w:2,l:4.6,m:1400,rl:8500,f:"race-future"},{n:"Drift Spec",c:0xf2f2f2,vm:66.7,ac:6.2,gr:7.5,dr:1.5,w:1.85,l:4.4,m:1300,rl:7800,f:"sedan-sports"},
+ // Furgoneta kei: pequeña, lenta y alta, con motor de poca cilindrada
+ {n:"Kei Van",c:0xe8e4d6,vm:38.9,ac:3.7,gr:7,dr:.7,w:1.5,l:3.4,m:900,rl:6800,f:"van"}];
 const t100=c=>c.vm/c.ac*Math.atanh(27.78/c.vm);
 let cur=CARS[0],car=null,carK=0,intG=null,whl=null,WSH=null,carBody=null;const WHEELS=[];
 // Lienzo de las gotas del parabrisas (lo dibuja weather.js)

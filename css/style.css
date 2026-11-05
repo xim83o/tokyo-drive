@@ -26,7 +26,9 @@ button.b:disabled{opacity:.4;cursor:default}button.g{background:rgba(128,128,128
 .opt button{padding:5px 11px;border:0;border-radius:14px;font:600 12px system-ui;cursor:pointer;color:inherit;background:rgba(128,128,128,.25)}.opt button.on{background:var(--ac);color:#fff}
 /* Ajustes */
 #setP{min-width:min(560px,94vw)}
-#raceP{min-width:min(620px,94vw)}
+#raceP,#garP{min-width:min(620px,94vw)}
+.rcChk{display:block;margin-top:10px;font-size:13px;color:var(--mu)}.garSw{width:34px;height:34px;border-radius:8px;flex:none}
+#garP input[type=text]{flex:1;min-width:0;padding:9px;border-radius:8px;border:1px solid rgba(128,128,128,.5);background:transparent;color:inherit}
 .rcRow{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(128,128,128,.25);text-align:left}
 .rcRow>div{flex:1;min-width:0}.rcRow b,.rcRow small{display:block}.rcRow select{max-width:170px;padding:6px;border-radius:8px}.rcRow .b{margin:0}
 #raceH{position:fixed;z-index:4;top:calc(12px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;padding:6px 18px;border-radius:12px;background:rgba(0,0,0,.6);color:#fff;font:600 13px system-ui;pointer-events:none}

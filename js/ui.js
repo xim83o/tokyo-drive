@@ -1,5 +1,5 @@
 // Menús: selección de coche y mapa para reaparecer
-const CAT=["Urbano","Deportivo","Superdeportivo","Drift"],HUDS=MOBILE?["mini","hud"]:["mini","hud","help"];
+const CAT=["Urbano","Deportivo","Superdeportivo","Drift","Furgoneta"],HUDS=MOBILE?["mini","hud"]:["mini","hud","help"];
 // Punto de la calzada más cercano a (x,z), en el carril izquierdo (en Japón se circula por la izquierda)
 function nearestRoad(x,z,flip){let best=0,bd=1e18;for(let k=0;k<RSG.length;k+=6){const d=segD2(x,z,RSG[k],RSG[k+1],RSG[k+2],RSG[k+3]);if(d<bd){bd=d;best=k}}
  segD2(x,z,RSG[best],RSG[best+1],RSG[best+2],RSG[best+3]);const r=MAP.roads[RSG[best+5]],hw=RSG[best+4];let ux=RSG[best+2]-RSG[best],uz=RSG[best+3]-RSG[best+1];const l=Math.hypot(ux,uz)||1;ux/=l;uz/=l;
@@ -18,7 +18,7 @@ function buildCards(){$("cards").innerHTML="";tb.innerHTML="";
 buildCards();applyI18n();
 function show(w){state=w;$("ov").hidden=false;$("carsP").hidden=w!=="cars";$("mapP").hidden=w!=="map";$("setP").hidden=true;$("livP").hidden=true;$("ov").classList.remove("liv");if(w==="map"){pend=null;$("ok").disabled=true;mapV={z:1,x:W/2,z0:W/2};drawMap()}
  hudVis(false);$("touch").hidden=true}
-function resume(){state="play";$("ov").hidden=true;$("raceP").hidden=true;hudVis(true);$("touch").hidden=!MOBILE}
+function resume(){state="play";$("ov").hidden=true;$("raceP").hidden=true;$("garP").hidden=true;hudVis(true);$("touch").hidden=!MOBILE}
 // HUD (minimapa, velocímetro y ayuda): se puede quitar cada parte en Ajustes → Pantalla
 function hudVis(on){$("mini").hidden=!on||!ENV.hud.mini;$("hud").hidden=!on||!ENV.hud.speed||MOBILE;$("spd").hidden=!on||!ENV.hud.speed||!MOBILE;$("help").hidden=!on||!ENV.hud.help||MOBILE;$("mz").hidden=!on||!ENV.hud.mini}
 const mp=$("mp"),mx=mp.getContext("2d");

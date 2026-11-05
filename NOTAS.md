@@ -119,10 +119,14 @@ Pedido por el usuario (todo con permiso ya dado; descargas permitidas: partes de
 - [x] Carreras (2 circuitos a 2 vueltas) y contrarreloj (3 rutas) con puntos de control, tiempos y récord guardados en el navegador. Tecla B o botón 🏁.
 - [x] Coche fantasma: se elige entre tus 5 mejores tiempos de cada ruta; la tecla G lo enciende o apaga. Repetición de los últimos 20 s al acabar una carrera. Modo foto: tecla F o botón 📷.
 
+## Tanda 2 — HECHA
+- [x] Pantalla antes de la carrera: tráfico y fantasma; recuerda la última elección, se puede desactivar y el tráfico vuelve al de antes al acabar.
+- [x] Coche nuevo: Kei Van (usa el modelo van del Car Kit, CC0). Garaje (js/garage.js): guarda hasta 20 combinaciones de coche, pintura y calcomanías.
+
 ## Próximas tandas elegidas por el usuario (2026-11-05) — sin empezar
 - Multijugador (entra en la tanda 5).
+- Sistema de puntos, y al final repasar la interfaz: el usuario la explicará cuando acabe todo.
 - Carretera alta conducible, con pocas entradas y salidas, fáciles de cambiar de sitio cuando se amplíe el mapa. El mapa no se amplía de momento.
-- Un coche nuevo (furgoneta kei, diseño propio) y garaje para guardar coches y calcomanías.
 - Cuentas, nube y salas de multijugador: un solo servicio con plan gratuito (tipo Supabase); la cuenta la crea el usuario.
 - Orden: 1) carreras, contrarreloj, fantasma, repetición y modo foto; 2) coche y garaje; 3) autopista; 4) gráficos y sonido; 5) nube y multijugador.
 - Modo realista (RTX real no se puede en el navegador), gráficos mejores, más sonidos (viento, ciudad, trenes) y neones reflejados en el asfalto mojado.
