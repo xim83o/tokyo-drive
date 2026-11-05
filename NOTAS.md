@@ -112,9 +112,11 @@ Pedido por el usuario (todo con permiso ya dado; descargas permitidas: partes de
 - [x] Rampas de las vías: la regla general bajaba 18 extremos; ahora solo baja el ramal del monorraíl junto al borde derecho (2383, 1185).
 - [x] Menos pilares bajo las vías elevadas: uno cada 42 m por vía (antes 28) y al menos 24 m entre pilares (antes 10).
 - [x] Aparcamientos sin salida: ya no se ponen encima de otra calle (había 4, con coches en mitad de la calzada).
+- [x] Vías que atravesaban edificios: se quitan los edificios de más de 6 m que cruza una vía elevada (eran 4).
 
 
 ## Pendiente / ideas
+- Modos de juego (apuntado el 2026-11-05): modo conducción libre (el actual) y modo carreras, para correr por las calles de Tokio.
 - Autopista Shuto elevada.
 - Más coches para elegir (apuntado el 2026-11-04): ampliar la lista de coches del juego más adelante.
 - Mapa más grande (futuro): el ramal que ahora baja en rampa hasta el suelo junto al borde derecho (captura 6 del 2026-11-04) es en realidad una vía de tren elevada (seguramente el monorraíl hacia Haneda), no la autopista. Habrá que alargarla para que siga por el mapa nuevo. Lo mismo con la autopista conducible.
