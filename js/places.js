@@ -304,7 +304,7 @@ function routeAt(r,s,o){const D=r.D;let a=0,b=D.length-1;while(b-a>1){const m=(a
 function trainsTick(dt){if(!TRN.routes.length)return;TRN.t+=dt;if(TRN.t>45){const f=TRN.routes.filter(r=>!r.busy),t=TRN.pool.find(q=>!q.r);if(f.length&&t){TRN.t=0;t.r=f[Math.floor(Math.random()*f.length)];t.r.busy=true;t.d=0;t.dir=Math.random()<.5?1:-1}}
  for(const t of TRN.pool){if(!t.r)continue;const r=t.r;t.d+=22*dt;t.cars.forEach((m,k)=>{const s=t.d-k*20.6-10;if(s<10||s>r.L-10){m.visible=false;return}const u=t.dir>0?s:r.L-s,e=t.dir;routeAt(r,u+9*e,_pa);routeAt(r,u-9*e,_pb);m.visible=true;m.position.addVectors(_pa,_pb).multiplyScalar(.5);m.lookAt(_pa)});
   if(t.d-3*20.6-10>r.L){r.busy=false;t.r=null;for(const m of t.cars)m.visible=false}}}
-function placesTick(dt){conesTick(dt);trainsTick(dt);raceTick(dt)}
+function placesTick(dt){conesTick(dt);trainsTick(dt);raceTick(dt);ambAudio(dt)}
 // Focos: material del panel, resplandor de noche y su textura (compartidos por el campo de béisbol y la zona de derrape)
 let PLL=null;
 function plLamp(){if(PLL)return PLL;const lt=canvasTex(256,160,(g,w,h)=>{g.fillStyle="#2a2d33";g.fillRect(0,0,w,h);for(let j=0;j<4;j++)for(let i=0;i<6;i++){const x=22+i*42.4,y=22+j*38.6,gr=g.createRadialGradient(x,y,2,x,y,16);gr.addColorStop(0,"#ffffff");gr.addColorStop(.6,"#d8d8d0");gr.addColorStop(1,"#8a8c90");g.fillStyle=gr;g.beginPath();g.arc(x,y,16,0,PI*2);g.fill()}});

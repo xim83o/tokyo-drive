@@ -18,17 +18,18 @@ function drawSettings(){const P=$("setP");P.innerHTML=`<h1>${T("Ajustes")}</h1>`
  const slider=(label,key)=>{const r=document.createElement("div");r.className="opt";r.innerHTML=`<span>${T(label)}</span><input type="range" min="0" max="100" step="5" value="${Math.round(ENV.vol[key]*100)}"><b>${Math.round(ENV.vol[key]*100)}%</b>`;
   const i=r.querySelector("input"),o=r.querySelector("b");i.oninput=()=>{ENV.vol[key]=i.value/100;o.textContent=i.value+"%";setVol();saveEnv()};box.appendChild(r)};
  const aq=()=>{if(ready)applyQuality()};
- if(setTab==="gfx"){env("Calidad",[["auto","Auto"],[0,"Baja"],[1,"Media"],[2,"Alta"],[3,"Ultra"]],"q",aq);
+ if(setTab==="gfx"){env("Calidad",[["auto","Auto"],[0,"Baja"],[1,"Media"],[2,"Alta"],[3,"Ultra"],[4,"Realista"]],"q",aq);
   env("Sombras",[["auto","Según calidad"],["on","Sí"],["off","No"]],"sh",aq);
   env("Distancia de visión",[[.7,"Corta"],[1,"Normal"],[1.4,"Lejana"]],"far",aq);
   env("Resplandor de luces",[["auto","Según calidad"],["on","Sí"],["off","No"]],"bl");
-  note("La calidad cambia la resolución, el detalle de árboles y edificios y cuántas farolas dan luz real. Si el juego va a tirones, baja la calidad o la distancia.")}
+  note("La calidad cambia la resolución, el detalle de árboles y edificios y cuántas farolas dan luz real. Si el juego va a tirones, baja la calidad o la distancia.");
+  note("Realista añade reflejos en el suelo, sombras de contacto y un color más de cine. Pide mucho al ordenador.")}
  else if(setTab==="time"){env("Hora",[["real","Tokio real"],["cycle","Día y noche"],["day","Siempre de día"],["night","Siempre de noche"]],"mode",()=>{cyc.hidden=ENV.mode!=="cycle"});
   const cyc=env("Un día dura",[[5,"5 min"],[10,"10 min"],[15,"15 min"],[30,"30 min"],[60,"60 min"]],"cycle");cyc.hidden=ENV.mode!=="cycle";
   env("Clima",[["auto","Aleatorio"],["clear","Despejado"],["rain","Lluvia"],["storm","Tormenta"]],"wx");
   if(ENV.season===undefined)ENV.season="auto";env("Estación",[["auto","Fecha de Japón"],[0,"Primavera"],[1,"Verano"],[2,"Otoño"],[3,"Invierno"]],"season",()=>{if(ready)seasonApply(seasonNow())});
   note("En invierno, si llueve, nieva: la nieve se acumula en el suelo y los tejados y el coche agarra menos.")}
- else if(setTab==="snd"){slider("General","m");slider("Motor","e");slider("Golpes y derrapes","fx");slider("Lluvia y truenos","rain");slider("Claxon","horn");
+ else if(setTab==="snd"){slider("General","m");slider("Motor","e");slider("Golpes y derrapes","fx");slider("Lluvia y truenos","rain");slider("Claxon","horn");slider("Ambiente: viento, ciudad y trenes","amb");
   row("Sonido",[[0,"Activado"],[1,"Silenciado"]],()=>mute?1:0,v=>{initAudio();setMute(!!v)});
   slider("Radio","radio");row("País de la radio",RCOUNTRY,()=>ENV.radio.c,v=>{ENV.radio.c=v;radioReset()});row("Estilo",RTAG,()=>ENV.radio.t,v=>{ENV.radio.t=v;radioReset()});
   {const b=document.createElement("button");b.className="b g";b.textContent="📻 "+T("Siguiente emisora");b.onclick=()=>{initAudio();if(!RADIO.on)radioToggle();else radioNext(1)};box.appendChild(b)}

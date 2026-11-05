@@ -128,12 +128,15 @@ Pedido por el usuario (todo con permiso ya dado; descargas permitidas: partes de
 ## Tanda 3 — HECHA (js/highway.js)
 - [x] Autopista conducible con 3 rampas de doble sentido. Para el mapa ampliado basta cambiar la lista HWY_RAMPS (punto de calle y punto del tablero, a 170 m o más). Va sin tráfico.
 
+## Tanda 4 — HECHA
+- [x] Calidad Realista (env.js, pasada REALS): sombras de contacto, reflejos en el suelo y color de cine. RTX real no existe en el navegador.
+- [x] Reflejos en el asfalto mojado en calidad Alta o más. Sonidos de ambiente por código (ambAudio): viento, ciudad y trenes, con su volumen en Ajustes.
+
 ## Próximas tandas elegidas por el usuario (2026-11-05) — sin empezar
 - Multijugador (entra en la tanda 5).
 - Sistema de puntos, y al final repasar la interfaz: el usuario la explicará cuando acabe todo.
 - Cuentas, nube y salas de multijugador: un solo servicio con plan gratuito (tipo Supabase); la cuenta la crea el usuario.
 - Orden: 1) carreras, contrarreloj, fantasma, repetición y modo foto; 2) coche y garaje; 3) autopista; 4) gráficos y sonido; 5) nube y multijugador.
-- Modo realista (RTX real no se puede en el navegador), gráficos mejores, más sonidos (viento, ciudad, trenes) y neones reflejados en el asfalto mojado.
 - Guardar partidas en la nube.
 - Apuntado para más adelante: dinero o puntos para comprar coches y mejoras.
 

@@ -3,11 +3,11 @@
 // color) y calidad gráfica. Las opciones se eligen en el menú de coches y se recuerdan. El clima (lluvia) lo maneja weather.js
 // Ajustes guardados: hora, calidad y sus retoques (sombras, distancia, resplandor), volúmenes, unidades, HUD, teclas y tráfico
 const ENV={mode:"cycle",cycle:15,q:"auto",sh:"auto",far:1,bl:"auto",units:"kmh",npc:MOBILE?1:2,
- vol:{m:.8,e:1,fx:1,rain:1,horn:1,radio:.6},hud:{mini:1,speed:1,help:1},
+ vol:{m:.8,e:1,fx:1,rain:1,horn:1,radio:.6,amb:1},hud:{mini:1,speed:1,help:1},
  keys:{up:["KeyW","ArrowUp"],down:["KeyS","ArrowDown"],left:["KeyA","ArrowLeft"],right:["KeyD","ArrowRight"],hb:["Space",""],cam:["KeyV",""],map:["KeyM",""],cars:["KeyC",""],snd:["KeyN",""],trf:["KeyT",""],radio:["KeyR",""],race:["KeyB",""],photo:["KeyF",""],ghost:["KeyG",""],set:["Escape",""]}},T0=performance.now()/1000;let FOGF=900,FOGQ=900,NF=0,HOUR=10;
 try{const s=JSON.parse(localStorage.getItem("td-env")||"{}");for(const k in s){if(ENV[k]&&typeof ENV[k]==="object"&&!Array.isArray(ENV[k]))Object.assign(ENV[k],s[k]);else ENV[k]=s[k]}}catch(e){}
 function saveEnv(){try{localStorage.setItem("td-env",JSON.stringify(ENV))}catch(e){}}
-const QUAL=[{n:"Baja",pr:.75,sh:0,R:0,far:450,lights:0},{n:"Media",pr:1,sh:1024,R:110,far:650,lights:4},{n:"Alta",pr:1.25,sh:2048,R:160,far:900,lights:8},{n:"Ultra",pr:1.75,sh:4096,R:230,far:1200,lights:12}];
+const QUAL=[{n:"Baja",pr:.75,sh:0,R:0,far:450,lights:0},{n:"Media",pr:1,sh:1024,R:110,far:650,lights:4},{n:"Alta",pr:1.25,sh:2048,R:160,far:900,lights:8},{n:"Ultra",pr:1.75,sh:4096,R:230,far:1200,lights:12},{n:"Realista",pr:2,sh:4096,R:300,far:1400,lights:16}];
 const qLevel=()=>ENV.q==="auto"?(MOBILE?0:2):+ENV.q;
 const WEA={rain:0,cloud:.35,wet:0,flash:0};   // estado del clima (weather.js): lluvia 0-1, nubosidad, suelo mojado, relámpago
 // Cielo: degradado, sol con halo, nubes que se mueven (ruido fractal), atardeceres anaranjados, luna, y estrellas aparte
@@ -60,17 +60,41 @@ function seasonNow(){if(ENV.season!==undefined&&ENV.season!=="auto")return+ENV.s
 function tokyoHour(){try{const p=new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Tokyo",hour:"numeric",minute:"numeric",second:"numeric",hour12:false}).formatToParts(new Date()),v=k=>+p.find(x=>x.type===k).value;return(v("hour")%24)+v("minute")/60+v("second")/3600}catch(e){return 12}}
 function hourNow(){if(ENV.mode==="real")return tokyoHour();if(ENV.mode==="day")return 12.5;if(ENV.mode==="night")return 22;return(10+(performance.now()/1000-T0)/(ENV.cycle*60)*24)%24}
 // --- Postproceso: resplandor (bloom) de luces y ventanas, corrección de color con viñeta y suavizado de bordes (FXAA) ---
-const GRADE={uniforms:{tDiffuse:{value:null},sat:{value:1.12},con:{value:1.06},vig:{value:.28},tint:{value:new THREE.Vector3(1,1,1)}},
+// Reflejos y sombras de contacto calculados sobre la imagen (no es RTX, que en el navegador no existe, pero lo imita):
+// el suelo mojado refleja de verdad lo que hay en pantalla (neones, faros, edificios) y los rincones se oscurecen en calidad Realista
+const REALS={uniforms:{tDiffuse:{value:null},tDepth:{value:null},uProj:{value:null},uInv:{value:null},uCamW:{value:null},uView:{value:null},uWet:{value:0},uAO:{value:0},uSky:{value:new THREE.Color()}},
  vertexShader:"varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}",
- fragmentShader:`uniform sampler2D tDiffuse;uniform float sat,con,vig;uniform vec3 tint;varying vec2 vUv;
-void main(){vec4 c=texture2D(tDiffuse,vUv);vec3 x=c.rgb*tint;float l=dot(x,vec3(.299,.587,.114));x=mix(vec3(l),x,sat);x=(x-.5)*con+.5;
+ fragmentShader:`uniform sampler2D tDiffuse,tDepth;uniform mat4 uProj,uInv,uCamW,uView;uniform float uWet,uAO;uniform vec3 uSky;varying vec2 vUv;
+vec3 vp(vec2 u){float d=texture2D(tDepth,u).x;vec4 v=uInv*vec4(u*2.-1.,d*2.-1.,1.);return v.xyz/v.w;}
+vec2 pr(vec3 p){vec4 c=uProj*vec4(p,1.);return c.xy/c.w*.5+.5;}
+float h1(vec2 p){return fract(sin(dot(p,vec2(12.9898,78.233)))*43758.5453);}
+void main(){vec4 c=texture2D(tDiffuse,vUv);float d0=texture2D(tDepth,vUv).x;if(d0>=.99999){gl_FragColor=c;return;}
+ vec3 P=vp(vUv),w=(uCamW*vec4(P,1.)).xyz;
+ if(uAO>0.&&-P.z<90.){vec3 N=normalize(cross(dFdx(P),dFdy(P)));float o=0.,a=.7;for(int i=0;i<8;i++){float t=(float(i)+.5)/8.,b=a+t*25.13;vec3 s=vec3(cos(b),sin(b),.6)*sqrt(t)*.9;if(dot(s,N)<0.)s=-s;vec3 q=P+s+N*.04;float z=vp(pr(q)).z,dz=z-q.z;if(dz>.03&&dz<1.2)o+=1.;}c.rgb*=1.-uAO*o/8.*.75;}
+ if(uWet>0.&&w.y<.35&&w.y>-.2&&-P.z<140.){vec3 V=normalize(P),N=normalize((uView*vec4(0.,1.,0.,0.)).xyz),R=reflect(V,N);float fr=.04+.96*pow(1.-max(dot(-V,N),0.),5.);
+  float pm=.5+.5*sin(w.x*.17+1.7*sin(w.z*.11))*cos(w.z*.13+1.3*sin(w.x*.09)),k=uWet*(.3+.7*fr)*(.55+.45*smoothstep(.35,.7,pm));
+  vec3 Q=P;float st=.5+h1(vUv*311.)*.5;vec3 rf=uSky;float f=.55;for(int i=0;i<26;i++){Q+=R*st;st*=1.13;vec2 u=pr(Q);if(u.x<0.||u.x>1.||u.y<0.||u.y>1.)break;float sz=vp(u).z,dz=sz-Q.z;if(dz>0.&&dz<st*2.5){vec2 e=min(u,1.-u);f=smoothstep(0.,.12,min(e.x,e.y));rf=mix(uSky,texture2D(tDiffuse,u).rgb,f);f=1.;break;}}
+  c.rgb=mix(c.rgb,rf,clamp(k*f,0.,.8));}
+ gl_FragColor=c;}`};
+const GRADE={uniforms:{tDiffuse:{value:null},sat:{value:1.12},con:{value:1.06},vig:{value:.28},film:{value:0},tint:{value:new THREE.Vector3(1,1,1)}},
+ vertexShader:"varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}",
+ fragmentShader:`uniform sampler2D tDiffuse;uniform float sat,con,vig,film;uniform vec3 tint;varying vec2 vUv;
+void main(){vec4 c=texture2D(tDiffuse,vUv);vec3 x=c.rgb*tint;x=mix(x,clamp(x*(2.51*x+.03)/(x*(2.43*x+.59)+.14),0.,1.),film);float l=dot(x,vec3(.299,.587,.114));x=mix(vec3(l),x,sat);x=(x-.5)*con+.5;
  vec2 q=vUv-.5;x*=1.-dot(q,q)*vig*1.6;gl_FragColor=vec4(clamp(x,0.,1.),c.a);}`};
-let composer=null,bloom=null,fxaa=null,grade=null;
-function setupPost(){if(!THREE.EffectComposer||composer)return;composer=new THREE.EffectComposer(rd);composer.addPass(new THREE.RenderPass(sc,cam));
+let composer=null,bloom=null,fxaa=null,grade=null,realP=null;
+function setupPost(){if(!THREE.EffectComposer||composer)return;composer=new THREE.EffectComposer(rd);
+ // Cada imagen intermedia guarda también la profundidad, que usa la pasada de reflejos
+ for(const t of[composer.renderTarget1,composer.renderTarget2]){const d=new THREE.DepthTexture();d.type=THREE.UnsignedIntType;t.depthTexture=d}
+ composer.addPass(new THREE.RenderPass(sc,cam));
+ realP=new THREE.ShaderPass(REALS);realP.material.extensions={derivatives:true};const U=realP.uniforms;U.uProj.value=cam.projectionMatrix;U.uInv.value=cam.projectionMatrixInverse;U.uCamW.value=cam.matrixWorld;U.uView.value=cam.matrixWorldInverse;
+ {const base=realP.render.bind(realP);realP.render=function(r,w,rb,dt2,m){U.tDepth.value=rb.depthTexture;base(r,w,rb,dt2,m)}}composer.addPass(realP);
  bloom=new THREE.UnrealBloomPass(new THREE.Vector2(innerWidth,innerHeight),.5,.5,.8);composer.addPass(bloom);grade=new THREE.ShaderPass(GRADE);composer.addPass(grade);
  fxaa=new THREE.ShaderPass(THREE.FXAAShader);composer.addPass(fxaa);postSize()}
 function postSize(){if(!composer)return;const pr=rd.getPixelRatio();composer.setPixelRatio(pr);composer.setSize(innerWidth,innerHeight);fxaa.material.uniforms.resolution.value.set(1/(innerWidth*pr),1/(innerHeight*pr))}
-function renderFrame(){const lv=qLevel(),bl=ENV.bl==="auto"?lv>=2:ENV.bl==="on";if(composer&&(lv>=1||bl)){bloom.enabled=bl;bloom.strength=.1+NF*.7+WEA.wet*.1;bloom.threshold=.78-NF*.12;composer.render()}else rd.render(sc,cam)}
+function renderFrame(){const lv=qLevel(),bl=ENV.bl==="auto"?lv>=2:ENV.bl==="on";if(composer&&(lv>=1||bl)){bloom.enabled=bl;bloom.strength=.1+NF*.7+WEA.wet*.1;bloom.threshold=.78-NF*.12;
+  // Reflejos: en Alta o más cuando el suelo está mojado; en Realista, siempre un brillo suave y sombras de contacto
+  const R=lv===4,wet=lv>=2?Math.min(.9,WEA.wet*1.1):0,U=realP.uniforms;U.uWet.value=R?Math.max(.12,wet):wet>.06?wet:0;U.uAO.value=R?1:0;U.uSky.value.copy(sc.fog.color);realP.enabled=R||U.uWet.value>0;
+  grade.uniforms.film.value=R?1:0;grade.uniforms.sat.value=R?1.04:1.12;grade.uniforms.con.value=R?1.08:1.06;grade.uniforms.vig.value=R?.42:.28;composer.render()}else rd.render(sc,cam)}
 let ledT=0;
 // Transición suave: la luz del día baja poco a poco desde media tarde (curva suave de 15:00 a 19:00, y al revés al amanecer) y el color
 // anaranjado del atardecer dura más (franja ancha alrededor del horizonte)
