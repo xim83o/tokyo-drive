@@ -108,6 +108,7 @@ Pedido por el usuario (todo con permiso ya dado; descargas permitidas: partes de
 - [x] Trenes decorativos en las vías elevadas: rutas de borde a borde del mapa, sale uno cada 45 s en una línea libre (4 coches) y desaparece al llegar al borde (places.js, buildTrains).
 - [x] Zona de derrape: sin árboles, con circuito de neumáticos, contenedores, camión, luces portátiles, grada, coches viejos y más marcas. Sin carteles.
 - [x] Conos de la zona: el coche los tira y vuelven a su sitio a los 12 s si no estás encima (conesTick).
+- [x] Pilares de la autopista: ninguno atraviesa una vía elevada; se mueve un poco o ese tramo va sin pilar (onElv).
 
 
 ## Pendiente / ideas

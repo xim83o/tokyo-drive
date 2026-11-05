@@ -291,6 +291,8 @@ function buildGround(){const GS=MOBILE?4:3,N=Math.ceil(W/GS)+1,SD=new Float32Arr
 // muros de hormigón a los lados con barandilla, puentes donde lo cruza una calle (vigas debajo y pretiles a los lados) y, encima,
 // la autopista elevada sobre pilares como en la realidad (de adorno: no se puede subir)
 const WATERU={uTime:{value:0},uNightW:{value:0}};let WATERM=null;
+// ¿Un pilar de la autopista en (x,z) tocaría una vía elevada? (tablero de 4,4 m de ancho más el medio ancho del pilar)
+function onElv(x,z){for(const r of MAP.rails){if(!r.b)continue;const p=r.p;for(let i=2;i<p.length;i+=2)if(segD2(x,z,p[i-2],p[i-1],p[i],p[i+1])<25)return true}return false}
 function buildCanal(){if(!MAP.rivers.length)return;const wa=[],wl=[],rl=[],gi=[],hw=[],hd=[],hs=[],pil=[],WY=-2.4,HY=16,FE=[];   // HY: altura del tablero, bien por encima de las vías elevadas (7,5 m) y de sus trenes
  const vq=(a,x0,z0,x1,z1,y0,y1)=>a.push(x0,y0,z0,x1,y0,z1,x1,y1,z1,x0,y0,z0,x1,y1,z1,x0,y1,z0);
  for(const r of MAP.rivers){const p=r.p,h2=r.w/2,ns=p.length/2,MT=[];
@@ -309,7 +311,8 @@ function buildCanal(){if(!MAP.rivers.length)return;const wa=[],wl=[],rl=[],gi=[]
     for(const[a,y]of[[hd,HY],[hs,HY-.8]]){flatTri(a,y,A0[0],A0[1],A1[0],A1[1],B1[0],B1[1]);flatTri(a,y,A0[0],A0[1],B1[0],B1[1],B0[0],B0[1])}
     vq(hw,A0[0],A0[1],A1[0],A1[1],HY-.8,HY+1.1);vq(hw,B0[0],B0[1],B1[0],B1[1],HY-.8,HY+1.1)}
    // (ningún pilar sobre una calle: en las curvas del canal puede coincidir con un puente)
-   for(let t=16;t<L;t+=34){const x=ax+(bx-ax)*t/L,z=az+(bz-az)*t/L;if([[0,0],[3,0],[-3,0],[0,3],[0,-3]].every(([u,v])=>roadAt(x+u,z+v)<0))pil.push([x,0,z,Math.atan2(bx-ax,bz-az)])}}}
+   // (ni sobre una vía elevada: se busca sitio un poco antes o después y, si no hay, ese tramo va sin pilar)
+   for(let t=16;t<L;t+=34)for(const o of[0,6,-6,12,-12]){const q=t+o;if(q<0||q>L)continue;const x=ax+(bx-ax)*q/L,z=az+(bz-az)*q/L;if([[0,0],[3,0],[-3,0],[0,3],[0,-3]].every(([u,v])=>roadAt(x+u,z+v)<0)&&!onElv(x,z)){pil.push([x,0,z,Math.atan2(bx-ax,bz-az)]);break}}}}
  // El canal de los datos a veces viene partido en dos (hueco de unos 14 m donde lo cruza una calle): la autopista sigue seguida por encima
  {const free=FE.filter(a=>!FE.some(b=>b!==a&&Math.hypot(a.x-b.x,a.z-b.z)<1));free.forEach((a,i)=>{for(let j=i+1;j<free.length;j++){const b=free[j];if(Math.hypot(a.x-b.x,a.z-b.z)>30)continue;
    const E=(q,s)=>[q.x+q.m[0]*6.5*s,q.z+q.m[1]*6.5*s],sg=Math.hypot(a.m[0]+b.m[0],a.m[1]+b.m[1])>Math.hypot(a.m[0]-b.m[0],a.m[1]-b.m[1])?1:-1,A0=E(a,1),B0=E(a,-1),A1=E(b,sg),B1=E(b,-sg);
