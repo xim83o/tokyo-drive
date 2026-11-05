@@ -109,6 +109,9 @@ Pedido por el usuario (todo con permiso ya dado; descargas permitidas: partes de
 - [x] Zona de derrape: sin árboles, con circuito de neumáticos, contenedores, camión, luces portátiles, grada, coches viejos y más marcas. Sin carteles.
 - [x] Conos de la zona: el coche los tira y vuelven a su sitio a los 12 s si no estás encima (conesTick).
 - [x] Pilares de la autopista: ninguno atraviesa una vía elevada; se mueve un poco o ese tramo va sin pilar (onElv).
+- [x] Rampas de las vías: la regla general bajaba 18 extremos; ahora solo baja el ramal del monorraíl junto al borde derecho (2383, 1185).
+- [x] Menos pilares bajo las vías elevadas: uno cada 42 m por vía (antes 28) y al menos 24 m entre pilares (antes 10).
+- [x] Aparcamientos sin salida: ya no se ponen encima de otra calle (había 4, con coches en mitad de la calzada).
 
 
 ## Pendiente / ideas

@@ -142,8 +142,10 @@ async function loadWorld(){
  // Calles sin salida (un extremo que no toca ninguna otra calle y no está en el borde del mapa): aparcamiento de 12 m con plazas
  // donde quepa y, si no, un final redondo para dar la vuelta con su señal. Se añaden como tramos de calzada (dejan hueco y bordillo)
  {const use=new Map();for(const r of MAP.roads)if(r.n)r.n.forEach((id,i)=>{if(i===0||i===r.n.length-1)use.set(id,(use.get(id)||0)+1);else use.set(id,(use.get(id)||0)+2)});
-  const fits=(pts)=>pts.every(([x,z])=>!inBuilding(x,z)&&!inWater(x,z)&&x>30&&z>30&&x<W-30&&z<W-30);
-  MAP.roads.forEach((r,ri)=>{if(!r.n)return;const p=r.p;for(const end of[0,1]){const id=end?r.n[r.n.length-1]:r.n[0];if(use.get(id)!==1)continue;
+  // (tampoco encima de otra calle: hay finales de calle que no comparten cruce con la de al lado aunque la toquen, y salía un aparcamiento con coches en mitad de la calzada)
+  let cri=-1;const other=(x,z)=>{for(const k of gq(x,z).r){const o=k*6;if(RSG[o+5]!==cri&&segD2(x,z,RSG[o],RSG[o+1],RSG[o+2],RSG[o+3])<RSG[o+4]*RSG[o+4])return true}return false};
+  const fits=(pts)=>pts.every(([x,z])=>!inBuilding(x,z)&&!inWater(x,z)&&!other(x,z)&&x>30&&z>30&&x<W-30&&z<W-30);
+  MAP.roads.forEach((r,ri)=>{if(!r.n)return;cri=ri;const p=r.p;for(const end of[0,1]){const id=end?r.n[r.n.length-1]:r.n[0];if(use.get(id)!==1)continue;
    const i=end?p.length-2:0,j=end?p.length-4:2,x=p[i],z=p[i+1],L=Math.hypot(x-p[j],z-p[j+1])||1,ux=(x-p[j])/L,uz=(z-p[j+1])/L,hw=r.hw[end?r.hw.length-1:0],lx=uz,lz=-ux;
    const pw=hw+3.5,ex=x+ux*13,ez=z+uz*13,rect=[];for(let a=0;a<=13;a+=3)for(const s of[-1,0,1])rect.push([x+ux*a+lx*pw*s,z+uz*a+lz*pw*s]);
    if(fits(rect)){quad(ra,x,z,ex,ez,pw,0);const k=RSG.length/6;RSG.push(x,z,ex,ez,pw,ri);gadd(Math.min(x,ex)-pw-3,Math.min(z,ez)-pw-3,Math.max(x,ex)+pw+3,Math.max(z,ez)+pw+3,"r",k);PARK.push({x,z,ux,uz,pw,t:"p"})}
@@ -191,14 +193,14 @@ async function loadWorld(){
   for(let i=2;i<p.length;i+=2){const ax=p[i-2],az=p[i-1],bx=p[i],bz=p[i+1],l=Math.hypot(bx-ax,bz-az)||1,lx=(bz-az)/l*hw,lz=-(bx-ax)/l*hw,y0=ys[i/2-1],y1=ys[i/2],v0=d/3,v1=(d+l)/3;d+=l;
    const A=[ax+lx,y0,az+lz,0,v0],B=[bx+lx,y1,bz+lz,0,v1],C=[bx-lx,y1,bz-lz,1,v1],D=[ax-lx,y0,az-lz,1,v0];tq(A,B,C);tq(A,C,D)}
   for(let i=0;i<p.length;i+=2)for(let k=0;k<10;k++){const a0=k/10*PI*2,a1=(k+1)/10*PI*2,n=a.length;flatTri(a,ys[i/2]-.03,p[i],p[i+1],p[i]+Math.cos(a0)*hw,p[i+1]+Math.sin(a0)*hw,p[i]+Math.cos(a1)*hw,p[i+1]+Math.sin(a1)*hw);for(let q=n;q<a.length;q+=3)uv.push(.02,.5)}};
- const okP=(x,z)=>!inBuilding(x,z)&&[[0,0],[1.4,0],[-1.4,0],[0,1.4],[0,-1.4]].every(([u,v])=>roadAt(x+u,z+v)<0)&&!pil.some(q=>(q[0]-x)**2+(q[2]-z)**2<100);
+ const okP=(x,z)=>!inBuilding(x,z)&&[[0,0],[1.4,0],[-1.4,0],[0,1.4],[0,-1.4]].every(([u,v])=>roadAt(x+u,z+v)<0)&&!pil.some(q=>(q[0]-x)**2+(q[2]-z)**2<576);
  for(const r of MAP.rails){let p=r.p;
   if(!r.b){ribbon(ba,p,1.6,CURB+.03,true);for(const s of[-.72,.72])for(let i=2;i<p.length;i+=2){const l=Math.hypot(p[i]-p[i-2],p[i+1]-p[i-1])||1,lx=(p[i+1]-p[i-1])/l*s,lz=-(p[i]-p[i-2])/l*s;quad(rl,p[i-2]+lx,p[i-1]+lz,p[i]+lx,p[i+1]+lz,.06,CURB+.15)}
    for(let i=2;i<p.length;i+=2){const ax=p[i-2],az=p[i-1],bx=p[i],bz=p[i+1],n=Math.max(1,Math.ceil(Math.hypot(bx-ax,bz-az)/8));
     for(let k=0;k<n;k++){const x0=ax+(bx-ax)*k/n,z0=az+(bz-az)*k/n,x1=ax+(bx-ax)*(k+1)/n,z1=az+(bz-az)*(k+1)/n;if(roadAt(x0,z0)<0&&roadAt(x1,z1)<0&&roadAt((x0+x1)/2,(z0+z1)/2)<0)addCaps(x0,z0,x1,z1,1.9)}}continue}
   // ¿Qué extremos bajan en rampa? (solos, a menos de 20 m del borde y sin apuntar hacia fuera del mapa)
-  const ramp=[0,1].map(e=>{const n=p.length,x=e?p[n-2]:p[0],z=e?p[n-1]:p[1],qx=e?p[n-4]:p[2],qz=e?p[n-3]:p[3];if(RE.filter(o=>Math.hypot(o[0]-x,o[1]-z)<2).length>1)return false;
-   const ed=Math.min(x,z,W-x,W-z);if(ed>20)return false;const nx=x===Math.min(x,z,W-x,W-z)?-1:W-x===ed?1:0,nz=nx?0:z===ed?-1:1,l=Math.hypot(x-qx,z-qz)||1;return((x-qx)/l*nx+(z-qz)/l*nz)<.6});
+  // (solo el ramal del monorraíl junto al borde derecho: la regla general bajaba 18 extremos y salían rampas inútiles por todo el borde)
+  const ramp=[0,1].map(e=>{const n=p.length,x=e?p[n-2]:p[0],z=e?p[n-1]:p[1];return Math.hypot(x-2383,z-1185)<10});
   if(ramp[0]||ramp[1]){const q=[p[0],p[1]];for(let i=2;i<p.length;i+=2){const n=Math.ceil(Math.hypot(p[i]-p[i-2],p[i+1]-p[i-1])/4);for(let k=1;k<=n;k++)q.push(p[i-2]+(p[i]-p[i-2])*k/n,p[i-1]+(p[i+1]-p[i-1])*k/n)}p=new Float32Array(q)}
   const D=[0];for(let i=2;i<p.length;i+=2)D.push(D[D.length-1]+Math.hypot(p[i]-p[i-2],p[i+1]-p[i-1]));const TL=D[D.length-1],RL=Math.min(60,TL*.45);
   const ys=D.map(d=>{let f=1;if(ramp[0])f=Math.min(f,d/RL);if(ramp[1])f=Math.min(f,(TL-d)/RL);f=Math.max(0,Math.min(1,f));return CURB+.05+(7.5-CURB-.05)*f*f*(3-2*f)});
@@ -207,7 +209,7 @@ async function loadWorld(){
   // Rampa: a la altura de un coche, la parte baja choca como un muro (no se puede subir a la vía)
   for(let i=2;i<p.length;i+=2)if(Math.min(ys[i/2-1],ys[i/2])<2.5)addCaps(p[i-2],p[i-1],p[i],p[i+1],2.2);
   const at=d=>{let i=1;while(i<D.length-1&&D[i]<d)i++;const f=(d-D[i-1])/((D[i]-D[i-1])||1);return[p[i*2-2]+(p[i*2]-p[i*2-2])*f,p[i*2-1]+(p[i*2+1]-p[i*2-1])*f,ys[i-1]+(ys[i]-ys[i-1])*f]};
-  for(let d=14;d<TL;d+=28)for(const o of[0,3,-3,6,-6,9,-9]){const dd=d+o;if(dd<0||dd>TL)continue;const[x,z,y]=at(dd);if(y<3)break;if(okP(x,z)){pil.push([x,0,z,0,1,(y-.05)/7.5]);break}}}
+  for(let d=20;d<TL;d+=42)for(const o of[0,3,-3,6,-6,9,-9]){const dd=d+o;if(dd<0||dd>TL)continue;const[x,z,y]=at(dd);if(y<3)break;if(okP(x,z)){pil.push([x,0,z,0,1,(y-.05)/7.5]);break}}}
  if(ba.length)mkMesh(ba,flat(0x6b6158),-1);if(rl.length)mkMesh(rl,new THREE.MeshLambertMaterial({color:0x8d939b,side:THREE.DoubleSide}));
  // Vías elevadas: bordes de hormigón, grava oscura y traviesas, para que no se confundan con una carretera
  if(dk.length){const tt=canvasTex(128,128,(g,w)=>{g.fillStyle="#6e7074";g.fillRect(0,0,w,w);g.fillStyle="#3f3e3b";g.fillRect(16,0,96,w);const r=rng(21);for(let i=0;i<2600;i++){const v=40+r()*50|0;g.fillStyle=`rgb(${v},${v},${v-3})`;g.fillRect(16+r()*94,r()*w,2,2)}g.fillStyle="#2a2522";for(let j=0;j<5;j++)g.fillRect(24,j*25.6+7,80,12)},true);
