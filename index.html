@@ -13,6 +13,8 @@
  <button class="tb mob" onclick="act('cam')">🎥</button>
  <button class="tb mob" onclick="act('map')">🗺️</button>
  <button class="tb mob" onclick="act('cars')">🚘</button>
+ <button class="tb" onclick="act('race')" title="Carreras">🏁</button>
+ <button class="tb" onclick="act('photo')" title="Modo foto">📷</button>
  <button class="tb" id="rad" onclick="initAudio();radioToggle()">📻</button>
  <button class="tb" onclick="initAudio();if(!RADIO.on)radioToggle();else radioNext(1)">⏭</button>
  <button class="tb" id="snd" onclick="initAudio();setMute(!mute)">🔊</button>
@@ -33,7 +35,11 @@
   <div><button class="b g" onclick="mapZoom(1)">+</button><button class="b g" onclick="mapZoom(-1)">−</button><button class="b" id="ok" disabled data-i18n="Confirmar">Confirmar</button><button class="b g" id="cancel" data-i18n="Cancelar">Cancelar</button></div></div>
  <div class="pn" id="setP" hidden></div>
  <div class="pn" id="livP" hidden></div>
+ <div class="pn" id="raceP" hidden></div>
 </div>
+<div id="raceH" hidden><span id="rcT">0:00.000</span><span id="rcD"></span><small id="rcCp"></small><small id="rcGh" onclick="ghostToggle()"></small></div>
+<div id="rcC" hidden></div>
+<div id="rcBar" hidden></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
@@ -66,6 +72,7 @@
 <script src="js/livery.js"></script>
 <script src="js/seasons.js"></script>
 <script src="js/places.js"></script>
+<script src="js/race.js"></script>
 <script src="js/dev.js"></script>
 <script src="js/main.js"></script>
 </body></html>

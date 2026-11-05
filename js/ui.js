@@ -18,7 +18,7 @@ function buildCards(){$("cards").innerHTML="";tb.innerHTML="";
 buildCards();applyI18n();
 function show(w){state=w;$("ov").hidden=false;$("carsP").hidden=w!=="cars";$("mapP").hidden=w!=="map";$("setP").hidden=true;$("livP").hidden=true;$("ov").classList.remove("liv");if(w==="map"){pend=null;$("ok").disabled=true;mapV={z:1,x:W/2,z0:W/2};drawMap()}
  hudVis(false);$("touch").hidden=true}
-function resume(){state="play";$("ov").hidden=true;hudVis(true);$("touch").hidden=!MOBILE}
+function resume(){state="play";$("ov").hidden=true;$("raceP").hidden=true;hudVis(true);$("touch").hidden=!MOBILE}
 // HUD (minimapa, velocímetro y ayuda): se puede quitar cada parte en Ajustes → Pantalla
 function hudVis(on){$("mini").hidden=!on||!ENV.hud.mini;$("hud").hidden=!on||!ENV.hud.speed||MOBILE;$("spd").hidden=!on||!ENV.hud.speed||!MOBILE;$("help").hidden=!on||!ENV.hud.help||MOBILE;$("mz").hidden=!on||!ENV.hud.mini}
 const mp=$("mp"),mx=mp.getContext("2d");

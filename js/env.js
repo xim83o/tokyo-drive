@@ -4,7 +4,7 @@
 // Ajustes guardados: hora, calidad y sus retoques (sombras, distancia, resplandor), volúmenes, unidades, HUD, teclas y tráfico
 const ENV={mode:"cycle",cycle:15,q:"auto",sh:"auto",far:1,bl:"auto",units:"kmh",npc:MOBILE?1:2,
  vol:{m:.8,e:1,fx:1,rain:1,horn:1,radio:.6},hud:{mini:1,speed:1,help:1},
- keys:{up:["KeyW","ArrowUp"],down:["KeyS","ArrowDown"],left:["KeyA","ArrowLeft"],right:["KeyD","ArrowRight"],hb:["Space",""],cam:["KeyV",""],map:["KeyM",""],cars:["KeyC",""],snd:["KeyN",""],trf:["KeyT",""],radio:["KeyR",""],set:["Escape",""]}},T0=performance.now()/1000;let FOGF=900,FOGQ=900,NF=0,HOUR=10;
+ keys:{up:["KeyW","ArrowUp"],down:["KeyS","ArrowDown"],left:["KeyA","ArrowLeft"],right:["KeyD","ArrowRight"],hb:["Space",""],cam:["KeyV",""],map:["KeyM",""],cars:["KeyC",""],snd:["KeyN",""],trf:["KeyT",""],radio:["KeyR",""],race:["KeyB",""],photo:["KeyF",""],ghost:["KeyG",""],set:["Escape",""]}},T0=performance.now()/1000;let FOGF=900,FOGQ=900,NF=0,HOUR=10;
 try{const s=JSON.parse(localStorage.getItem("td-env")||"{}");for(const k in s){if(ENV[k]&&typeof ENV[k]==="object"&&!Array.isArray(ENV[k]))Object.assign(ENV[k],s[k]);else ENV[k]=s[k]}}catch(e){}
 function saveEnv(){try{localStorage.setItem("td-env",JSON.stringify(ENV))}catch(e){}}
 const QUAL=[{n:"Baja",pr:.75,sh:0,R:0,far:450,lights:0},{n:"Media",pr:1,sh:1024,R:110,far:650,lights:4},{n:"Alta",pr:1.25,sh:2048,R:160,far:900,lights:8},{n:"Ultra",pr:1.75,sh:4096,R:230,far:1200,lights:12}];

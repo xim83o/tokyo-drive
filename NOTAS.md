@@ -115,6 +115,20 @@ Pedido por el usuario (todo con permiso ya dado; descargas permitidas: partes de
 - [x] Vías que atravesaban edificios: se quitan los edificios de más de 6 m que cruza una vía elevada (eran 4).
 
 
+## Tanda 1 — HECHA (js/race.js)
+- [x] Carreras (2 circuitos a 2 vueltas) y contrarreloj (3 rutas) con puntos de control, tiempos y récord guardados en el navegador. Tecla B o botón 🏁.
+- [x] Coche fantasma: se elige entre tus 5 mejores tiempos de cada ruta; la tecla G lo enciende o apaga. Repetición de los últimos 20 s al acabar una carrera. Modo foto: tecla F o botón 📷.
+
+## Próximas tandas elegidas por el usuario (2026-11-05) — sin empezar
+- Multijugador (entra en la tanda 5).
+- Carretera alta conducible, con pocas entradas y salidas, fáciles de cambiar de sitio cuando se amplíe el mapa. El mapa no se amplía de momento.
+- Un coche nuevo (furgoneta kei, diseño propio) y garaje para guardar coches y calcomanías.
+- Cuentas, nube y salas de multijugador: un solo servicio con plan gratuito (tipo Supabase); la cuenta la crea el usuario.
+- Orden: 1) carreras, contrarreloj, fantasma, repetición y modo foto; 2) coche y garaje; 3) autopista; 4) gráficos y sonido; 5) nube y multijugador.
+- Modo realista (RTX real no se puede en el navegador), gráficos mejores, más sonidos (viento, ciudad, trenes) y neones reflejados en el asfalto mojado.
+- Guardar partidas en la nube.
+- Apuntado para más adelante: dinero o puntos para comprar coches y mejoras.
+
 ## Pendiente / ideas
 - Modos de juego (apuntado el 2026-11-05): modo conducción libre (el actual) y modo carreras, para correr por las calles de Tokio.
 - Autopista Shuto elevada.
@@ -122,7 +136,7 @@ Pedido por el usuario (todo con permiso ya dado; descargas permitidas: partes de
 - Mapa más grande (futuro): el ramal que ahora baja en rampa hasta el suelo junto al borde derecho (captura 6 del 2026-11-04) es en realidad una vía de tren elevada (seguramente el monorraíl hacia Haneda), no la autopista. Habrá que alargarla para que siga por el mapa nuevo. Lo mismo con la autopista conducible.
 - Modelos 3D de coches libres (hypercar = hypercar, drift = estilo japonés…), pedir permiso por cada descarga.
 - Calcomanías: packs sencillos + editor tipo Motorfest (franjas, dorsales, colores, llantas, cristales), estilo anime de licencia libre.
-- Daños visibles y hitbox de caja cuando estén los coches definitivos.
+- Hitbox de caja cuando estén los coches definitivos. Daños visibles: el usuario NO los quiere.
 - Cambio manual: de momento no.
 - El usuario quiere más realismo gráfico en el futuro.
 

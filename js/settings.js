@@ -1,7 +1,7 @@
 // Menú de ajustes (Esc o botón ⚙️): gráficos, hora y clima, sonido, tráfico, pantalla (HUD y unidades) y teclas (solo PC).
 // Todo se guarda en el navegador (ENV, ver env.js). Mientras está abierto el juego queda en pausa
 let rebind=null,setPrev="cars",setTab="gfx";
-const ACTS=[["up","Acelerar"],["down","Frenar / marcha atrás"],["left","Girar a la izquierda"],["right","Girar a la derecha"],["hb","Freno de mano"],["cam","Cambiar cámara"],["map","Mapa"],["cars","Coches"],["snd","Silenciar sonido"],["trf","Cambiar tráfico"],["radio","Cambiar emisora"],["set","Ajustes"]];
+const ACTS=[["up","Acelerar"],["down","Frenar / marcha atrás"],["left","Girar a la izquierda"],["right","Girar a la derecha"],["hb","Freno de mano"],["cam","Cambiar cámara"],["map","Mapa"],["cars","Coches"],["snd","Silenciar sonido"],["trf","Cambiar tráfico"],["radio","Cambiar emisora"],["race","Carreras"],["photo","Modo foto"],["ghost","Fantasma"],["set","Ajustes"]];
 const KEYDEF=JSON.parse(JSON.stringify(ENV.keys));
 function keyName(c){if(!c)return"—";const m={Space:"Espacio",Escape:"Esc",ArrowUp:"↑",ArrowDown:"↓",ArrowLeft:"←",ArrowRight:"→",ShiftLeft:"Mayús izq.",ShiftRight:"Mayús der.",ControlLeft:"Ctrl izq.",ControlRight:"Ctrl der.",Enter:"Intro",Tab:"Tab",Backspace:"Borrar"};
  return(m[c]?T(m[c]):0)||c.replace(/^Key/,"").replace(/^Digit/,"").replace(/^Numpad/,"Num ")}

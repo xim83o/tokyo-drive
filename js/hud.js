@@ -29,8 +29,9 @@ function mini(){const s=MZ,c=95;mc.setTransform(1,0,0,1,0,0);mc.clearRect(0,0,19
  if(mapImg){mc.globalAlpha=.85;mc.drawImage(mapImg,0,0);mc.globalAlpha=1}
  if(ready){const seen=new Set(),R=Math.min(14,Math.ceil(5*1.15/MZ));mc.lineCap="round";for(let i=-R;i<=R;i++)for(let j=-R;j<=R;j++)for(const k of gq(px+i*HC,pz+j*HC).r)seen.add(k);
   for(const pass of[0,1]){mc.strokeStyle=pass?"#e4e8ef":"#0b0c10";for(const k of seen){const o=k*6;mc.lineWidth=RSG[o+4]*2+(pass?0:2.5);mc.beginPath();mc.moveTo(RSG[o],RSG[o+1]);mc.lineTo(RSG[o+2],RSG[o+3]);mc.stroke()}}
+  raceMini(mc);
   mc.fillStyle="#ffb000";const nr=110*1.15/MZ;for(const n of NPC)if(n.g.visible&&Math.abs(n.x-px)<nr&&Math.abs(n.z-pz)<nr){mc.beginPath();mc.arc(n.x,n.z,2.2,0,7);mc.fill()}}
- mc.restore();mc.setTransform(1,0,0,1,0,0);
+ mc.restore();mc.setTransform(1,0,0,1,0,0);raceMiniDot(a,b,cc,d,c);
  // Concesionario: icono en su sitio o, si está lejos, en el borde del minimapa señalando hacia dónde está
  if(DEALER){const dx=DEALER.bx-px,dz=DEALER.bz-pz;let x=a*dx+cc*dz,y=b*dx+d*dz;const r=Math.hypot(x,y);if(r>76){x*=76/r;y*=76/r}
   mc.fillStyle="#29d3ff";mc.strokeStyle="#fff";mc.lineWidth=3;mc.beginPath();mc.arc(c+x,c+y,13,0,7);mc.fill();mc.stroke();mc.font="15px system-ui";mc.textAlign="center";mc.textBaseline="middle";mc.fillText("🎨",c+x,c+y+1)}carIcon(mc,c,c,0,1)}
