@@ -294,15 +294,26 @@ function buildTrains(){const key=(x,z)=>Math.round(x)+"_"+Math.round(z),nd=new M
   const D=[0];for(let k=1;k<pts.length;k++)D.push(D[k-1]+Math.hypot(pts[k][0]-pts[k-1][0],pts[k][2]-pts[k-1][2]));const a=pts[0],b=pts[pts.length-1];
   if(D[D.length-1]>600&&ed(a[0],a[2])<45&&ed(b[0],b[2])<45)TRN.routes.push({pts,D,L:D[D.length-1],busy:false})}
  if(!TRN.routes.length)return;
- // Coche de tren inventado: blanco con banda azul y ventanas
- const st=canvasTex(512,64,(g,w,h)=>{g.fillStyle="#e6e8ea";g.fillRect(0,0,w,h);g.fillStyle="#1f5fa8";g.fillRect(0,44,w,10);g.fillStyle="#1c2430";for(let i=0;i<14;i++)g.fillRect(14+i*35,12,24,22);g.fillStyle="#3a4048";for(const x of[120,250,380])g.fillRect(x,10,20,44)});
- const S=new THREE.MeshLambertMaterial({map:st}),R=new THREE.MeshLambertMaterial({color:0xaeb2b6}),F=new THREE.MeshLambertMaterial({color:0x1f5fa8}),geo=new THREE.BoxGeometry(2.8,3.1,20);
- // (los lados son las caras ±X; la textura va a lo largo)
- for(let i=0;i<4;i++){const cars=[];for(let k=0;k<4;k++){const m=new THREE.Mesh(geo,[S,S,R,R,F,F]);m.visible=false;m.castShadow=true;sc.add(m);cars.push(m)}TRN.pool.push({cars,r:null,d:0,dir:1})}}
+ // Tren de cercanías de diseño propio: caja de acero con techo redondeado, bajos, bogies y equipos en el techo; el coche de cabeza lleva morro con parabrisas y faros
+ const sh=new THREE.Shape();sh.moveTo(-1.42,-.95);sh.lineTo(-1.42,1.05);sh.quadraticCurveTo(-1.42,1.6,-.7,1.72);sh.lineTo(.7,1.72);sh.quadraticCurveTo(1.42,1.6,1.42,1.05);sh.lineTo(1.42,-.95);sh.closePath();
+ const body=new THREE.ExtrudeGeometry(sh,{depth:19.8,bevelEnabled:false,curveSegments:5}).translate(0,0,-9.9),I=new THREE.Matrix4(),WB=head=>{const B=vcBuild();B.add(body,"#d6dadd",I);B.at(I,PBOX,"#2a2d33",0,-1.2,0,2.6,.5,17.5);
+   for(const z of[-6.8,6.8]){B.at(I,PBOX,"#1d1f24",0,-1.5,z,2.3,.45,3.2);for(const u of[-1.1,1.1])B.add(cylG(.42,.42,12).rotateZ(Math.PI/2),"#101114",I.clone().multiply(M4(0,-1.45,z+u,0,1,2.5,1)))}
+   for(const z of[-6,0,6])B.at(I,PBOX,"#9aa0a6",0,1.82,z,1.5,.28,3);
+   if(head==="p"){for(const u of[-.6,.6])B.at(I,PBOX,"#30343a",u,2.3,0,.08,.9,.08);B.at(I,PBOX,"#30343a",0,2.74,0,1.5,.07,.3)}
+   if(head==="c"){B.add(new THREE.CylinderGeometry(.72,1,1,4,1).rotateY(Math.PI/4).rotateX(Math.PI/2),"#d6dadd",I.clone().multiply(M4(0,.35,10.4,0,2.02,1.85,1)));B.at(I,PBOX,"#121720",0,.9,10.9,2,.95,.08);B.at(I,PBOX,"#1f5fa8",0,-.3,10.86,2.1,.8,.06);for(const u of[-.75,.75])B.at(I,PBOX,"#fff3c4",u,-.1,10.9,.34,.2,.06)}
+   const m=B.mesh();sc.remove(m);return m};
+ const mC=WB("c"),mP=WB("p"),mM=WB("");
+ // Costados: ventanas con viajeros en sombra, puertas y banda azul
+ const st=canvasTex(1024,128,(g,w,h)=>{g.clearRect(0,0,w,h);g.fillStyle="#1f5fa8";g.fillRect(0,88,w,14);g.fillStyle="#7fb0dc";g.fillRect(0,104,w,4);for(let i=0;i<4;i++){const x=70+i*235;g.fillStyle="#c9ced2";g.fillRect(x,8,84,112);g.fillStyle="#3b4148";g.fillRect(x+2,8,39,112);g.fillRect(x+43,8,39,112);g.fillStyle="#26303a";g.fillRect(x+7,20,29,46);g.fillRect(x+48,20,29,46)}
+   const r=rng(61);for(let i=0;i<5;i++){const x=i*235-92,w2=142;if(x<-w2)continue;g.fillStyle="#1c2530";g.fillRect(x,20,w2,50);g.fillStyle="rgba(150,185,215,.35)";g.fillRect(x+6,22,w2/2,14);g.fillStyle="#d6dadd";for(let k=1;k<3;k++)g.fillRect(x+k*w2/3,20,3,50);g.fillStyle="#0e1319";for(let k=0;k<5;k++)if(r()<.6){g.beginPath();g.arc(x+12+r()*(w2-24),58,7,0,7);g.fill()}}});
+ const sp=[];for(const s of[-1,1]){const a=s*1.435,z0=-9.8*s,z1=9.8*s;sp.push([a,-.95,z0,0,0],[a,-.95,z1,1,0],[a,1.05,z1,1,1],[a,-.95,z0,0,0],[a,1.05,z1,1,1],[a,1.05,z0,0,1])}
+ const sg=new THREE.BufferGeometry();sg.setAttribute("position",new THREE.Float32BufferAttribute(sp.flatMap(q=>q.slice(0,3)),3));sg.setAttribute("uv",new THREE.Float32BufferAttribute(sp.flatMap(q=>q.slice(3)),2));sg.computeVertexNormals();
+ const S=new THREE.MeshLambertMaterial({map:st,transparent:true,alphaTest:.3,side:THREE.DoubleSide});
+ for(let i=0;i<4;i++){const cars=[];for(let k=0;k<4;k++){const G=new THREE.Group(),src=k===0||k===3?mC:k===1?mP:mM,bd=new THREE.Mesh(src.geometry,src.material);bd.castShadow=true;if(k===3)bd.rotation.y=Math.PI;G.add(bd,new THREE.Mesh(sg,S));G.visible=false;sc.add(G);cars.push(G)}TRN.pool.push({cars,r:null,d:0,dir:1})}}
 const _pa=new THREE.Vector3(),_pb=new THREE.Vector3();
-function routeAt(r,s,o){const D=r.D;let a=0,b=D.length-1;while(b-a>1){const m=(a+b)>>1;if(D[m]<=s)a=m;else b=m}const f=(s-D[a])/((D[b]-D[a])||1),p=r.pts[a],q=r.pts[b];return o.set(p[0]+(q[0]-p[0])*f,p[1]+(q[1]-p[1])*f+1.75,p[2]+(q[2]-p[2])*f)}
+function routeAt(r,s,o){const D=r.D;let a=0,b=D.length-1;while(b-a>1){const m=(a+b)>>1;if(D[m]<=s)a=m;else b=m}const f=(s-D[a])/((D[b]-D[a])||1),p=r.pts[a],q=r.pts[b];return o.set(p[0]+(q[0]-p[0])*f,p[1]+(q[1]-p[1])*f+2.05,p[2]+(q[2]-p[2])*f)}
 function trainsTick(dt){if(!TRN.routes.length)return;TRN.t+=dt;if(TRN.t>45){const f=TRN.routes.filter(r=>!r.busy),t=TRN.pool.find(q=>!q.r);if(f.length&&t){TRN.t=0;t.r=f[Math.floor(Math.random()*f.length)];t.r.busy=true;t.d=0;t.dir=Math.random()<.5?1:-1}}
- for(const t of TRN.pool){if(!t.r)continue;const r=t.r;t.d+=22*dt;t.cars.forEach((m,k)=>{const s=t.d-k*20.6-10;if(s<10||s>r.L-10){m.visible=false;return}const u=t.dir>0?s:r.L-s,e=t.dir;routeAt(r,u+9*e,_pa);routeAt(r,u-9*e,_pb);m.visible=true;m.position.addVectors(_pa,_pb).multiplyScalar(.5);m.lookAt(_pa)});
+ for(const t of TRN.pool){if(!t.r)continue;const r=t.r;t.d+=36*dt;t.cars.forEach((m,k)=>{const s=t.d-k*20.6-10;if(s<10||s>r.L-10){m.visible=false;return}const u=t.dir>0?s:r.L-s,e=t.dir;routeAt(r,u+9*e,_pa);routeAt(r,u-9*e,_pb);m.visible=true;m.position.addVectors(_pa,_pb).multiplyScalar(.5);m.lookAt(_pa)});
   if(t.d-3*20.6-10>r.L){r.busy=false;t.r=null;for(const m of t.cars)m.visible=false}}}
 function placesTick(dt){conesTick(dt);trainsTick(dt);raceTick(dt);ambAudio(dt);onlTick(dt)}
 // Focos: material del panel, resplandor de noche y su textura (compartidos por el campo de béisbol y la zona de derrape)

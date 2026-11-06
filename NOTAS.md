@@ -137,6 +137,14 @@ Pedido por el usuario (todo con permiso ya dado; descargas permitidas: partes de
 - [x] Cuenta y partidas en la nube (calcomanías, garaje, tiempos e imágenes), con guardado automático cada minuto. Tabla en tools/supabase.sql; hay que pegarla una vez en Supabase.
 - En el enlace de Claude no funciona lo en línea (bloquea conexiones externas): usar GitHub Pages o jugar.bat.
 
+## Capturas y arreglos del 2026-11-06 — HECHOS
+- [x] Rampas: entran por su lado del tablero, sin cruzarlo. Rampa sur nueva: la autopista acaba ahí (hwyCut); se quitan 5 edificios (HWY_CLEAR). Al ampliar el mapa, quitar hwyCut.
+- [x] Vías: las que acaban en el borde siguen 200 m fuera del mapa. Tren a 130 km/h con modelo propio (morro, techo redondeado, bogies, ventanas).
+- [x] Tráfico: en el final de calle del borde ya no sigue recto fuera de la calzada.
+- [x] Nieve sin brillo (Ultra y Realista) y más contraste en Realista. Sonidos de ambiente en frecuencias que se oyen en portátil.
+- [x] Desarrollador → Incidencias: teletransporte a lo que hay que revisar (devInc en dev.js).
+- Registro de cuentas: en Supabase, Authentication → Users.
+
 ## Próximas tandas elegidas por el usuario (2026-11-05) — sin empezar
 - Sistema de puntos, y al final repasar la interfaz: el usuario la explicará cuando acabe todo.
 - Cuentas, nube y salas de multijugador: un solo servicio con plan gratuito (tipo Supabase); la cuenta la crea el usuario.

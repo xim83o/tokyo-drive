@@ -133,6 +133,7 @@ async function loadWorld(){
  // Edificios primero: las calles se estrechan donde se meterían en uno, y los adornos comprueban si caen dentro
  // El rascacielos de 105 m que tapaba la megatorre Kurogane (places.js) se traslada a un sitio libre del parque, a unos 125 m de ella
  {const b=MAP.buildings.find(q=>q.h>100&&q.h<110&&Math.hypot(q.p[0]-1350,q.p[1]-1547)<80);if(b)for(let i=0;i<b.p.length;i+=2){b.p[i]+=106;b.p[i+1]-=27}}
+ MAP.buildings=MAP.buildings.filter(b=>!HWY_CLEAR.some(([x,z])=>[[0,0],[1,1],[-1,-1],[1,-1],[-1,1]].some(([u,v])=>inPoly(b.p,x+u,z+v))));
  // (el agua se añade después de las calles: si no, las calles que cruzan una bahía o un lago se estrechaban como junto a un edificio)
  for(const b of MAP.buildings)addPoly(b.p,b.h);
  // Calzada a 0 m (la acera queda 15 cm más alta). Cada tramo guarda su medio ancho (r.hw) ya ajustado
@@ -205,6 +206,9 @@ async function loadWorld(){
   // (solo el ramal del monorraíl junto al borde derecho: la regla general bajaba 18 extremos y salían rampas inútiles por todo el borde)
   const ramp=[0,1].map(e=>{const n=p.length,x=e?p[n-2]:p[0],z=e?p[n-1]:p[1];return Math.hypot(x-2383,z-1185)<10});
   if(ramp[0]||ramp[1]){const q=[p[0],p[1]];for(let i=2;i<p.length;i+=2){const n=Math.ceil(Math.hypot(p[i]-p[i-2],p[i+1]-p[i-1])/4);for(let k=1;k<=n;k++)q.push(p[i-2]+(p[i]-p[i-2])*k/n,p[i-1]+(p[i+1]-p[i-1])*k/n)}p=new Float32Array(q)}
+  // Las vías que acaban en el borde del mapa siguen 200 m más allá, para que no se corten a la vista y los trenes salgan del mapa de verdad
+  {const fr=(x,z)=>RE.filter(o=>Math.hypot(o[0]-x,o[1]-z)<2).length===1&&Math.min(x,z,W-x,W-z)<45,ex=(x,z,qx,qz)=>{const l=Math.hypot(x-qx,z-qz)||1;return[x+(x-qx)/l*200,z+(z-qz)/l*200]};let q=Array.from(p);
+   if(!ramp[0]&&fr(p[0],p[1]))q=ex(p[0],p[1],p[2],p[3]).concat(q);const n=p.length;if(!ramp[1]&&fr(p[n-2],p[n-1]))q=q.concat(ex(p[n-2],p[n-1],p[n-4],p[n-3]));p=new Float32Array(q)}
   const D=[0];for(let i=2;i<p.length;i+=2)D.push(D[D.length-1]+Math.hypot(p[i]-p[i-2],p[i+1]-p[i-1]));const TL=D[D.length-1],RL=Math.min(60,TL*.45);
   const ys=D.map(d=>{let f=1;if(ramp[0])f=Math.min(f,d/RL);if(ramp[1])f=Math.min(f,(TL-d)/RL);f=Math.max(0,Math.min(1,f));return CURB+.05+(7.5-CURB-.05)*f*f*(3-2*f)});
   ELV.push({p,ys});ribY(dk,dkuv,p,ys,2.2);for(const s of[-.72,.72]){const o=[];for(let i=0;i<p.length;i+=2){const j=Math.min(i,p.length-4),l=Math.hypot(p[j+2]-p[j],p[j+3]-p[j+1])||1;o.push(p[i]+(p[j+3]-p[j+1])/l*s,p[i+1]-(p[j+2]-p[j])/l*s)}
@@ -212,12 +216,12 @@ async function loadWorld(){
   // Rampa: a la altura de un coche, la parte baja choca como un muro (no se puede subir a la vía)
   for(let i=2;i<p.length;i+=2)if(Math.min(ys[i/2-1],ys[i/2])<2.5)addCaps(p[i-2],p[i-1],p[i],p[i+1],2.2);
   const at=d=>{let i=1;while(i<D.length-1&&D[i]<d)i++;const f=(d-D[i-1])/((D[i]-D[i-1])||1);return[p[i*2-2]+(p[i*2]-p[i*2-2])*f,p[i*2-1]+(p[i*2+1]-p[i*2-1])*f,ys[i-1]+(ys[i]-ys[i-1])*f]};
-  for(let d=20;d<TL;d+=42)for(const o of[0,3,-3,6,-6,9,-9]){const dd=d+o;if(dd<0||dd>TL)continue;const[x,z,y]=at(dd);if(y<3)break;if(okP(x,z)){pil.push([x,0,z,0,1,(y-.05)/7.5]);break}}}
+  for(let d=20;d<TL;d+=42)for(const o of[0,3,-3,6,-6,9,-9]){const dd=d+o;if(dd<0||dd>TL)continue;const[x,z,y]=at(dd);if(y<3)break;if(x<2||z<2||x>W-2||z>W-2||okP(x,z)){pil.push([x,0,z,0,1,(y-.05)/7.5]);break}}}
  if(ba.length)mkMesh(ba,flat(0x6b6158),-1);if(rl.length)mkMesh(rl,new THREE.MeshLambertMaterial({color:0x8d939b,side:THREE.DoubleSide}));
  // Vías elevadas: bordes de hormigón, grava oscura y traviesas, para que no se confundan con una carretera
  if(dk.length){const tt=canvasTex(128,128,(g,w)=>{g.fillStyle="#6e7074";g.fillRect(0,0,w,w);g.fillStyle="#3f3e3b";g.fillRect(16,0,96,w);const r=rng(21);for(let i=0;i<2600;i++){const v=40+r()*50|0;g.fillStyle=`rgb(${v},${v},${v-3})`;g.fillRect(16+r()*94,r()*w,2,2)}g.fillStyle="#2a2522";for(let j=0;j<5;j++)g.fillRect(24,j*25.6+7,80,12)},true);
   mkMesh(dk,new THREE.MeshLambertMaterial({map:tt,side:THREE.DoubleSide}),0,{uv:dkuv},2);
-  inst(new THREE.CylinderGeometry(.8,.8,7.5,8).translate(0,3.75,0),new THREE.MeshLambertMaterial({color:0x8e9096}),pil,0,true);for(const q of pil)addCirc(q[0],q[2],.8)}
+  inst(new THREE.CylinderGeometry(.8,.8,7.5,8).translate(0,3.75,0),new THREE.MeshLambertMaterial({color:0x8e9096}),pil,0,true);for(const q of pil)if(q[0]>2&&q[2]>2&&q[0]<W-2&&q[2]<W-2)addCirc(q[0],q[2],.8)}
  buildBuildings();buildTower();decorate();buildPlaces();drawMapImg();ready=true}
 
 let ROADMAT=null,GROUNDMAT=null;
@@ -312,19 +316,19 @@ function buildCanal(){if(!MAP.rivers.length)return;const wa=[],wl=[],rl=[],gi=[]
     vq(wl,x0,z0,x1,z1,WY-.6,road?-.45:CURB);if(!road)vq(rl,x0,z0,x1,z1,CURB,CURB+1.1)}
    // Autopista elevada: tablero de 13 m a 12 m de altura, pretiles y pilares en el centro del cauce
    // (bordes a inglete en cada vértice: antes cada tramo era un rectángulo y en las curvas las esquinas salían en pico)
-   {const E=(v,s)=>[p[v*2]+MT[v*2]*6.5*s,p[v*2+1]+MT[v*2+1]*6.5*s],v0=i/2-1,v1=i/2,A0=E(v0,1),A1=E(v1,1),B0=E(v0,-1),B1=E(v1,-1);
+   if(!hwyCut((ax+bx)/2,(az+bz)/2)){const E=(v,s)=>[p[v*2]+MT[v*2]*6.5*s,p[v*2+1]+MT[v*2+1]*6.5*s],v0=i/2-1,v1=i/2,A0=E(v0,1),A1=E(v1,1),B0=E(v0,-1),B1=E(v1,-1);
     for(const[a,y]of[[hd,HY],[hs,HY-.8]]){flatTri(a,y,A0[0],A0[1],A1[0],A1[1],B1[0],B1[1]);flatTri(a,y,A0[0],A0[1],B1[0],B1[1],B0[0],B0[1])}
     hwyWall(vq,hw,A0,A1,HY);hwyWall(vq,hw,B0,B1,HY);hwyDeck(ax,az,bx,bz,HY)}
    // (ningún pilar sobre una calle: en las curvas del canal puede coincidir con un puente)
    // (ni sobre una vía elevada: se busca sitio un poco antes o después y, si no hay, ese tramo va sin pilar)
-   for(let t=16;t<L;t+=34)for(const o of[0,6,-6,12,-12]){const q=t+o;if(q<0||q>L)continue;const x=ax+(bx-ax)*q/L,z=az+(bz-az)*q/L;if([[0,0],[3,0],[-3,0],[0,3],[0,-3]].every(([u,v])=>roadAt(x+u,z+v)<0)&&!onElv(x,z)){pil.push([x,0,z,Math.atan2(bx-ax,bz-az)]);break}}}}
+   for(let t=16;t<L;t+=34)for(const o of[0,6,-6,12,-12]){const q=t+o;if(q<0||q>L)continue;const x=ax+(bx-ax)*q/L,z=az+(bz-az)*q/L;if([[0,0],[3,0],[-3,0],[0,3],[0,-3]].every(([u,v])=>roadAt(x+u,z+v)<0)&&!onElv(x,z)&&!hwyCut(x,z)){pil.push([x,0,z,Math.atan2(bx-ax,bz-az)]);break}}}}
  // El canal de los datos a veces viene partido en dos (hueco de unos 14 m donde lo cruza una calle): la autopista sigue seguida por encima
- {const free=FE.filter(a=>!FE.some(b=>b!==a&&Math.hypot(a.x-b.x,a.z-b.z)<1));free.forEach((a,i)=>{for(let j=i+1;j<free.length;j++){const b=free[j];if(Math.hypot(a.x-b.x,a.z-b.z)>30)continue;
+ {const free=FE.filter(a=>!FE.some(b=>b!==a&&Math.hypot(a.x-b.x,a.z-b.z)<1));free.forEach((a,i)=>{for(let j=i+1;j<free.length;j++){const b=free[j];if(Math.hypot(a.x-b.x,a.z-b.z)>30||hwyCut(a.x,a.z))continue;
    const E=(q,s)=>[q.x+q.m[0]*6.5*s,q.z+q.m[1]*6.5*s],sg=Math.hypot(a.m[0]+b.m[0],a.m[1]+b.m[1])>Math.hypot(a.m[0]-b.m[0],a.m[1]-b.m[1])?1:-1,A0=E(a,1),B0=E(a,-1),A1=E(b,sg),B1=E(b,-sg);
    for(const[t,y]of[[hd,HY],[hs,HY-.8]]){flatTri(t,y,A0[0],A0[1],A1[0],A1[1],B1[0],B1[1]);flatTri(t,y,A0[0],A0[1],B1[0],B1[1],B0[0],B0[1])}hwyWall(vq,hw,A0,A1,HY);hwyWall(vq,hw,B0,B1,HY);hwyDeck(a.x,a.z,b.x,b.z,HY);a.j=b.j=1}});
   // Extremos sueltos de la autopista: pretil de cierre
-  for(const a of free)if(!a.j){const P=[a.x+a.m[0]*6.5,a.z+a.m[1]*6.5],Q=[a.x-a.m[0]*6.5,a.z-a.m[1]*6.5];vq(hw,P[0],P[1],Q[0],Q[1],HY-.8,HY+1.1)}
-  hwyGeo(hd,hs,hw,pil,WY,HY)}
+  for(const a of free)if(!a.j&&!hwyCut(a.x,a.z)){const P=[a.x+a.m[0]*6.5,a.z+a.m[1]*6.5],Q=[a.x-a.m[0]*6.5,a.z-a.m[1]*6.5];vq(hw,P[0],P[1],Q[0],Q[1],HY-.8,HY+1.1)}
+  hwyGeo(hd,hs,hw,pil,WY,HY,vq)}
  // Puentes: tramos de calle por encima del agua
  for(let k=0;k<RSG.length;k+=6){const ax=RSG[k],az=RSG[k+1],bx=RSG[k+2],bz=RSG[k+3],w2=RSG[k+4],L=Math.hypot(bx-ax,bz-az)||1,lx=(bz-az)/L,lz=-(bx-ax)/L,n=Math.ceil(L);
   // Solo es puente si la calle cruza el canal (no si va paralela al borde, que pondría barrera a un lado de toda la calle). Los

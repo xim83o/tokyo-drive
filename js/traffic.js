@@ -199,8 +199,8 @@ function npcs(dt){if(!LANES.length)return;TT+=dt;const k2=Math.floor(TT*2);if(k2
    if(!n.tr){const L2=n.lane,d=L2.s1-n.s;if(!n.nx&&d<45&&!n.dead){n.nx=pickNext(L2);if(!n.nx)n.dead=true}
     // Calle de sentido único sin salida (borde del mapa): se para al final y desaparece solo cuando no se ve
     const ex=lanePos(L2,L2.s1),edge=Math.min(ex[0],ex[1],W-ex[0],W-ex[1])<40;
-    if(n.dead&&edge){if(d<1.5){n.exit=true;continue}}
-    else if(n.dead){vt=Math.min(vt,Math.max(0,d-2)*.8);SPH.center.set(n.x,1,n.z);n.uns=FR.intersectsSphere(SPH)&&Math.hypot(n.x-px,n.z-pz)<250?0:n.uns+dt;if(n.uns>1.5){npcRst(n);n.lane=null;continue}}
+    // (antes, en el borde, seguían recto fuera de la calzada: ahora frenan al final y desaparecen cuando no se ven)
+    if(n.dead){vt=Math.min(vt,Math.max(0,d-2)*.8);SPH.center.set(n.x,1,n.z);n.uns=FR.intersectsSphere(SPH)&&Math.hypot(n.x-px,n.z-pz)<250?0:n.uns+dt;if(n.uns>1.5){npcRst(n);n.lane=null;continue}}
     // Semáforo o cruce sin semáforo ocupado: frenada progresiva hasta quedarse con el morro en la línea
     const g=GN[L2.to],room=d-n.l/2-.5;let stop=false;if(n.ign>0)n.ign-=dt;
     if(g.r>0&&d<60){if(g.cl>=0&&!L2.internal){const st=lightSt(L2);stop=st==="r"||(st==="y"&&room>n.v*n.v/12)}

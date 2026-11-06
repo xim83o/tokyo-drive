@@ -93,8 +93,9 @@ function setupPost(){if(!THREE.EffectComposer||composer)return;composer=new THRE
 function postSize(){if(!composer)return;const pr=rd.getPixelRatio();composer.setPixelRatio(pr);composer.setSize(innerWidth,innerHeight);fxaa.material.uniforms.resolution.value.set(1/(innerWidth*pr),1/(innerHeight*pr))}
 function renderFrame(){const lv=qLevel(),bl=ENV.bl==="auto"?lv>=2:ENV.bl==="on";if(composer&&(lv>=1||bl)){bloom.enabled=bl;bloom.strength=.1+NF*.7+WEA.wet*.1;bloom.threshold=.78-NF*.12;
   // Reflejos: en Alta o más cuando el suelo está mojado; en Realista, siempre un brillo suave y sombras de contacto
-  const R=lv===4,wet=lv>=2?Math.min(.9,WEA.wet*1.1):0,U=realP.uniforms;U.uWet.value=R?Math.max(.12,wet):wet>.06?wet:0;U.uAO.value=R?1:0;U.uSky.value.copy(sc.fog.color);realP.enabled=R||U.uWet.value>0;
-  grade.uniforms.film.value=R?1:0;grade.uniforms.sat.value=R?1.04:1.12;grade.uniforms.con.value=R?1.08:1.06;grade.uniforms.vig.value=R?.42:.28;composer.render()}else rd.render(sc,cam)}
+  // (la nieve no brilla: con invierno o suelo nevado no hay reflejos; y el brillo seco de Realista es muy suave para no igualar calzada y acera)
+  const R=lv===4,snowy=SEASON===3||(WEA.snow||0)>.05,wet=lv>=2&&!snowy?Math.min(.9,WEA.wet*1.1):0,U=realP.uniforms;U.uWet.value=wet>.06?wet:R&&!snowy?.05:0;U.uAO.value=R?1:0;U.uSky.value.copy(sc.fog.color);realP.enabled=R||U.uWet.value>0;
+  grade.uniforms.film.value=R?1:0;grade.uniforms.sat.value=R?1.1:1.12;grade.uniforms.con.value=R?1.16:1.06;grade.uniforms.vig.value=R?.42:.28;composer.render()}else rd.render(sc,cam)}
 let ledT=0;
 // Transición suave: la luz del día baja poco a poco desde media tarde (curva suave de 15:00 a 19:00, y al revés al amanecer) y el color
 // anaranjado del atardecer dura más (franja ancha alrededor del horizonte)
@@ -124,7 +125,7 @@ function envUpdate(dt){HOUR=hourNow();const e=Math.sin((HOUR-6)/12*PI),day=sstep
  if(ROADMAT)ROADMAT.lightMapIntensity=NF*1.5;if(WATERM){WATERM.lightMapIntensity=NF*1.1;WATERM.reflectivity=.5*(1-NF*.6);WATERU.uTime.value=performance.now()/1000;WATERU.uNightW.value=NF}if(GROUNDMAT)GROUNDMAT.lightMapIntensity=NF*1.3;if(NM.vend)NM.vend.emissiveIntensity=.15+NF*.85;
  if(NM.head)NM.head.emissiveIntensity=.2+NF*1.8;if(NM.tail)NM.tail.emissiveIntensity=.25+NF*1.3;
  if(towerMat)towerMat.emissive.copy(PAL.tw).multiplyScalar(NF*.55);for(const m of NM.ledT)m.color.setScalar(.85+NF*.15);
- if(ROADMAT){ROADMAT.specular.setScalar(.05+WEA.wet*.75);ROADMAT.shininess=30+WEA.wet*70;ROADMAT.color.setScalar(1-WEA.wet*.35)}
+ if(ROADMAT){const dw=SEASON===3?0:WEA.wet;ROADMAT.specular.setScalar(.05+dw*.75);ROADMAT.shininess=30+dw*70;ROADMAT.color.setScalar(1-dw*.35)}
  HL.intensity=NF>.2?NF*7:0;if(car){const fx=Math.sin(h),fz=Math.cos(h),f=cur.l/2+.3;HL.position.set(px+fx*f,.8+bodyY,pz+fz*f);HL.target.position.set(px+fx*26,0,pz+fz*26);HL.target.updateMatrixWorld();
   HLU.uHLP.value.set(px+fx*f,pz+fz*f);HLU.uHLD.value.set(fx,fz);HLU.uHLI.value=NF>.2&&spawned?NF*1.4:0}
  // Farolas más cercanas al jugador con luz de verdad (se reparten cada 0,3 s) y detalle cercano de los edificios
