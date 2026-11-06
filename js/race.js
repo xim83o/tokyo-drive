@@ -48,7 +48,7 @@ function rTurn(){const R=RACE.rt,n=R.cps.length,k=RACE.cp%n,E=$("rcA"),q=R.cps[k
  E.hidden=!t;if(t){E.textContent=t>0?"⬅":"➡";E.title=Math.round(D)+" m"}}
 function rPlace(){const R=RACE.rt,n=R.cps.length,k=RACE.cp%n,tot=n*R.laps;GTS.forEach((q,i)=>{const d=(i-k+n)%n;q.G.visible=d<2&&RACE.cp+d<tot;for(const m of q.P)m.material=d===0?GTM.next:GTM.far;for(const m of q.C)m.material=d===0?GTM.tn:GTM.tf;for(const m of q.H)m.visible=d===0});const c=R.cps[k];GTM.beam.position.set(c.x,0,c.z);GTM.beam.visible=true}
 // ¿Va por la ruta? Se mira el tramo entre el último punto de control y el siguiente (no vale atajar a otra parte del recorrido ni subir a la autopista)
-function rOnRoute(){if(HWL.on)return false;const R=RACE.rt,n=R.cps.length,k=RACE.cp%n,i1=Math.min(R.pts.length-1,R.cps[k].i+2),i0=Math.max(0,(k?R.cps[k-1].i:0)-2);for(let i=i0+1;i<=i1;i++){const[a,b]=R.pts[i-1],[c,d]=R.pts[i];if(segD2(px,pz,a,b,c,d)<784)return true}return false}
+function rOnRoute(){if(HWL.on)return false;const R=RACE.rt,n=R.cps.length,k=RACE.cp%n,i1=Math.min(R.pts.length-1,R.cps[k].i+2),i0=Math.max(0,(k>1?R.cps[k-2].i:0)-2);for(let i=i0+1;i<=i1;i++){const[a,b]=R.pts[i-1],[c,d]=R.pts[i];if(segD2(px,pz,a,b,c,d)<784)return true}return false}
 // Fuera de la ruta o tras saltarse un arco: al acabarse los 5 s, vuelve al último punto por el que pasó (el tiempo sigue corriendo)
 function rBack(){const R=RACE.rt,n=R.cps.length,k=RACE.cp%n,q=R.cps[k];let x=RACE.sx,z=RACE.sz,hd=RACE.sh;if(RACE.cp>0){const o=R.cps[(RACE.cp-1)%n];x=o.x;z=o.z;hd=Math.atan2(o.dx,o.dz)}spawnAt({x,z,h:hd});RACE.off=null;RACE.safe=1.5}
 function raceQuit(){raceAbort();if(state==="set")closeSettings()}
