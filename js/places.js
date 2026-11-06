@@ -154,7 +154,9 @@ function templeWall(set,pth,pw,gl){const N=GSN,GS=GSS,SD=GSD,WD=1.2,K=new Set();
    if(!roadNear(mx,mz)||!near(mx,mz))continue;put(a,b,l,mx,mz)}}
  // El resto del contorno (lo que no da a la calle) sigue el borde de la grava, con las esquinas en diagonal para que no salga en escalera.
  // Así el patio queda cerrado y las casas de alrededor se quedan fuera del muro
- const val=(i,j)=>{let c=0;for(const[u,v]of[[0,0],[-1,0],[0,-1],[-1,-1]])if(set.has((j+v)*N+i+u))c++;return c/4-.4},rdNear=(x,z)=>{for(let k=0;k<8;k++){const a=k*PI/4;for(const r of[2.6,5.5])if(roadAt(x+Math.cos(a)*r,z+Math.sin(a)*r)>=0)return true}return false};
+ // (las islas de césped que quedan dentro de la grava no llevan muro: se rellena desde fuera y lo que no se alcanza cuenta como patio)
+ let i0=1e9,i1=-1,j0=1e9,j1=-1;for(const o of set){const i=o%N,j=(o/N)|0;i0=Math.min(i0,i);i1=Math.max(i1,i);j0=Math.min(j0,j);j1=Math.max(j1,j)}i0-=3;j0-=3;i1+=3;j1+=3;const OUT=new Set([j0*N+i0]),st=[[i0,j0]];while(st.length){const[i,j]=st.pop();for(const[u,v]of[[1,0],[-1,0],[0,1],[0,-1]]){const a=i+u,b=j+v,o=b*N+a;if(a<i0||b<j0||a>i1||b>j1||OUT.has(o)||set.has(o))continue;OUT.add(o);st.push([a,b])}}
+ const val=(i,j)=>{let c=0;for(const[u,v]of[[0,0],[-1,0],[0,-1],[-1,-1]]){const a=i+u,b=j+v;if(a>=i0&&b>=j0&&a<=i1&&b<=j1&&!OUT.has(b*N+a))c++}return c/4-.4},rdNear=(x,z)=>{for(let k=0;k<8;k++){const a=k*PI/4;for(const r of[2.6,5.5])if(roadAt(x+Math.cos(a)*r,z+Math.sin(a)*r)>=0)return true}return false};
  for(const o of K){const i=o%N,j=(o/N)|0;if(i<1||j<1||i>N-3||j>N-3)continue;const C=[[i*GS,j*GS,val(i,j)],[(i+1)*GS,j*GS,val(i+1,j)],[(i+1)*GS,(j+1)*GS,val(i+1,j+1)],[i*GS,(j+1)*GS,val(i,j+1)]],X=[];
   for(let k=0;k<4;k++){const a=C[k],b=C[(k+1)%4];if((a[2]>0)!==(b[2]>0)){const t=a[2]/(a[2]-b[2]);X.push([a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t])}}
   for(let k=0;k+1<X.length;k+=2){const a=X[k],b=X[k+1],mx=(a[0]+b[0])/2,mz=(a[1]+b[1])/2,l=Math.hypot(b[0]-a[0],b[1]-a[1]);if(l<.05||rdNear(mx,mz))continue;put(a,b,l,mx,mz)}}
