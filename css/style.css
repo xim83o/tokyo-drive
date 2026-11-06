@@ -47,7 +47,7 @@ button.b:disabled{opacity:.4;cursor:default}button.g{background:rgba(128,128,128
 #raceH{position:fixed;z-index:4;top:calc(12px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;padding:6px 18px;border-radius:12px;background:rgba(0,0,0,.6);color:#fff;font:600 13px system-ui;pointer-events:none}
 #rcT{font:700 26px ui-monospace,Consolas,monospace}#rcD{font:700 15px ui-monospace,Consolas,monospace}#rcGh{pointer-events:auto;cursor:pointer}
 #rcC{position:fixed;z-index:4;top:32%;left:50%;transform:translate(-50%,-50%);color:#fff;font:800 96px system-ui;text-shadow:0 4px 18px rgba(0,0,0,.7);pointer-events:none}
-#rcA{position:fixed;z-index:4;top:17%;left:50%;transform:translateX(-50%);color:#ffd400;font:800 64px system-ui;text-shadow:0 0 16px rgba(255,176,0,.9),0 3px 8px rgba(0,0,0,.8);pointer-events:none}
+body.rcUI #topbar,body.rcUI #help,body.rcUI #radioL,body.rcUI #mz{display:none!important}
 #rcC.warn{font:800 34px system-ui;color:#ffb000}#rcX{margin-top:4px;padding:3px 10px;border:0;border-radius:10px;background:rgba(255,255,255,.2);color:#fff;font:600 12px system-ui;cursor:pointer;pointer-events:auto}
 #rcBar{position:fixed;z-index:6;bottom:calc(18px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);display:flex;gap:8px}
 .stabs{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:6px}
