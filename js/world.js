@@ -303,9 +303,9 @@ function buildGround(){const GS=MOBILE?4:3,N=Math.ceil(W/GS)+1,SD=new Float32Arr
 // la autopista elevada sobre pilares como en la realidad (de adorno: no se puede subir)
 const WATERU={uTime:{value:0},uNightW:{value:0}};let WATERM=null;
 // ¿Un pilar de la autopista en (x,z) tocaría una vía elevada? (tablero de 4,4 m de ancho más el medio ancho del pilar)
-// El corredor de vías del mapa real tiene hasta 12 líneas seguidas y varias se cruzan a la misma altura. Se quedan 4 sin cruces: se quita cada línea entera (de borde a borde)
-// que pasa por uno de estos puntos
-const RAIL_DROP=[[2355,1100],[2367,1100],[2372,1100],[2377,1100],[2394,600],[2368,200],[2372,200]];
+// El corredor de vías del mapa real tiene hasta 12 líneas seguidas: se cruzan a la misma altura y, a menos de 4,4 m, sus tableros se pisan. Se quedan 2 bien separadas: se quita
+// cada línea entera (de borde a borde) que pasa por uno de estos puntos. También la paralela del monorraíl, que se montaba sobre el ramal que baja a tierra
+const RAIL_DROP=[[2355,1100],[2367,1100],[2372,1100],[2377,1100],[2394,600],[2368,200],[2372,200],[2356.8,1050],[2372.9,1050],[2399.3,1300]];
 function railsTrim(){const key=(x,z)=>Math.round(x)+"_"+Math.round(z),nd=new Map(),R=MAP.rails,seen=new Set(),drop=new Set();R.forEach((r,i)=>{const p=r.p,n=p.length;for(const[k,e]of[[key(p[0],p[1]),0],[key(p[n-2],p[n-1]),1]]){if(!nd.has(k))nd.set(k,[]);nd.get(k).push([i,e])}});
  for(const[,l]of nd){if(l.length!==1)continue;let[i,e]=l[0];if(seen.has(i))continue;const ch=[];for(;;){seen.add(i);ch.push(i);const p=R[i].p,n=p.length,x=e?p[0]:p[n-2],z=e?p[1]:p[n-1],nx=(nd.get(key(x,z))||[]).find(([j])=>!seen.has(j));if(!nx)break;i=nx[0];e=nx[1]}
   if(ch.some(c=>{const p=R[c].p;for(let k=2;k<p.length;k+=2)for(const q of RAIL_DROP)if(segD2(q[0],q[1],p[k-2],p[k-1],p[k],p[k+1])<1.7)return true;return false}))for(const c of ch)drop.add(c)}

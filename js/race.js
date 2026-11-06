@@ -3,11 +3,11 @@
 // últimos 20 s al acabar una carrera; y modo foto (cámara libre alrededor del coche y guardar la imagen)
 const RTS=[{id:"torre",n:"Circuito de la Torre",tipo:"Carrera",laps:2,loop:true,w:[[1020,1020],[1400,1000],[1420,1400],[1020,1400]]},
  {id:"canal",n:"Circuito del Canal",tipo:"Carrera",laps:2,loop:true,w:[[800,1500],[1250,1650],[1600,1780],[1560,1450],[1000,1300]]},
- {id:"kuro",n:"Torre de Tokio → Kurogane",tipo:"Contrarreloj",laps:1,w:[[1201,1090],[1364,1680]]},
- {id:"beis",n:"Béisbol → Zona de derrape",tipo:"Contrarreloj",laps:1,w:[[1139,900],[1650,1250]]},
+ {id:"kuro2",n:"Torre de Tokio → Kurogane",tipo:"Contrarreloj",laps:1,w:[[1201,1090],[1500,1100],[1600,1500],[1000,1450],[1364,1680]]},
+ {id:"beis2",n:"Béisbol → Zona de derrape",tipo:"Contrarreloj",laps:1,w:[[1139,900],[800,1000],[900,1500],[1400,1450],[1650,1250]]},
  {id:"cruce",n:"Cruce de Tokio",tipo:"Contrarreloj",laps:1,w:[[320,1200],[2100,1250]]}];
 const RACE={on:false,rt:null,cp:0,t:0,cd:0,rec:[],split:[],ghost:null,gOn:true,recT:0};
-const RDT=.05,CPD=140;
+const RDT=.05,CPD=400;
 const rStore=()=>{try{return JSON.parse(localStorage.getItem("td-race")||"{}")}catch(e){return{}}},rSave=s=>{try{localStorage.setItem("td-race",JSON.stringify(s))}catch(e){}};
 const fmtT=t=>{const m=Math.floor(t/60),s=t-m*60;return m+":"+(s<10?"0":"")+s.toFixed(3)};
 // --- Rutas: camino más corto por el grafo de calles, prefiriendo las avenidas ---
@@ -20,24 +20,37 @@ function rPath(a,b,used){const dist=new Map([[a,0]]),prev=new Map(),H=[[0,a]],up
  while(H.length){const[d,n]=H[0],l=H.pop();if(H.length){H[0]=l;dn()}if(n===b)break;if(d>dist.get(n))continue;for(const[m,c]of n.e){const nc=d+c*(used.has(n.id+"_"+m.id)?6:1);if(nc<(dist.has(m)?dist.get(m):1e18)){dist.set(m,nc);prev.set(m,n);H.push([nc,m]);up()}}}
  if(!prev.has(b))return null;const P=[b];for(let n=b;n!==a;){n=prev.get(n);P.unshift(n)}for(let i=1;i<P.length;i++){used.add(P[i-1].id+"_"+P[i].id);used.add(P[i].id+"_"+P[i-1].id)}return P}
 function rBuild(R){if(R.pts)return R;const W=R.w.map(([x,z])=>rNear(x,z));if(R.loop)W.push(W[0]);const used=new Set();let P=[W[0]];for(let i=1;i<W.length;i++){const q=rPath(W[i-1],W[i],used);if(!q)return null;P=P.concat(q.slice(1))}
- R.pts=P.map(n=>[n.x,n.z]);let D=0;const cps=[];let nx=CPD;for(let i=1;i<R.pts.length;i++){const[a,b]=R.pts[i-1],[c,d]=R.pts[i],l=Math.hypot(c-a,d-b);while(D+l>=nx&&(R.pts.length-i>0)){const f=(nx-D)/(l||1);cps.push({x:a+(c-a)*f,z:b+(d-b)*f,dx:(c-a)/(l||1),dz:(d-b)/(l||1),i});nx+=CPD}D+=l}
- R.len=D;while(cps.length&&D-(cps.length*CPD)<50)cps.pop();const[e0,e1]=R.pts.slice(-2);const ll=Math.hypot(e1[0]-e0[0],e1[1]-e0[1])||1;cps.push({x:e1[0],z:e1[1],dx:(e1[0]-e0[0])/ll,dz:(e1[1]-e0[1])/ll,end:true,i:R.pts.length-1});R.cps=cps;return R}
-// --- Arcos de los puntos de control: altos y luminosos, se ven desde lejos. El siguiente va resaltado y con un haz de luz hacia el cielo ---
+ R.pts=P.map(n=>[n.x,n.z]);const S=[0];for(let i=1;i<R.pts.length;i++)S.push(S[i-1]+Math.hypot(R.pts[i][0]-R.pts[i-1][0],R.pts[i][1]-R.pts[i-1][1]));const D=S[S.length-1],cps=[];
+ const at=s=>{s=Math.max(0,Math.min(D,s));let i=1;while(i<S.length-1&&S[i]<s)i++;const f=(s-S[i-1])/((S[i]-S[i-1])||1),[a,b]=R.pts[i-1],[c,d]=R.pts[i];return{x:a+(c-a)*f,z:b+(d-b)*f,i}};
+ // Los puntos de control van en un tramo recto (se busca hasta 80 m antes o después) y orientados con la calle, para que los banderines queden de frente
+ for(let s=CPD;D-s>=150;s+=CPD){let u=null;for(const o of[0,20,-20,40,-40,60,-60,80,-80]){const a=at(s+o-22),b=at(s+o),c=at(s+o+22);if(Math.abs(ad(Math.atan2(b.x-a.x,b.z-a.z),Math.atan2(c.x-b.x,c.z-b.z)))<.2){u=[a,b,c];break}}if(!u)u=[at(s-22),at(s),at(s+22)];const[a,b,c]=u,l=Math.hypot(c.x-a.x,c.z-a.z)||1;cps.push({x:b.x,z:b.z,dx:(c.x-a.x)/l,dz:(c.z-a.z)/l,i:b.i})}
+ R.len=D;{const a=at(D-30),b=at(D),l=Math.hypot(b.x-a.x,b.z-a.z)||1;cps.push({x:b.x,z:b.z,dx:(b.x-a.x)/l,dz:(b.z-a.z)/l,end:true,i:R.pts.length-1})}R.cps=cps;return R}
+// --- Banderines de los puntos de control: dos a cada lado de la calle, altos y luminosos, se ven desde lejos. El siguiente punto va resaltado y con un haz de luz; la meta, a cuadros ---
 let GTS=[],GTM=null;
 function gateMats(){if(GTM)return GTM;const b=(c,o)=>new THREE.MeshBasicMaterial({color:c,transparent:o<1,opacity:o,fog:o<1,depthWrite:o>=1}),chk=canvasTex(128,32,(g)=>{for(let i=0;i<16;i++)for(let j=0;j<4;j++){g.fillStyle=(i+j)%2?"#111":"#fff";g.fillRect(i*8,j*8,8,8)}},true);
  const beam=new THREE.Mesh(new THREE.CylinderGeometry(1.1,1.1,160,10,1,true).translate(0,80,0),new THREE.MeshBasicMaterial({color:0xffb000,transparent:true,opacity:.28,fog:false,depthWrite:false,blending:THREE.AdditiveBlending,side:THREE.DoubleSide}));beam.visible=false;sc.add(beam);
- GTM={next:b(0xffb000,1),far:b(0xff5a2a,.4),fin:new THREE.MeshBasicMaterial({map:chk,side:THREE.DoubleSide,fog:false}),beam};return GTM}
+ chk.repeat.set(.44,5);const fs=new THREE.Shape();fs.moveTo(0,0);fs.lineTo(0,6.4);fs.quadraticCurveTo(1.5,6.9,2.2,5.4);fs.quadraticCurveTo(2.5,2.6,0,0);
+ // Tela del banderín: franja oscura con «東京», flechas hacia delante y remate a rayas. Los del lado izquierdo van reflejados para que el texto se lea siempre bien
+ const mk=s=>{const g=new THREE.ShapeGeometry(fs,8),P=g.attributes.position,U=g.attributes.uv;for(let i=0;i<P.count;i++){const x=P.getX(i),y=P.getY(i);P.setX(i,x*s);U.setXY(i,s>0?1-x/2.5:x/2.5,y/6.9)}return g};
+ const tx=canvasTex(128,352,g=>{g.fillStyle="#fff";g.fillRect(0,0,128,352);g.fillStyle="#17181f";g.fillRect(0,26,128,134);g.fillStyle="#fff";g.font="bold 54px sans-serif";g.textAlign="center";g.fillText("東",62,84);g.fillText("京",62,144);g.fillStyle="#17181f";for(const y of[182,216,250]){g.beginPath();g.moveTo(26,y);g.lineTo(64,y+24);g.lineTo(102,y);g.lineTo(102,y+14);g.lineTo(64,y+38);g.lineTo(26,y+14);g.closePath();g.fill()}for(let y=306;y<352;y+=16)g.fillRect(0,y,128,8)});
+ GTM={fgR:mk(1),fgL:mk(-1),tg:new THREE.ConeGeometry(.24,.6,3).rotateX(PI),ts:new THREE.SphereGeometry(.22,10,8),tb:new THREE.CylinderGeometry(.5,.7,.2,10),next:b(0xffb000,1),far:b(0xff5a2a,.45),fin:new THREE.MeshBasicMaterial({map:chk,side:THREE.DoubleSide,fog:false}),beam,pg:new THREE.CylinderGeometry(.08,.11,7.6,6).translate(0,3.8,0),hl:new THREE.MeshBasicMaterial({color:0xffb000,transparent:true,opacity:.5,fog:false,depthWrite:false,blending:THREE.AdditiveBlending,side:THREE.DoubleSide})};GTM.next.side=GTM.far.side=THREE.DoubleSide;GTM.tn=GTM.next.clone();GTM.tf=GTM.far.clone();GTM.tn.map=GTM.tf.map=tx;return GTM}
 const rHW=(x,z)=>{let m=4;for(const k of gq(x,z).r){const o=k*6;if(segD2(x,z,RSG[o],RSG[o+1],RSG[o+2],RSG[o+3])<(RSG[o+4]+2)**2)m=Math.max(m,RSG[o+4])}return m};
-function gatesClear(){for(const q of GTS){sc.remove(q.G);q.G.traverse(o=>{if(o.geometry)o.geometry.dispose()})}GTS=[];if(GTM)GTM.beam.visible=false}
-function gatesBuild(R){gatesClear();const M=gateMats();R.cps.forEach((c,i)=>{const hw=rHW(c.x,c.z)+1.2,G=new THREE.Group(),P=[new THREE.Mesh(new THREE.TorusGeometry(hw,.42,8,32,PI),M.far)];P[0].position.y=5;
-  for(const s of[-1,1]){const L=new THREE.Mesh(new THREE.CylinderGeometry(.42,.42,5,10),M.far);L.position.set(s*hw,2.5,0);P.push(L)}G.add(...P);
-  if(c.end){const B=new THREE.Mesh(new THREE.PlaneGeometry(hw*1.4,1.8),M.fin);B.position.y=5+hw-1.1;G.add(B)}
-  G.position.set(c.x,0,c.z);G.rotation.y=Math.atan2(c.dx,c.dz);G.visible=false;sc.add(G);c.r=hw+4;GTS.push({G,P})})}
-function rPlace(){const R=RACE.rt,n=R.cps.length,k=RACE.cp%n,tot=n*R.laps;GTS.forEach((q,i)=>{const d=(i-k+n)%n;q.G.visible=RACE.cp+d<tot;for(const m of q.P)m.material=d===0?GTM.next:GTM.far});const c=R.cps[k];GTM.beam.position.set(c.x,0,c.z);GTM.beam.visible=true}
+function gatesClear(){for(const q of GTS)sc.remove(q.G);GTS=[];if(GTM)GTM.beam.visible=false}
+function gatesBuild(R){gatesClear();const M=gateMats();R.cps.forEach((c,i)=>{const hw=rHW(c.x,c.z)+1.2,G=new THREE.Group(),P=[],F=[],H=[],C=[],add=(g,x,y,z)=>{const m=new THREE.Mesh(g,M.far);m.position.set(x,y,z);G.add(m);P.push(m)};
+  for(const s of[-1,1]){const fg=s>0?M.fgR:M.fgL;for(const z of[-3,3]){add(M.pg,s*hw,0,z);add(M.ts,s*hw,7.7,z);add(M.tb,s*hw,.1,z);const B=new THREE.Mesh(fg,c.end?M.fin:M.tf);B.position.set(s*hw,1,z);B.userData.a=0;if(!c.end)C.push(B);F.push(B);G.add(B);const A=new THREE.Mesh(fg,M.hl);A.scale.set(1.3,1.12,1);A.position.set(-.3*s,-.38,-.03);B.add(A);H.push(A)}
+   for(let t=1;t<=5;t++)add(M.tg,s*hw,7.45-Math.sin(PI*t/6)*.7,t-3)}   // (guirnalda de banderitas entre los dos mástiles)
+  G.position.set(c.x,0,c.z);G.rotation.y=Math.atan2(c.dx,c.dz);G.visible=false;sc.add(G);c.r=Math.max(hw+4,26);GTS.push({G,P,F,H,C})})}   // (radio amplio: en avenidas con dos calzadas también cuenta si vas por la otra)
+// Los banderines ondean un poco y el resplandor del siguiente punto late
+function gatesWave(){const t=performance.now()/1000;GTM.hl.opacity=.42+Math.sin(t*4)*.16;for(const q of GTS)if(q.G.visible)q.F.forEach((B,i)=>B.rotation.y=B.userData.a+Math.sin(t*2.4+i*1.3)*.2)}
+// Flecha de giro: mira el recorrido hasta 90 m por delante y, si la calle gira más de 35°, avisa hacia qué lado. ang() da el giro con signo; a la derecha es negativo porque h crece hacia la izquierda
+function rTurn(){const R=RACE.rt,n=R.cps.length,k=RACE.cp%n,E=$("rcA"),q=R.cps[k],i0=Math.max(1,k?R.cps[k-1].i:1);let s=i0,bd=1e18;for(let i=i0;i<=q.i;i++){const a=R.pts[i-1],b=R.pts[i],d=segD2(px,pz,a[0],a[1],b[0],b[1]);if(d<bd){bd=d;s=i}}
+ const dir=i=>{const a=R.pts[i-1],b=R.pts[i];return Math.atan2(b[0]-a[0],b[1]-a[1])},h0=dir(s);let D=Math.hypot(R.pts[s][0]-px,R.pts[s][1]-pz),t=0;for(let i=s+1;i<R.pts.length&&D<90;i++){const l=Math.hypot(R.pts[i][0]-R.pts[i-1][0],R.pts[i][1]-R.pts[i-1][1]);if(l<3){D+=l;continue}const a=ad(dir(i),h0);if(Math.abs(a)>.6){t=a;break}D+=l}
+ E.hidden=!t;if(t){E.textContent=t>0?"⬅":"➡";E.title=Math.round(D)+" m"}}
+function rPlace(){const R=RACE.rt,n=R.cps.length,k=RACE.cp%n,tot=n*R.laps;GTS.forEach((q,i)=>{const d=(i-k+n)%n;q.G.visible=d<2&&RACE.cp+d<tot;for(const m of q.P)m.material=d===0?GTM.next:GTM.far;for(const m of q.C)m.material=d===0?GTM.tn:GTM.tf;for(const m of q.H)m.visible=d===0});const c=R.cps[k];GTM.beam.position.set(c.x,0,c.z);GTM.beam.visible=true}
 // ¿Va por la ruta? Se mira el tramo entre el último punto de control y el siguiente (no vale atajar a otra parte del recorrido ni subir a la autopista)
 function rOnRoute(){if(HWL.on)return false;const R=RACE.rt,n=R.cps.length,k=RACE.cp%n,i1=Math.min(R.pts.length-1,R.cps[k].i+2),i0=Math.max(0,(k?R.cps[k-1].i:0)-2);for(let i=i0+1;i<=i1;i++){const[a,b]=R.pts[i-1],[c,d]=R.pts[i];if(segD2(px,pz,a,b,c,d)<784)return true}return false}
 // Fuera de la ruta o tras saltarse un arco: al acabarse los 5 s, vuelve al último punto por el que pasó (el tiempo sigue corriendo)
-function rBack(){const R=RACE.rt,n=R.cps.length,k=RACE.cp%n,q=R.cps[k];let x=RACE.sx,z=RACE.sz;if(RACE.cp>0){const o=R.cps[(RACE.cp-1)%n];x=o.x;z=o.z}spawnAt({x,z,h:Math.atan2(q.x-x,q.z-z)});RACE.off=null;RACE.safe=1.5}
+function rBack(){const R=RACE.rt,n=R.cps.length,k=RACE.cp%n,q=R.cps[k];let x=RACE.sx,z=RACE.sz,hd=RACE.sh;if(RACE.cp>0){const o=R.cps[(RACE.cp-1)%n];x=o.x;z=o.z;hd=Math.atan2(o.dx,o.dz)}spawnAt({x,z,h:hd});RACE.off=null;RACE.safe=1.5}
 function raceQuit(){raceAbort();if(state==="set")closeSettings()}
 // --- Coche fantasma: copia translúcida de tu coche ---
 let GHC=null;
@@ -55,7 +68,10 @@ function raceSetup(R,gi){if(ENV.rcSkip){raceStart(R,gi);return}const P=$("raceP"
  const lb=document.createElement("label");lb.className="rcChk";lb.innerHTML=`<input type="checkbox"> ${T("No volver a mostrar esta pantalla")}`;const ck=lb.firstChild;ck.onchange=()=>{ENV.rcSkip=ck.checked;saveEnv()};P.appendChild(lb);
  const w=document.createElement("div"),s=document.createElement("button");s.className="b";s.textContent=T("Empezar");s.onclick=()=>raceStart(R,+sel.value);const c=document.createElement("button");c.className="b g";c.textContent=T("Volver");c.onclick=raceMenu;w.append(s,c);P.appendChild(w)}
 function rGhostSel(runs){const sel=document.createElement("select");sel.title=T("Coche fantasma");const o0=document.createElement("option");o0.value=-1;o0.textContent="👻 "+T("Sin fantasma");sel.appendChild(o0);runs.forEach((r,i)=>{const o=document.createElement("option");o.value=i;o.textContent=`👻 ${fmtT(r.t)} · ${r.c}`;sel.appendChild(o)});sel.value=runs.length?0:-1;return sel}
-function raceStart(R,gi){if(!rBuild(R))return;if(RACE.prevT===undefined||RACE.prevT===null)RACE.prevT=npcLvl;setNpc(ENV.rcT);if(state==="race")$("raceP").hidden=true;const[a,b]=R.pts[0],[c,d]=R.pts[Math.min(3,R.pts.length-1)],hd=Math.atan2(c-a,d-b);spawnAt({x:a,z:b,h:hd});bodyY=0;RACE.on=true;RACE.rt=R;RACE.cp=0;RACE.t=0;RACE.cd=3.4;RACE.rec=[];RACE.split=[];RACE.recT=0;RACE.sx=a;RACE.sz=b;RACE.sh=hd;RACE.gi=gi;RACE.off=null;RACE.safe=0;gatesBuild(R);
+function raceStart(R,gi){if(!rBuild(R))return;if(RACE.prevT===undefined||RACE.prevT===null)RACE.prevT=npcLvl;setNpc(ENV.rcT);if(state==="race")$("raceP").hidden=true;let[a,b]=R.pts[0];const[a0,b0]=R.pts[0],[c,d]=R.pts[1];let hd=Math.atan2(c-a,d-b);   // (mirando en el sentido de la calle, no hacia un punto más lejano)
+ // En los circuitos la salida va 25 m antes de la meta, no encima
+ if(R.loop){let left=25;for(let i=R.pts.length-1;i>0&&left>0;i--){const[x0,z0]=R.pts[i],[x1,z1]=R.pts[i-1],l=Math.hypot(x1-x0,z1-z0)||1,f=Math.min(1,left/l);a=x0+(x1-x0)*f;b=z0+(z1-z0)*f;hd=Math.atan2(x0-x1,z0-z1);left-=l}}
+ spawnAt({x:a,z:b,h:hd});bodyY=0;RACE.on=true;RACE.rt=R;RACE.cp=0;RACE.t=0;RACE.cd=3.4;RACE.rec=[];RACE.split=[];RACE.recT=0;RACE.sx=a;RACE.sz=b;RACE.sh=hd;RACE.gi=gi;RACE.off=null;RACE.safe=0;gatesBuild(R);
  const st=rStore()[R.id],run=st&&st.runs&&gi>=0?st.runs[gi]:null;RACE.ghost=run||null;ghostCar();if(GHC)GHC.visible=false;resume();rPlace();rHud();$("rcD").textContent=""}
 function raceAbort(){RACE.on=false;if(RACE.prevT!==undefined&&RACE.prevT!==null){setNpc(RACE.prevT);RACE.prevT=null}gatesClear();RACE.off=null;if(GHC)GHC.visible=false;$("raceH").hidden=true;$("rcC").hidden=true;$("rcC").className=""}
 function raceEnd(){const R=RACE.rt,t=RACE.t,s=rStore(),e=s[R.id]||(s[R.id]={runs:[]}),old=e.runs.length?e.runs[0].t:null,sm=[];for(let i=0;i<RACE.rec.length;i+=6)sm.push(+RACE.rec[i].toFixed(1),+RACE.rec[i+1].toFixed(1),+RACE.rec[i+2].toFixed(3));
@@ -63,14 +79,16 @@ function raceEnd(){const R=RACE.rt,t=RACE.t,s=rStore(),e=s[R.id]||(s[R.id]={runs
 // --- Cada fotograma ---
 // (con cualquier panel abierto el aviso central se oculta, y vuelve al cerrarlo)
 const RC_UI=["ov","mapP","setP","livP","raceP","garP","onlP","radioL"];
-function raceTick(dt){const on=RACE.on&&state==="play",cb=$("rcC");$("raceH").hidden=!on;if(!on){cb.hidden=true;return}idle=0;const R=RACE.rt,ui=RC_UI.some(k=>!$(k).hidden);
+function raceTick(dt){const on=RACE.on&&state==="play",cb=$("rcC");$("raceH").hidden=!on;if(!on){cb.hidden=true;$("rcA").hidden=true;return}idle=0;gatesWave();const R=RACE.rt,ui=RC_UI.some(k=>!$(k).hidden);rTurn();if(ui)$("rcA").hidden=true;
  if(RACE.cd>0){RACE.cd-=dt;px=RACE.sx;pz=RACE.sz;h=camH=RACE.sh;vx=vz=0;const n=Math.ceil(RACE.cd);cb.hidden=ui;cb.textContent=RACE.cd>.4?String(Math.min(3,Math.ceil(RACE.cd-.4))):T("¡Ya!");$("rcT").textContent="0:00.000";ghostAt(0);return}
  RACE.t+=dt;RACE.recT+=dt;while(RACE.recT>=RDT){RACE.recT-=RDT;RACE.rec.push(px,pz,h)}$("rcT").textContent=fmtT(RACE.t);ghostAt(RACE.t);
  const c=R.cps[RACE.cp%R.cps.length];{const k=1+Math.sin(performance.now()/160)*.08;GTS[RACE.cp%R.cps.length].G.scale.set(k,k,k)}
  // Cuenta atrás si se sale de la ruta
  if(RACE.safe>0)RACE.safe-=dt;if(rOnRoute()||RACE.safe>0){if(RACE.off!==null){RACE.off=null;cb.className=""}cb.hidden=true}else{if(RACE.off===null)RACE.off=5;RACE.off-=dt;cb.hidden=ui;cb.className="warn";cb.textContent=`${T("Vuelve a la ruta")} ${Math.max(1,Math.ceil(RACE.off))}`;if(RACE.off<=0){rBack();cb.hidden=true;cb.className=""}}
  if(!HWL.on&&Math.hypot(px-c.x,pz-c.z)<c.r){RACE.split.push(RACE.t);const g=RACE.ghost&&RACE.ghost.split&&RACE.ghost.split[RACE.cp];if(g!==undefined&&g!==null){const d=RACE.t-g;$("rcD").textContent=(d<0?"−":"+")+Math.abs(d).toFixed(2);$("rcD").style.color=d<0?"#49e07a":"#ff6a5a"}RACE.cp++;if(RACE.cp>=R.cps.length*R.laps){raceEnd();return}rPlace();rHud()}}
-function raceMini(g){if(!RACE.on)return;const R=RACE.rt;g.lineCap=g.lineJoin="round";for(const[c,w]of[["#14151a",13],["#ffd400",8]]){g.strokeStyle=c;g.lineWidth=w;g.beginPath();R.pts.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));g.stroke()}}
+// Minimapa: solo el tramo que falta hasta el siguiente punto de control, no todo el recorrido
+function raceMini(g){if(!RACE.on)return;const R=RACE.rt,n=R.cps.length,k=RACE.cp%n,q=R.cps[k],i0=Math.max(1,k?R.cps[k-1].i:1);let s=i0,bd=1e18;for(let i=i0;i<=q.i;i++){const a=R.pts[i-1],b=R.pts[i],d=segD2(px,pz,a[0],a[1],b[0],b[1]);if(d<bd){bd=d;s=i}}
+ g.lineCap=g.lineJoin="round";for(const[c,w]of[["#14151a",8],["#ffd400",4.5]]){g.strokeStyle=c;g.lineWidth=w;g.beginPath();g.moveTo(px,pz);for(let i=s;i<q.i;i++)g.lineTo(R.pts[i][0],R.pts[i][1]);g.lineTo(q.x,q.z);g.stroke()}}
 function raceMiniDot(a,b,cc,d,c){if(!RACE.on)return;const q=RACE.rt.cps[RACE.cp%RACE.rt.cps.length],dx=q.x-px,dz=q.z-pz;let x=a*dx+cc*dz,y=b*dx+d*dz;const r=Math.hypot(x,y);if(r>82){x*=82/r;y*=82/r}mc.fillStyle="#ffb000";mc.strokeStyle="#14151a";mc.lineWidth=3;mc.beginPath();mc.arc(c+x,c+y,7,0,7);mc.fill();mc.stroke()}
 // --- Menú y resultados ---
 function raceMenu(){state="race";$("ov").hidden=false;$("carsP").hidden=$("mapP").hidden=$("setP").hidden=$("livP").hidden=true;$("raceP").hidden=false;hudVis(false);$("touch").hidden=true;const P=$("raceP"),S=rStore();P.innerHTML="";

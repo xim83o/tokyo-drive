@@ -176,8 +176,9 @@ Pedido por el usuario (todo con permiso ya dado; descargas permitidas: partes de
 - Tráfico: no entra en calles de sentido único que se cortan en el borde. Sin semáforos a menos de 45 m del borde. Edificios de más de 13 m que tocaban la autopista, quitados. En la autopista la cámara no sale de los pretiles.
 - Al acabar cada tanda, las capturas revisadas van a la Papelera de Windows.
 - Rampas (capturas de las 19:02): la boca de la rampa 1 estaba dentro de la avenida de 17 m (el ramal ahora mide 31 m, `st`); la 2 salía de la calzada norte y caía sobre la sur, ahora sale de la sur. Al mover una rampa, comprobar que la parte baja no pise NINGUNA calzada, también las paralelas. El pretil se abre solo a lo largo de la unión (hwyJoin). En las rampas la cámara ya no se limita a los pretiles.
-- Vías: el corredor del este pasa de hasta 12 líneas a 4 sin cruces (RAIL_DROP en world.js quita líneas enteras). Quedan el monorraíl y sus trenes. Al ampliar el mapa, revisar esos puntos.
-- Carreras: el aviso central (3-2-1 y "Vuelve a la ruta") se oculta con cualquier panel abierto y vuelve al cerrarlo.
+- Vías: el corredor del este pasa de hasta 12 líneas a 2 bien separadas (RAIL_DROP en world.js quita líneas enteras; a menos de 4,4 m los tableros se pisan). Queda el ramal del monorraíl que baja a tierra. Al ampliar el mapa, revisar esos puntos.
+- Carreras: el aviso central (3-2-1 y "Vuelve a la ruta") se oculta con cualquier panel abierto y vuelve al cerrarlo. Banderines decorados en vez de arcos (el siguiente brilla; solo se ven el siguiente y el de después). Un punto cada 400 m, en tramo recto y orientado con la calle; radio de 26 m. Salida de circuitos 25 m antes de la meta. Flecha de giro en pantalla (rTurn, 90 m por delante). El minimapa muestra solo el tramo hasta el siguiente punto. Rutas kuro2 y beis2 alargadas a ~2,8 km (ids nuevos: sus tiempos empiezan de cero).
+- Pasos de cebra: si otra calle corta más del 20 % del paso, no se pinta.
 
 ## Pendiente de revisar por el usuario
 - Lista desde Carreras (ver el chat), rampas con teclado, tren y viento, editor de capas y plantilla con una imagen real.

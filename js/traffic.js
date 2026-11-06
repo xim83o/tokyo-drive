@@ -56,7 +56,8 @@ function buildMarkings(){const wa=[],ya=[],done=new Set();
   const cw=a0=>{const a1=a0+4,P0=at(L,a0,0),P1=at(L,a1,0),dl=Math.hypot(P1[0]-P0[0],P1[1]-P0[1])||1,ux=(P1[0]-P0[0])/dl,uz=(P1[1]-P0[1])/dl;
    const okX=([x,z])=>{let mine=false;for(const k of gq(x,z).r){const q=k*6,w=RSG[q+4]-(RSG[q+5]===L.ri?.2:0);if(segD2(x,z,RSG[q],RSG[q+1],RSG[q+2],RSG[q+3])>=w*w)continue;if(RSG[q+5]===L.ri){mine=true;continue}
     const sx=RSG[q+2]-RSG[q],sz=RSG[q+3]-RSG[q+1],sl=Math.hypot(sx,sz)||1;if(Math.abs((sx*ux+sz*uz)/sl)<.9)return false}return mine};
-   for(let o=-hw+.6;o<hw-.4;o+=.9){const A=at(L,a0,o),B=at(L,a1,o);if(okX(A)&&okX(B))quad(wa,A[0],A[1],B[0],B[1],.22,.016)}};
+   const st=[];let nt=0;for(let o=-hw+.6;o<hw-.4;o+=.9){nt++;const A=at(L,a0,o),B=at(L,a1,o);if(okX(A)&&okX(B))st.push([A,B])}
+   if(st.length<nt*.8)return;for(const[A,B]of st)quad(wa,A[0],A[1],B[0],B[1],.22,.016)};   // (si otra calle corta casi todo el paso, mejor ninguno que cuatro rayas sueltas)
   if(g1.cl>=0&&!L.internal&&len-g1.r>5)cw(len-g1.r+1.2);
   if(L.o&&g0.cl>=0&&!L.internal&&len-g0.r>5)cw(g0.r-5.2)}
  const mm=c=>beamMat(new THREE.MeshLambertMaterial({color:c,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-6}));
