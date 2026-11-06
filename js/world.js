@@ -84,7 +84,7 @@ async function loadWorld(){
  LDS.set(20,"Descargando el mapa de Tokio");MAP=await(await fetch(`data/${MAPNAME}.json`)).json();W=MAP.W;await LDS.step(36,"Leyendo el mapa");
  const P=a=>{const o=new Float32Array(a.length);for(let i=0;i<a.length;i++)o[i]=a[i]/10;return o};
  MAP.roads.forEach(r=>r.p=P(r.p));MAP.buildings.forEach(b=>b.p=P(b.p));MAP.green.forEach(g=>g.p=P(g.p));MAP.water=MAP.water.map(P);
- MAP.rivers.forEach(r=>r.p=P(r.p));MAP.rails.forEach(r=>r.p=P(r.p));MAP.trees=P(MAP.trees);MAP.signals=P(MAP.signals);
+ MAP.rivers.forEach(r=>r.p=P(r.p));MAP.rails.forEach(r=>r.p=P(r.p));railsTrim();MAP.trees=P(MAP.trees);MAP.signals=P(MAP.signals);
  // Torre de Tokio: OSM la incluye como varios "edificios" (partes de más de 100 m y las bases de las patas). Se usan para
  // situar la torre y se quitan, porque la torre la construye tower.js. El giro es el de FootTown, el edificio entre las patas
  const cen=b=>{const R=b.p;let x=0,z=0;for(let i=0;i<R.length;i+=2){x+=R[i];z+=R[i+1]}return[x/(R.length/2),z/(R.length/2)]};
@@ -303,6 +303,13 @@ function buildGround(){const GS=MOBILE?4:3,N=Math.ceil(W/GS)+1,SD=new Float32Arr
 // la autopista elevada sobre pilares como en la realidad (de adorno: no se puede subir)
 const WATERU={uTime:{value:0},uNightW:{value:0}};let WATERM=null;
 // ¿Un pilar de la autopista en (x,z) tocaría una vía elevada? (tablero de 4,4 m de ancho más el medio ancho del pilar)
+// El corredor de vías del mapa real tiene hasta 12 líneas seguidas y varias se cruzan a la misma altura. Se quedan 4 sin cruces: se quita cada línea entera (de borde a borde)
+// que pasa por uno de estos puntos
+const RAIL_DROP=[[2355,1100],[2367,1100],[2372,1100],[2377,1100],[2394,600],[2368,200],[2372,200]];
+function railsTrim(){const key=(x,z)=>Math.round(x)+"_"+Math.round(z),nd=new Map(),R=MAP.rails,seen=new Set(),drop=new Set();R.forEach((r,i)=>{const p=r.p,n=p.length;for(const[k,e]of[[key(p[0],p[1]),0],[key(p[n-2],p[n-1]),1]]){if(!nd.has(k))nd.set(k,[]);nd.get(k).push([i,e])}});
+ for(const[,l]of nd){if(l.length!==1)continue;let[i,e]=l[0];if(seen.has(i))continue;const ch=[];for(;;){seen.add(i);ch.push(i);const p=R[i].p,n=p.length,x=e?p[0]:p[n-2],z=e?p[1]:p[n-1],nx=(nd.get(key(x,z))||[]).find(([j])=>!seen.has(j));if(!nx)break;i=nx[0];e=nx[1]}
+  if(ch.some(c=>{const p=R[c].p;for(let k=2;k<p.length;k+=2)for(const q of RAIL_DROP)if(segD2(q[0],q[1],p[k-2],p[k-1],p[k],p[k+1])<1.7)return true;return false}))for(const c of ch)drop.add(c)}
+ MAP.rails=R.filter((r,i)=>!drop.has(i))}
 function onElv(x,z){for(const r of MAP.rails){if(!r.b)continue;const p=r.p;for(let i=2;i<p.length;i+=2)if(segD2(x,z,p[i-2],p[i-1],p[i],p[i+1])<25)return true}return false}
 function buildCanal(){if(!MAP.rivers.length)return;const wa=[],wl=[],rl=[],gi=[],hw=[],hd=[],hs=[],pil=[],WY=-2.4,HY=HWY_H,FE=[];   hwyRamps();   // HY: altura del tablero, bien por encima de las vías elevadas (7,5 m) y de sus trenes
  const vq=(a,x0,z0,x1,z1,y0,y1)=>a.push(x0,y0,z0,x1,y0,z1,x1,y1,z1,x0,y0,z0,x1,y1,z1,x0,y1,z0);
