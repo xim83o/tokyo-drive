@@ -134,6 +134,8 @@ async function loadWorld(){
  // El rascacielos de 105 m que tapaba la megatorre Kurogane (places.js) se traslada a un sitio libre del parque, a unos 125 m de ella
  {const b=MAP.buildings.find(q=>q.h>100&&q.h<110&&Math.hypot(q.p[0]-1350,q.p[1]-1547)<80);if(b)for(let i=0;i<b.p.length;i+=2){b.p[i]+=106;b.p[i+1]-=27}}
  // (los edificios que estorban a las rampas de la autopista se quitan: ver highway.js)
+ // (ni templos ni puertas en medio de la calzada: en el mapa real hay alguna puerta que se pasa por debajo, y aquí sería un bloque macizo)
+ MAP.buildings=MAP.buildings.filter(b=>{if(!b.k)return true;const p=b.p;let x=0,z=0;for(let i=0;i<p.length;i+=2){x+=p[i];z+=p[i+1]}x/=p.length/2;z/=p.length/2;return!MAP.roads.some(r=>{if(!r.n)return false;const q=r.p;for(let i=2;i<q.length;i+=2)if(segD2(x,z,q[i-2],q[i-1],q[i],q[i+1])<(r.w/2)**2)return true;return false})});
  hwyPlan();MAP.buildings=MAP.buildings.filter(b=>!hwyBlds(b));
  // (el agua se añade después de las calles: si no, las calles que cruzan una bahía o un lago se estrechaban como junto a un edificio)
  for(const b of MAP.buildings)addPoly(b.p,b.h);
