@@ -5,8 +5,8 @@
 // · Rampa de final (end): la autopista se acaba en d (un vértice del canal) y la rampa es su continuación hacia out. zone: dónde se quita el tablero sobrante.
 //   Al ampliar el mapa se quitan estas rampas de final y el tablero vuelve a salir solo
 const HWY_H=16;
-const HWY_RAMPS=[{g:[745,1532],d:[930,1608],ph:.6,ls:.4,le:.4},{g:[1250,1612],d:[1410,1733],ph:.8},{g:[1512,1708],d:[1699,1751],ph:.8},
- {g:[548,2265],d:[488.3,2091.6],end:true,out:[.18,.98],zone:[400,2000,620,2420]},{g:[2172,1781],d:[2009,1804.5],end:true,ph:.8,out:[1,.1],zone:[1950,1700,2420,1950]}];
+const HWY_RAMPS=[{g:[880,1648],d:[1085,1625],ph:.6,ls:.3,le:.45},{g:[1250,1612],d:[1410,1733]},{g:[1512,1708],d:[1699,1751]},
+ {g:[516,2195],d:[469.1,2003.4],inl:true,dir:[.12,-.99],ls:.7,le:.35,end:true,out:[.21,.98],zone:[400,1950,620,2420]},{g:[2172,1781],d:[2009,1804.5],end:true,out:[1,.1],zone:[1950,1700,2420,1950]}];
 // Tablero que se quita más allá de cada final
 const hwyCut=(x,z)=>HWY_RAMPS.some(R=>R.end&&x>R.zone[0]&&z>R.zone[1]&&x<R.zone[2]&&z<R.zone[3]&&(x-R.d[0])*R.out[0]+(z-R.d[1])*R.out[1]>0);
 // on: el coche va por la autopista (fuera de eso rigen los choques normales). segs: [ax,ay,az,bx,by,bz,hw,rampa,s]
@@ -18,24 +18,25 @@ const hwyDeck=(ax,az,bx,bz,Y)=>hwyAdd(ax,Y,az,bx,Y,bz,6.5,false,0);
 const hwySm=t=>{t=Math.max(0,Math.min(1,t));return t*t*(3-2*t)};
 // Punto más cercano del canal a (x,z) y su dirección
 function hwyRiv(x,z){let b=null,bd=1e18;for(const r of MAP.rivers){const p=r.p;for(let i=2;i<p.length;i+=2){const d=segD2(x,z,p[i-2],p[i-1],p[i],p[i+1]);if(d<bd){bd=d;const l=Math.hypot(p[i]-p[i-2],p[i+1]-p[i-1])||1;b=[_cx,_cz,(p[i]-p[i-2])/l,(p[i+1]-p[i-1])/l]}}}return b}
-// Traza las rampas. Se hace antes de construir nada, para poder quitar los edificios que estorban. Cada boca sale del borde de la calle hacia fuera,
-// en ángulo: así no ocupa la calzada ni se mete en ella el tráfico
+// Traza las rampas. Se hace antes de construir nada, para poder quitar los edificios que estorban. Cruce propio: de la calle sale un ramal corto de asfalto (se añade como
+// una calle más, sin tráfico, y así la acera se corta sola) y la rampa empieza al final del ramal, fuera de la calzada. inl: en vez de ramal, la rampa continúa una calle sin salida
 function hwyPlan(){const Y=HWY_H,herm=(a,ta,b,tb,t)=>{const t2=t*t,t3=t2*t,p=2*t3-3*t2+1,q=t3-2*t2+t,r=-2*t3+3*t2,s=t3-t2;return[p*a[0]+q*ta[0]+r*b[0]+s*tb[0],p*a[1]+q*ta[1]+r*b[1]+s*tb[1]]};
- for(const R of HWY_RAMPS){const[gx,gz]=R.g,v=hwyRiv(R.d[0],R.d[1]),dx=v[0],dz=v[1];let bd=1e18,c=null,tg=null,rh=4;for(const r of MAP.roads){const p=r.p;for(let i=2;i<p.length;i+=2){const d=segD2(gx,gz,p[i-2],p[i-1],p[i],p[i+1]);if(d<bd){bd=d;c=[_cx,_cz];const l=Math.hypot(p[i]-p[i-2],p[i+1]-p[i-1])||1;tg=[(p[i]-p[i-2])/l,(p[i+1]-p[i-1])/l];rh=r.w/2*.85}}}
+ for(const R of HWY_RAMPS){const[gx,gz]=R.g,v=hwyRiv(R.d[0],R.d[1]),dx=v[0],dz=v[1];let bd=1e18,c=null,tg=null,rh=4,sa,sb;for(const r of MAP.roads){const p=r.p;for(let i=2;i<p.length;i+=2){const d=segD2(gx,gz,p[i-2],p[i-1],p[i],p[i+1]);if(d<bd){bd=d;c=[_cx,_cz];const l=Math.hypot(p[i]-p[i-2],p[i+1]-p[i-1])||1;tg=[(p[i]-p[i-2])/l,(p[i+1]-p[i-1])/l];rh=r.w/2*.85;sa=[p[i-2],p[i-1]];sb=[p[i],p[i+1]]}}}
   let td=[v[2],v[3]],sd=0;const o0=[dx-gx,dz-gz];let A,arr;
   if(R.end){if(td[0]*R.out[0]+td[1]*R.out[1]<0)td=[-td[0],-td[1]];A=[dx,dz];arr=[-td[0],-td[1]]}
   else{if(td[0]*o0[0]+td[1]*o0[1]<0)td=[-td[0],-td[1]];const nv=[td[1],-td[0]];sd=(gx-dx)*nv[0]+(gz-dz)*nv[1]<0?-1:1;A=[dx+nv[0]*sd*10.5,dz+nv[1]*sd*10.5];arr=td}
-  const nr=[tg[1],-tg[0]],sg=(A[0]-c[0])*nr[0]+(A[1]-c[1])*nr[1]<0?-1:1,M=[c[0]+nr[0]*sg*Math.max(0,rh-2.5),c[1]+nr[1]*sg*Math.max(0,rh-2.5)];
-  const L=Math.hypot(A[0]-M[0],A[1]-M[1]),de=[(A[0]-M[0])/L,(A[1]-M[1])/L];if(tg[0]*de[0]+tg[1]*de[1]<0)tg=[-tg[0],-tg[1]];
-  // Dirección de salida: entre 30 y 70 grados con la calle, hacia donde está la autopista (ph la fija a mano, para que la parte baja no vaya pisando la calle)
-  const ph=R.ph||Math.max(.52,Math.min(1.22,Math.acos(Math.max(-1,Math.min(1,tg[0]*de[0]+tg[1]*de[1]))))),out=[tg[0]*Math.cos(ph)+nr[0]*sg*Math.sin(ph),tg[1]*Math.cos(ph)+nr[1]*sg*Math.sin(ph)];
-  const n=Math.ceil(L/4),C=[],K=R.le||(R.end?.5:.9);let S=0;for(let i=0;i<=n;i++){const q=herm(M,[out[0]*L*(R.ls||.8),out[1]*L*(R.ls||.8)],A,[arr[0]*L*K,arr[1]*L*K],i/n);if(i)S+=Math.hypot(q[0]-C[i-1][0],q[1]-C[i-1][1]);C.push([q[0],q[1],S])}
+  const nr=[tg[1],-tg[0]],sg=(A[0]-c[0])*nr[0]+(A[1]-c[1])*nr[1]<0?-1:1,d0=Math.hypot(A[0]-c[0],A[1]-c[1]);if(tg[0]*(A[0]-c[0])+tg[1]*(A[1]-c[1])<0)tg=[-tg[0],-tg[1]];
+  let M,out;if(R.inl){const E=Math.hypot(sa[0]-gx,sa[1]-gz)<Math.hypot(sb[0]-gx,sb[1]-gz)?[sa,sb]:[sb,sa],l=Math.hypot(E[0][0]-E[1][0],E[0][1]-E[1][1])||1;out=[(E[0][0]-E[1][0])/l,(E[0][1]-E[1][1])/l];M=[E[0][0]-out[0]*6,E[0][1]-out[1]*6];if(R.dir)out=R.dir}
+  else{const ph=R.ph||1.05;out=[tg[0]*Math.cos(ph)+nr[0]*sg*Math.sin(ph),tg[1]*Math.cos(ph)+nr[1]*sg*Math.sin(ph)];const B=[c[0]+out[0]*(rh+13),c[1]+out[1]*(rh+13)];M=[B[0]-out[0]*6,B[1]-out[1]*6];R.stub=[c,B];MAP.roads.push({p:new Float32Array([c[0],c[1],B[0],B[1]]),w:9.5,t:4,o:0})}
+  const L=Math.hypot(A[0]-M[0],A[1]-M[1]);
+  const n=Math.ceil(L/4),C=[],K=R.le||(R.end?.5:.7);let S=0;for(let i=0;i<=n;i++){const q=herm(M,[out[0]*L*(R.ls||.5),out[1]*L*(R.ls||.5)],A,[arr[0]*L*K,arr[1]*L*K],i/n);if(i)S+=Math.hypot(q[0]-C[i-1][0],q[1]-C[i-1][1]);C.push([q[0],q[1],S])}
   const P=C.map(q=>{const s=q[2];return[q[0],q[2]===0?.02:Math.max(Y*hwySm(s/S),.17*Math.min(1,s/6)),q[1],s,R.end?4+2.5*hwySm((s-S+45)/45):4,0]});
   P[P.length-1][1]=Y;
   if(!R.end){P[P.length-1][5]=1;let cx=dx,cz=dz,tn=td;for(let k=1;k<=8;k++){cx+=tn[0]*6;cz+=tn[1]*6;const q=hwyRiv(cx,cz);cx=q[0];cz=q[1];tn=q[2]*tn[0]+q[3]*tn[1]<0?[-q[2],-q[3]]:[q[2],q[3]];const of=10.5-8*hwySm(k/8);P.push([cx+tn[1]*sd*of,Y,cz-tn[0]*sd*of,S+k*6,4,1])}}
   R.sd=sd;R.P=P;HWL.rp.push(P)}}
 // ¿Este edificio estorba a una rampa? (solo si llega a la altura de la rampa en ese punto)
-function hwyBlds(b){for(const P of HWL.rp)for(let i=1;i<P.length;i++){const q=P[i],o=P[i-1],l=Math.hypot(q[0]-o[0],q[2]-o[2])||1,lx=(q[2]-o[2])/l,lz=-(q[0]-o[0])/l;if(b.h<q[1]-1.5)continue;for(const k of[0,.5,1,-.5,-1]){const e=(q[4]+1.2)*k;if(inPoly(b.p,q[0]+lx*e,q[2]+lz*e))return true}}return false}
+function hwyBlds(b){if(b.h>13){const p=b.p;for(let i=0;i<p.length;i+=2){const j=(i+2)%p.length;for(const k of[0,.5]){const x=p[i]+(p[j]-p[i])*k,z=p[i+1]+(p[j+1]-p[i+1])*k,q=hwyRiv(x,z);if(Math.hypot(x-q[0],z-q[1])<8&&!hwyCut(x,z))return true}}}   // (la autopista no atraviesa edificios)
+ for(const R of HWY_RAMPS)if(R.stub){const[a,e]=R.stub,l=Math.hypot(e[0]-a[0],e[1]-a[1])||1,lx=(e[1]-a[1])/l,lz=-(e[0]-a[0])/l;for(let s=0;s<=l;s+=3)for(const k of[0,5.5,-5.5])if(inPoly(b.p,a[0]+(e[0]-a[0])*s/l+lx*k,a[1]+(e[1]-a[1])*s/l+lz*k))return true}for(const P of HWL.rp)for(let i=1;i<P.length;i++){const q=P[i],o=P[i-1],l=Math.hypot(q[0]-o[0],q[2]-o[2])||1,lx=(q[2]-o[2])/l,lz=-(q[0]-o[0])/l;if(b.h<q[1]-1.5)continue;for(const k of[0,.5,1,-.5,-1]){const e=(q[4]+1.2)*k;if(inPoly(b.p,q[0]+lx*e,q[2]+lz*e))return true}}return false}
 // Crea los tramos conducibles y los muros de la parte baja (por los lados de la parte baja no se entra: solo por la boca, desde la calle)
 function hwyRamps(){for(const P of HWL.rp)for(let i=1;i<P.length;i++){const a=P[i-1],b=P[i];hwyAdd(a[0],a[1],a[2],b[0],b[1],b[2],(a[4]+b[4])/2,true,a[3]);
   const l=Math.hypot(b[0]-a[0],b[2]-a[2])||1,lx=(b[2]-a[2])/l*(a[4]+.1),lz=-(b[0]-a[0])/l*(a[4]+.1);if(a[3]>9&&a[1]<3.2)for(const k of[-1,1])addEdge(a[0]+lx*k,a[2]+lz*k,b[0]+lx*k,b[2]+lz*k);if(a[1]<3.2&&b[1]>=3.2)addEdge(b[0]+lx,b[2]+lz,b[0]-lx,b[2]-lz)}}

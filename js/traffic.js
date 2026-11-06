@@ -12,17 +12,17 @@ function mkLane(pts,a,b,r,off,eid){const n=pts.length/2,p=new Float32Array(pts.l
  for(let i=0;i<n;i++){const i0=Math.max(0,i-1),i1=Math.min(n-1,i+1),dx=pts[i1*2]-pts[i0*2],dz=pts[i1*2+1]-pts[i0*2+1],l=Math.hypot(dx,dz)||1;p[i*2]=pts[i*2]+dz/l*off;p[i*2+1]=pts[i*2+1]-dx/l*off}
  const cum=[0];for(let i=1;i<n;i++)cum.push(cum[i-1]+Math.hypot(p[i*2]-p[i*2-2],p[i*2+1]-p[i*2-1]));
  const L={p,cum,len:cum[n-1],from:a,to:b,w:r.w,t:r.t,o:r.o,ri:MAP.roads.indexOf(r),vmax:r.s?r.s/3.6:SPD[r.t],eid,rev:null,grp:0,internal:false,c:Float32Array.from(pts),off};LANES.push(L);GN[a].out.push(L);GN[b].inc.push(L);return L}
-function initTraffic(){const use=new Map(),node=new Map();
- for(const r of MAP.roads)r.n.forEach((id,i)=>use.set(id,(use.get(id)||0)+(i===0||i===r.n.length-1?2:1)));
+function initTraffic(){const use=new Map(),node=new Map(),RDN=MAP.roads.filter(r=>r.n);   // (los ramales de las rampas no llevan tráfico)
+ for(const r of RDN)r.n.forEach((id,i)=>use.set(id,(use.get(id)||0)+(i===0||i===r.n.length-1?2:1)));
  const gn=(id,x,z)=>{let k=node.get(id);if(k===undefined){k=GN.length;node.set(id,k);GN.push({x,z,out:[],inc:[],cl:-1,r:0,e:new Set(),busy:0})}return k};
- let eid=0;for(const r of MAP.roads){let st=0;const p=r.p;
+ let eid=0;for(const r of RDN){let st=0;const p=r.p;
   for(let i=1;i<r.n.length;i++){if(i<r.n.length-1&&use.get(r.n[i])<2)continue;
    const pts=Array.from(p.slice(st*2,i*2+2)),a=gn(r.n[st],p[st*2],p[st*2+1]),b=gn(r.n[i],p[i*2],p[i*2+1]);st=i;if(a===b||pts.length<4)continue;
    GN[a].e.add(eid);GN[b].e.add(eid);
    if(r.o)mkLane(pts,a,b,r,Math.max(0,r.w/2-1.9),eid);
    else{const f=mkLane(pts,a,b,r,r.w/4,eid),rp=[];for(let k=pts.length-2;k>=0;k-=2)rp.push(pts[k],pts[k+1]);const bk=mkLane(rp,b,a,r,r.w/4,eid);f.rev=bk;bk.rev=f}eid++}}
  // Semáforos: cada semáforo de OSM se asigna al cruce más cercano; los cruces con semáforo a menos de 35 m forman un mismo grupo
- const S=MAP.signals;for(let i=0;i<S.length;i+=2){let best=-1,bd=900;GN.forEach((g,k)=>{if(g.e.size<3)return;const d=(g.x-S[i])**2+(g.z-S[i+1])**2;if(d<bd){bd=d;best=k}});if(best>=0)GN[best].sig=true}
+ const S=MAP.signals;for(let i=0;i<S.length;i+=2){let best=-1,bd=900;GN.forEach((g,k)=>{if(g.e.size<3||Math.min(g.x,g.z,W-g.x,W-g.z)<45)return;const d=(g.x-S[i])**2+(g.z-S[i+1])**2;if(d<bd){bd=d;best=k}});if(best>=0)GN[best].sig=true}
  GN.forEach((g,k)=>{if(!g.sig||g.cl>=0)return;const c=CLU.length,q=[k];CLU.push({off:Math.random()*24,ax:null});g.cl=c;
   while(q.length){const a=GN[q.pop()];GN.forEach((b,j)=>{if(b.sig&&b.cl<0&&(a.x-b.x)**2+(a.z-b.z)**2<1225){b.cl=c;q.push(j)}})}});
  for(const L of LANES){const g=GN[L.to];if(g.cl<0)continue;const c=CLU[g.cl],n=L.p.length,ang=Math.atan2(L.p[n-2]-L.p[n-4],L.p[n-1]-L.p[n-3]);
@@ -90,16 +90,16 @@ function mkNpc(){if(CMAP){let r=Math.random()*NPCK.reduce((a,k)=>a+k.p,0),K=NPCK
  g.traverse(o=>{if(o.isMesh)o.castShadow=true});g.add(blob(w,l));
  return{g,x:-9999,z:-9999,h:0,v:0,vt:12,m:[1000,1300,1700][t],l,hp:.85+Math.random()*.3,si:0}}
 function npcRst(n){n.tr=null;n.nx=null;n.ox=n.oz=0;n.dead=false;n.exit=false;n.mode=0;n.wreck=false;n.uns=0;n.vx=n.vz=n.sp=0;n.wb=0;n.pw=0;n.stun=0;n.sw=0;n.ign=0;n.k=.85+Math.random()*.2}
-function npcPlace(n){for(let t=0;t<30;t++){const L=LANES[Math.floor(Math.random()*LANES.length)];if(L.s1-L.s0<10||(L.t===4&&Math.random()<.75))continue;
+function npcPlace(n){if(!TRAPS)markTraps();for(let t=0;t<30;t++){const L=LANES[Math.floor(Math.random()*LANES.length)];if(L.s1-L.s0<10||L.trap||(L.t===4&&Math.random()<.75))continue;
   const s=L.s0+Math.random()*(L.s1-L.s0),[x,z,a]=lanePos(L,s),d=Math.hypot(x-px,z-pz);if(d<110||d>320)continue;
   if(NPC.some(o=>o!==n&&o.lane===L&&Math.abs(o.s-s)<12))continue;n.lane=L;n.s=s;n.si=0;n.x=x;n.z=z;n.h=a;n.v=Math.min(L.vmax,10);return}
  n.x=n.z=-9999;n.lane=null}
 // Elige el siguiente carril al llegar a un cruce (sin dar la vuelta salvo en calles sin salida)
-// Carriles "trampa": los que llevan a una calle sin salida (directamente o porque todas sus salidas son trampas). Los del borde del
-// mapa no cuentan (por ahí los coches salen del mapa). Se calcula una vez, repitiendo hasta que no cambia nada
+// Carriles "trampa": los que llevan a una calle sin salida (directamente o porque todas sus salidas son trampas). Los de doble sentido del borde del
+// mapa no cuentan (ahí dan la vuelta en la calzada); los de sentido único que se cortan en el borde sí: los coches ni entran. Se calcula una vez, repitiendo hasta que no cambia nada
 let TRAPS=false;
 function markTraps(){TRAPS=true;const edge=L=>{const e=lanePos(L,L.s1);return Math.min(e[0],e[1],W-e[0],W-e[1])<40};let ch=true;
- while(ch){ch=false;for(const L of LANES){if(L.trap||edge(L))continue;const o=GN[L.to].out.filter(q=>q!==L.rev);if(o.every(q=>q.trap)){L.trap=true;ch=true}}}}
+ while(ch){ch=false;for(const L of LANES){if(L.trap||(edge(L)&&L.rev))continue;const o=GN[L.to].out.filter(q=>q!==L.rev);if(o.every(q=>q.trap)){L.trap=true;ch=true}}}}
 function pickNext(L){if(!TRAPS)markTraps();let o=GN[L.to].out.filter(q=>q!==L.rev);if(!o.length)return L.rev||uturnLane(L);
  // Como si leyeran la señal de calle sin salida: si hay otra opción, no se meten
  const ok=o.filter(q=>!q.trap);if(ok.length)o=ok;
@@ -107,7 +107,7 @@ function pickNext(L){if(!TRAPS)markTraps();let o=GN[L.to].out.filter(q=>q!==L.re
  const w=o.map(q=>{const d=Math.abs(ad(Math.atan2(q.p[2]-q.p[0],q.p[3]-q.p[1]),a0));return(d<.5?3:d<2.3?1:.3)*(q.t===4&&L.t<4?.3:1)});let r=Math.random()*w.reduce((a,b)=>a+b);
  for(let i=0;i<o.length;i++){r-=w[i];if(r<=0)return o[i]}return o[0]}
 // Final de una calle de sentido único (avenida partida en dos que se corta en el borde del mapa): da media vuelta hacia el carril contrario más cercano
-function uturnLane(L){if(L.ut!==undefined)return L.ut;const[x,z,a]=lanePos(L,L.s1);let b=null,bd=2500;for(const M of LANES){if(M===L||M.s1-M.s0<10)continue;const[mx,mz,ma]=lanePos(M,M.s0),d=(mx-x)**2+(mz-z)**2;if(d<bd&&Math.abs(ad(ma,a))>2.3){bd=d;b=M}}L.ut=b;return b}
+function uturnLane(L){if(L.ut!==undefined)return L.ut;const[x,z,a]=lanePos(L,L.s1);let b=null,bd=2500;for(const M of LANES){if(M===L||M.s1-M.s0<10)continue;const[mx,mz,ma]=lanePos(M,M.s0),d=(mx-x)**2+(mz-z)**2;if(d<bd&&Math.abs(ad(ma,a))>2.3&&[.25,.5,.75].every(t=>roadAt(x+(mx-x)*t,z+(mz-z)*t)>=0)){bd=d;b=M}}L.ut=b;return b}
 // Curva de Bézier para recorrer el cruce desde el final del tramo recto al principio del siguiente
 function mkTurn(n,L,M){const[x0,z0,a0]=lanePos(L,L.s1),[x3,z3,a3]=lanePos(M,M.s0),d=Math.hypot(x3-x0,z3-z0),k=Math.max(1,d*.4);
  n.tr={P:[x0,z0,x0+Math.sin(a0)*k,z0+Math.cos(a0)*k,x3-Math.sin(a3)*k,z3-Math.cos(a3)*k,x3,z3],len:Math.max(.5,d*1.15),t:0,node:L.to,vt:Math.abs(ad(a3,a0))>.6?6:11}}

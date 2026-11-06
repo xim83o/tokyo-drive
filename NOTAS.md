@@ -172,6 +172,10 @@ Pedido por el usuario (todo con permiso ya dado; descargas permitidas: partes de
 - Carreras: botón de salir (pantalla y pausa), arcos por punto de control con haz de luz, ruta amarilla en el minimapa, 5 s para volver a la ruta o reaparece en el último punto.
 - Calcomanías: pestañas Pintura / Capas / Imagen entera. Capas con formas, texto, color, opacidad, ancho, orden, duplicar, reflejar y arrastre sobre el coche. Imagen entera con plantilla por coche o estampado repetido (se guarda en td-stk con wrap:1).
 
+- Rampas con cruce propio: de la calle sale un ramal corto de asfalto (se añade a MAP.roads sin `n`, así no lleva tráfico) y la rampa empieza al final, fuera de la calzada. La rampa sur continúa la calle sin salida (516,2195), por tierra. La autopista termina en (469,2003) y (2009,1804). Comprobar al mover una rampa: que no pise calles por debajo de 4,6 m ni pase sobre el canal por debajo de 9 m.
+- Tráfico: no entra en calles de sentido único que se cortan en el borde. Sin semáforos a menos de 45 m del borde. Edificios de más de 13 m que tocaban la autopista, quitados. En la autopista la cámara no sale de los pretiles.
+- Al acabar cada tanda, las capturas revisadas van a la Papelera de Windows.
+
 ## Pendiente de revisar por el usuario
 - Lista desde Carreras (ver el chat), rampas con teclado, tren y viento, editor de capas y plantilla con una imagen real.
 - Fluidez en PC y móvil con los gráficos nuevos (1,7 M triángulos en Alta con sombras).
