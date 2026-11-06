@@ -100,12 +100,14 @@ function npcPlace(n){for(let t=0;t<30;t++){const L=LANES[Math.floor(Math.random(
 let TRAPS=false;
 function markTraps(){TRAPS=true;const edge=L=>{const e=lanePos(L,L.s1);return Math.min(e[0],e[1],W-e[0],W-e[1])<40};let ch=true;
  while(ch){ch=false;for(const L of LANES){if(L.trap||edge(L))continue;const o=GN[L.to].out.filter(q=>q!==L.rev);if(o.every(q=>q.trap)){L.trap=true;ch=true}}}}
-function pickNext(L){if(!TRAPS)markTraps();let o=GN[L.to].out.filter(q=>q!==L.rev);if(!o.length)return L.rev;
+function pickNext(L){if(!TRAPS)markTraps();let o=GN[L.to].out.filter(q=>q!==L.rev);if(!o.length)return L.rev||uturnLane(L);
  // Como si leyeran la señal de calle sin salida: si hay otra opción, no se meten
  const ok=o.filter(q=>!q.trap);if(ok.length)o=ok;
  const n=L.p.length,a0=Math.atan2(L.p[n-2]-L.p[n-4],L.p[n-1]-L.p[n-3]);
  const w=o.map(q=>{const d=Math.abs(ad(Math.atan2(q.p[2]-q.p[0],q.p[3]-q.p[1]),a0));return(d<.5?3:d<2.3?1:.3)*(q.t===4&&L.t<4?.3:1)});let r=Math.random()*w.reduce((a,b)=>a+b);
  for(let i=0;i<o.length;i++){r-=w[i];if(r<=0)return o[i]}return o[0]}
+// Final de una calle de sentido único (avenida partida en dos que se corta en el borde del mapa): da media vuelta hacia el carril contrario más cercano
+function uturnLane(L){if(L.ut!==undefined)return L.ut;const[x,z,a]=lanePos(L,L.s1);let b=null,bd=2500;for(const M of LANES){if(M===L||M.s1-M.s0<10)continue;const[mx,mz,ma]=lanePos(M,M.s0),d=(mx-x)**2+(mz-z)**2;if(d<bd&&Math.abs(ad(ma,a))>2.3){bd=d;b=M}}L.ut=b;return b}
 // Curva de Bézier para recorrer el cruce desde el final del tramo recto al principio del siguiente
 function mkTurn(n,L,M){const[x0,z0,a0]=lanePos(L,L.s1),[x3,z3,a3]=lanePos(M,M.s0),d=Math.hypot(x3-x0,z3-z0),k=Math.max(1,d*.4);
  n.tr={P:[x0,z0,x0+Math.sin(a0)*k,z0+Math.cos(a0)*k,x3-Math.sin(a3)*k,z3-Math.cos(a3)*k,x3,z3],len:Math.max(.5,d*1.15),t:0,node:L.to,vt:Math.abs(ad(a3,a0))>.6?6:11}}
@@ -197,7 +199,7 @@ function npcs(dt){if(!LANES.length)return;TT+=dt;const k2=Math.floor(TT*2);if(k2
    if(n.tr){const T=n.tr;T.t+=n.v*dt/T.len;
     if(T.t>=1){n.tr=null;n.lane=n.nx;n.nx=null;n.s=n.lane.s0;n.si=0}else{const[x,z]=bez(T.P,T.t),[x2,z2]=bez(T.P,Math.min(1,T.t+.05));n.x=x;n.z=z;n.h=Math.atan2(x2-x,z2-z)}}
    if(!n.tr){const L2=n.lane,d=L2.s1-n.s;if(!n.nx&&d<45&&!n.dead){n.nx=pickNext(L2);if(!n.nx)n.dead=true}
-    // Calle de sentido único sin salida (borde del mapa): se para al final y desaparece solo cuando no se ve
+    // Calle sin salida y sin carril contrario cerca: se para al final y desaparece solo cuando no se ve (lo normal es dar media vuelta, ver uturnLane)
     const ex=lanePos(L2,L2.s1),edge=Math.min(ex[0],ex[1],W-ex[0],W-ex[1])<40;
     // (antes, en el borde, seguían recto fuera de la calzada: ahora frenan al final y desaparecen cuando no se ven)
     if(n.dead){vt=Math.min(vt,Math.max(0,d-2)*.8);SPH.center.set(n.x,1,n.z);n.uns=FR.intersectsSphere(SPH)&&Math.hypot(n.x-px,n.z-pz)<250?0:n.uns+dt;if(n.uns>1.5){npcRst(n);n.lane=null;continue}}
@@ -211,7 +213,7 @@ function npcs(dt){if(!LANES.length)return;TT+=dt;const k2=Math.floor(TT*2);if(k2
     if(stop)vt=Math.min(vt,room>0?Math.sqrt(2*BD*room):0);
     if(n.nx&&Math.abs(ad(Math.atan2(n.nx.p[2]-n.nx.p[0],n.nx.p[3]-n.nx.p[1]),n.h))>.6&&d<30)vt=Math.min(vt,7);
     n.sw=n.v<.3?n.sw+dt:0;if(n.sw>10){n.ign=5;n.sw=0}
-    n.s+=n.v*dt;if(n.dead)n.s=Math.min(n.s,L2.len-1);else if(n.s>=L2.s1){if(g.r>0||n.nx===L2.rev)mkTurn(n,L2,n.nx);else{n.lane=n.nx;n.nx=null;n.s=n.lane.s0+(n.s-L2.s1);n.si=0}}
+    n.s+=n.v*dt;if(n.dead)n.s=Math.min(n.s,L2.len-1);else if(n.s>=L2.s1){if(g.r>0||n.nx===L2.rev||n.nx===L2.ut)mkTurn(n,L2,n.nx);else{n.lane=n.nx;n.nx=null;n.s=n.lane.s0+(n.s-L2.s1);n.si=0}}
     // Tras reincorporarse, el desfase con el carril se reduce poco a poco (sin saltos)
     if(!n.tr){const[x,z,a]=lanePos(n.lane,n.s,n),f=Math.exp(-2*dt);n.ox=(n.ox||0)*f;n.oz=(n.oz||0)*f;n.x=x+n.ox;n.z=z+n.oz;n.h+=ad(a,n.h)*Math.min(1,dt*(n.ox?3:8))}}
    n.v=vt<n.v?Math.max(vt,n.v-Math.max(8,(n.v-vt)*4)*dt):n.v+(vt-n.v)*Math.min(1,dt)}

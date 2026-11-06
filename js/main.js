@@ -57,5 +57,9 @@ function loop(n){requestAnimationFrame(loop);const dt=Math.min(.05,(n-last)/1e3)
    cam.setViewOffset(innerWidth,innerHeight,-pw/2,0,innerWidth,innerHeight);cam.updateProjectionMatrix()}
   else if(spawned){cam.position.set(px+Math.sin(t0)*220,90,pz+Math.cos(t0)*220);cam.lookAt(px,20,pz)}else{cam.position.set(TX+Math.sin(t0)*420,140,TZ+Math.cos(t0)*420);cam.lookAt(TX,110,TZ)}}
  envUpdate(dt);studio();seasonTick(dt);radioTick();if(typeof weather==="function")weather(dt);if(ready)placesTick(dt);renderFrame()}
-loop(last);
-Promise.all([loadWorld(),loadCars()]).then(()=>{initTraffic();placeParked();placeDeadSigns();seasonInit();applyQuality();ld.hidden=true}).catch(e=>{console.error(e);ld.textContent=T("No se pudo cargar el mapa. Ábrelo con jugar.bat (necesita el servidor local).")});
+// Antes de dejar jugar: compila los materiales, sube las texturas a la tarjeta y dibuja la ciudad en cuatro direcciones, para que no haya tirones al empezar
+async function gfxWarm(){await LDS.step(88,"Preparando los gráficos");try{rd.compile(sc,cam)}catch(e){console.warn(e)}await LDS.step(91,"Subiendo las texturas");
+ const tx=new Set();sc.traverse(o=>{const m=o.material;if(!m)return;for(const q of Array.isArray(m)?m:[m])for(const k of["map","emissiveMap","lightMap","specularMap","alphaMap"])if(q[k]&&q[k].isTexture&&!q[k].isCubeTexture)tx.add(q[k])});
+ if(rd.initTexture)for(const t of tx)rd.initTexture(t);envUpdate(.016);
+ for(let k=0;k<4;k++){await LDS.step(93+k*1.7,"Dibujando la ciudad");const a=k*PI/2+.5;cam.position.set(TX+Math.sin(a)*300,36,TZ+Math.cos(a)*300);cam.lookAt(TX,10,TZ);cam.updateMatrixWorld();renderFrame()}}
+Promise.all([loadWorld(),loadCars(),Promise.all(ENGB).catch(()=>{})]).then(async()=>{await LDS.step(84,"Colocando el tráfico");initTraffic();placeParked();placeDeadSigns();seasonInit();applyQuality();await gfxWarm();last=performance.now();loop(last);LDS.ready()}).catch(e=>{console.error(e);LDS.fail(T("No se pudo cargar el mapa. Ábrelo con jugar.bat (necesita el servidor local)."))});

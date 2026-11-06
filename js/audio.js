@@ -6,7 +6,9 @@ const BUS={};
 function setVol(){if(typeof radioVol==="function")radioVol();if(!AC)return;const v=ENV.vol,t=AC.currentTime;aMaster.gain.setTargetAtTime(.5*v.m,t,.05);BUS.eng.gain.setTargetAtTime(v.e,t,.05);BUS.fx.gain.setTargetAtTime(v.fx,t,.05);BUS.rain.gain.setTargetAtTime(v.rain,t,.05);BUS.horn.gain.setTargetAtTime(v.horn,t,.05);BUS.amb.gain.setTargetAtTime(v.amb===undefined?1:v.amb,t,.05)}
 function setMute(m){mute=m;$("snd").textContent=m?"🔇":"🔊";if(typeof radioVol==="function")radioVol()}
 // Seis bucles del mismo motor a revoluciones crecientes: se mezclan los dos más cercanos a las rpm y se ajusta su velocidad de reproducción
-function loadEngine(){Promise.all([0,1,2,3,4,5].map(i=>fetch(`sounds/engine/loop${i}.wav`).then(r=>r.arrayBuffer()).then(b=>new Promise((ok,ko)=>AC.decodeAudioData(b,ok,ko)))))
+// (se descargan durante la pantalla de carga; se decodifican al crear el sonido, que el navegador solo permite tras pulsar algo)
+const ENGB=[0,1,2,3,4,5].map(i=>fetch(`sounds/engine/loop${i}.wav`).then(r=>r.ok?r.arrayBuffer():Promise.reject(r.status)));
+function loadEngine(){Promise.all(ENGB).then(B=>Promise.all(B.map(b=>new Promise((ok,ko)=>AC.decodeAudioData(b,ok,ko)))))
  .then(bufs=>{bufs.forEach(b=>{const s=AC.createBufferSource(),g=AC.createGain();s.buffer=b;s.loop=true;g.gain.value=0;s.connect(g);g.connect(ef);s.start();ES.push({s,g})});eo.disconnect();eo2.disconnect();eo3.disconnect()})
  .catch(e=>console.warn("Sonido de motor por código:",e))}
 function initAudio(){if(AC){if(AC.state==="suspended")AC.resume();return}
@@ -36,12 +38,21 @@ function rainAudio(){if(!AC)return;if(!rainG){const s=AC.createBufferSource(),hp
   g.gain.setValueAtTime(WEA.rain*(inside?.18:.06),t);g.gain.exponentialRampToValueAtTime(.001,t+.05);b.connect(f);f.connect(g);g.connect(BUS.rain);b.start(t,Math.random());b.stop(t+.06)}}
 // Ambiente generado por código: viento según la velocidad, rumor de la ciudad según el tráfico y trenes que se oyen al pasar cerca
 let AMB=null,ambHorn=20,ambClk=0;
-function ambAudio(dt){if(!AC)return;if(!AMB){const nz=(type,fr,q)=>{const s=AC.createBufferSource(),f=AC.createBiquadFilter(),g=AC.createGain();s.buffer=nb;s.loop=true;f.type=type;f.frequency.value=fr;f.Q.value=q;g.gain.value=0;s.connect(f);f.connect(g);g.connect(BUS.amb);s.start(0,Math.random());return{f,g}};AMB={w:nz("bandpass",800,.5),c:nz("bandpass",520,.35),t:nz("bandpass",430,.5)}}   // (frecuencias que se oyen también en altavoces de portátil)
+// Golpe metálico de la rueda en la junta del raíl
+function trainClk(t,v){const s=AC.createBufferSource(),f=AC.createBiquadFilter(),g=AC.createGain();s.buffer=nb;f.type="bandpass";f.frequency.value=1500;f.Q.value=1.2;g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.001,t+.07);s.connect(f);f.connect(g);g.connect(BUS.amb);s.start(t,Math.random());s.stop(t+.08)}
+// Bocina del tren al acercarse: dos notas, para que se distinga del tráfico
+function trainHorn(v){const t=AC.currentTime,f=AC.createBiquadFilter(),g=AC.createGain();f.type="lowpass";f.frequency.value=2400;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+.05);g.gain.setValueAtTime(v,t+1.1);g.gain.linearRampToValueAtTime(0,t+1.3);for(const fr of[523,659]){const o=AC.createOscillator();o.type="sawtooth";o.frequency.value=fr;o.connect(f);o.start(t);o.stop(t+1.35)}f.connect(g);g.connect(BUS.amb)}
+function ambAudio(dt){if(!AC)return;if(!AMB){const nz=(type,fr,q)=>{const s=AC.createBufferSource(),f=AC.createBiquadFilter(),g=AC.createGain();s.buffer=nb;s.loop=true;f.type=type;f.frequency.value=fr;f.Q.value=q;g.gain.value=0;s.connect(f);f.connect(g);g.connect(BUS.amb);s.start(0,Math.random());return{f,g}};AMB={w:nz("bandpass",420,.35),c:nz("bandpass",520,.35),t:nz("bandpass",320,.6)};
+  const o=AC.createOscillator(),g=AC.createGain();o.type="triangle";o.frequency.value=620;g.gain.value=0;o.connect(g);g.connect(BUS.amb);o.start();AMB.m={o,g}}   // m: zumbido de los motores eléctricos
  const t=AC.currentTime,on=!mute&&(state==="play"||state==="spec"),sp=Math.hypot(vx,vz),inside=mode===3&&state==="play",high=HWL.on?1:0;
- AMB.w.g.gain.setTargetAtTime(on?Math.min(1.6,(sp/45)**2*1.1+.04+high*.12)*(inside?.45:1):0,t,.2);AMB.w.f.frequency.setTargetAtTime(600+sp*16,t,.2);
+ // Viento: suave y grave, sube poco a poco con la velocidad y va a ráfagas lentas (nunca por encima del motor)
+ AMB.w.g.gain.setTargetAtTime(on?Math.min(.3,(sp/60)**2*.16+.01+high*.02)*(1+Math.sin(t*.7)*.18+Math.sin(t*1.9)*.1)*(inside?.4:1):0,t,.4);AMB.w.f.frequency.setTargetAtTime(300+sp*5,t,.4);
  AMB.c.g.gain.setTargetAtTime(on?(.16+npcLvl*.09)*(high?.55:1)*(inside?.6:1):0,t,.4);
- let d=1e9;for(const q of TRN.pool)if(q.r)for(const m of q.cars)if(m.visible)d=Math.min(d,Math.hypot(m.position.x-px,m.position.z-pz));const k=Math.max(0,1-d/320);
- AMB.t.g.gain.setTargetAtTime(on?k*k*2.2:0,t,.3);ambClk-=dt;if(on&&k>.1&&ambClk<0){ambClk=.3;const s=AC.createBufferSource(),f=AC.createBiquadFilter(),g=AC.createGain();s.buffer=nb;f.type="bandpass";f.frequency.value=900;f.Q.value=1.5;g.gain.setValueAtTime(k*k*2.4,t);g.gain.exponentialRampToValueAtTime(.001,t+.09);s.connect(f);f.connect(g);g.connect(BUS.amb);s.start(t,Math.random());s.stop(t+.1)}
+ let d=1e9,near=null;for(const q of TRN.pool)if(q.r)for(const m of q.cars)if(m.visible){const e=Math.hypot(m.position.x-px,m.position.z-pz);if(e<d){d=e;near=q}}const k=Math.max(0,1-d/380),s2=k*k*(inside?.6:1);
+ // Tren: rodadura, zumbido de motores, traqueteo y bocina
+ AMB.t.g.gain.setTargetAtTime(on?s2*.9:0,t,.3);AMB.m.g.gain.setTargetAtTime(on?s2*.12:0,t,.3);
+ if(near&&on){const vr=near.prevD===undefined?0:(d-near.prevD)/Math.max(dt,.001);near.prevD=d;AMB.m.o.frequency.setTargetAtTime(620*(1-Math.max(-.12,Math.min(.12,vr/340))),t,.2);if(d<280&&!near.hk){near.hk=true;trainHorn(.45*k+.12)}}
+ ambClk-=dt;if(on&&k>.08&&ambClk<0){ambClk=.62;trainClk(t,s2*1.5+.03);trainClk(t+.11,s2*1.2+.03)}
  ambHorn-=dt;if(on&&npcLvl>0&&ambHorn<0){ambHorn=18+Math.random()*30;hornSnd(30+Math.random()*30,.9+Math.random()*.25)}}
 function thunderSnd(v){if(!AC||mute)return;const t=AC.currentTime,s=AC.createBufferSource(),f=AC.createBiquadFilter(),g=AC.createGain();s.buffer=nb;s.loop=true;s.playbackRate.value=.35;f.type="lowpass";f.frequency.setValueAtTime(380,t);f.frequency.exponentialRampToValueAtTime(90,t+4);
  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v*.9,t+.15);g.gain.exponentialRampToValueAtTime(v*.3,t+1.2);g.gain.exponentialRampToValueAtTime(.001,t+5);s.connect(f);f.connect(g);g.connect(BUS.rain);s.start(t);s.stop(t+5.2)}

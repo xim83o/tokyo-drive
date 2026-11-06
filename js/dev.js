@@ -5,11 +5,13 @@ const DEV=["localhost","127.0.0.1","[::1]"].includes(location.hostname);
 const DV={spd:1,scn:null,stuck:new Map(),t:0,keep:null};
 // Incidencias: botones para teletransportarse a lo que hay que revisar (calle más cercana, o encima de la autopista con top)
 function devTP(x,z,hd,top){closeSettings();resume();if(top){spawnAt({x,z,h:hd});HWL.on=true;HWL.y=16;HWL.x=x;HWL.z=z;bodyY=16;WY.fill(16)}else if(hd===undefined)spawnAt(nearestRoad(x,z,false));else spawnAt({x,z,h:hd})}
+// Manda un tren por la vía más cercana para que pase por tu lado en unos 6 s (para probar el sonido)
+function devTrain(){let br=null,bu=0,bd=1e18;for(const r of TRN.routes){if(r.busy)continue;for(let i=0;i<r.pts.length;i++){const d=Math.hypot(r.pts[i][0]-px,r.pts[i][2]-pz);if(d<bd){bd=d;br=r;bu=r.D[i]}}}const t=TRN.pool.find(q=>!q.r);if(!br||!t)return;t.r=br;br.busy=true;t.dir=1;t.d=Math.max(0,bu-216);t.hk=false;t.prevD=undefined}
 function devInc(box){const h=document.createElement("h3");h.textContent=T("Incidencias");box.appendChild(h);const r=document.createElement("div");r.className="lrow";r.style.justifyContent="center";box.appendChild(r);const add=(n,f)=>{const b=document.createElement("button");b.textContent=n;b.onclick=f;r.appendChild(b)};
- ["oeste","centro","este","sur"].forEach((n,i)=>{const P=HWL.rp[i];if(!P)return;const a=P[0],b=P[3],hd=Math.atan2(b[0]-a[0],b[2]-a[2]);add("Rampa "+n,()=>devTP(a[0]-Math.sin(hd)*14,a[2]-Math.cos(hd)*14,hd))});
+ ["oeste","centro","este","sur","final este"].forEach((n,i)=>{const P=HWL.rp[i];if(!P)return;const a=P[0],b=P[3],hd=Math.atan2(b[0]-a[0],b[2]-a[2]);add("Rampa "+n,()=>devTP(a[0]-Math.sin(hd)*14,a[2]-Math.cos(hd)*14,hd))});
  add("Encima de la autopista",()=>{const P=HWL.rp[1],q=P[P.length-1],o=P[P.length-3];devTP(q[0],q[2],Math.atan2(q[0]-o[0],q[2]-o[2]),true)});
  add("Unión de la rampa oeste",()=>{const P=HWL.rp[0],q=P[P.length-1],o=P[P.length-3];devTP(q[0],q[2],Math.atan2(q[0]-o[0],q[2]-o[2]),true)});
- add("Final de la autopista",()=>{const P=HWL.rp[3],q=P[P.length-1],o=P[P.length-3];devTP(q[0],q[2],Math.atan2(o[0]-q[0],o[2]-q[2]),true)});
+ add("Final de la autopista (sur)",()=>{const P=HWL.rp[3],q=P[P.length-1],o=P[P.length-3];devTP(q[0],q[2],Math.atan2(o[0]-q[0],o[2]-q[2]),true)});add("Final de la autopista (este)",()=>{const P=HWL.rp[4],q=P[P.length-1],o=P[P.length-3];devTP(q[0],q[2],Math.atan2(o[0]-q[0],o[2]-q[2]),true)});add("Llamar a un tren aquí",()=>{closeSettings();resume();devTrain()});
  for(const[n,x,z]of[["Calle del borde (tráfico)",840,2375],["Vías: borde derecho",2370,920],["Vías: rampa del monorraíl",2340,1185],["Zona de derrape",1555,1156],["Béisbol",1139,945],["Templo",1461,1333],["Torre Kurogane",1364,1608]])add(n,()=>devTP(x,z))}
 function devHud(html){let e=$("devHud");if(!e){e=document.createElement("div");e.id="devHud";document.body.appendChild(e)}e.hidden=!html;if(html)e.innerHTML=html}
 function devSave(){DV.keep={px,pz,h}}

@@ -6,7 +6,6 @@ function nearestRoad(x,z,flip){let best=0,bd=1e18;for(let k=0;k<RSG.length;k+=6)
  if(!r.o&&flip){ux=-ux;uz=-uz}const off=r.o?Math.max(0,hw-1.9):hw/2;return{x:_cx+uz*off,z:_cz-ux*off,h:Math.atan2(ux,uz)}}
 function spawnAt(q){HWL.on=false;px=q.x;pz=q.z;h=camH=q.h;vx=vz=0;bodyY=bodyV=0;WY.fill(0)}
 function spawnC(){const a=Math.random()*PI*2,r=150+Math.random()*350;spawnAt(nearestRoad(TX+Math.sin(a)*r,TZ+Math.cos(a)*r,Math.random()<.5))}
-const ld=document.createElement("p");ld.dataset.i18n="Cargando el mapa de Tokio…";ld.textContent=T(ld.dataset.i18n);$("carsP").insertBefore(ld,$("tabs"));
 const tb=$("tabs");tb.style.cssText="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:12px";
 // Fichas de coche y pestañas de categoría (se rehacen al cambiar de idioma)
 function buildCards(){$("cards").innerHTML="";tb.innerHTML="";

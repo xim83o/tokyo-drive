@@ -3,6 +3,24 @@
 <title>Tokyo Drive</title>
 <link rel="stylesheet" href="css/style.css">
 </head><body>
+<div id="lds"><div id="ldsI"><h1>TOKYO DRIVE</h1><small>東京ドライブ</small><div id="ldsB"><u></u></div><div id="ldsR"><span id="ldsT">Cargando…</span><b id="ldsP">0 %</b></div><p id="ldsC"></p><button id="ldsGo" hidden data-i18n="Pulsa para empezar">Pulsa para empezar</button></div></div>
+<script>
+// Pantalla de carga: es lo primero que se ve. La barra avanza con los scripts, el mapa, el mundo y la preparación de los gráficos
+const LDS={p:0,n:0,done:false,go:false,tr:t=>typeof T==="function"?T(t):t,
+ el:i=>document.getElementById(i),
+ set(p,t){p=Math.max(this.p,Math.min(100,p));this.p=p;this.el("ldsB").firstChild.style.width=p+"%";this.el("ldsP").textContent=Math.round(p)+" %";if(t)this.el("ldsT").textContent=this.tr(t)},
+ step(p,t){this.set(p,t);return new Promise(r=>setTimeout(r,20))},
+ fail(t){this.el("ldsT").textContent=t;this.el("ldsT").style.color="#ff6a5a";this.el("ldsP").hidden=true},
+ ready(){this.set(100,"Todo listo");this.go=true;this.el("ldsGo").hidden=false;this.el("ldsGo").focus()},
+ start(){if(!this.go||this.done)return;this.done=true;initAudio();clearInterval(this.tt);const e=this.el("lds");e.classList.add("off");setTimeout(()=>e.hidden=true,400)},
+ tips:["Mantén el freno de mano en las curvas cerradas para derrapar.","Pulsa B para abrir las carreras.","Pulsa F para entrar en el modo foto.","Pulsa V para cambiar de cámara.","Pulsa M para abrir el mapa y aparecer donde quieras.","En el concesionario puedes pintar tu coche y ponerle calcomanías.","La autopista elevada tiene rampas de entrada y de salida.","En invierno el coche agarra menos.","Pulsa R para encender la radio.","En una carrera, si te sales de la ruta, tienes 5 segundos para volver."],
+ tip(){this.el("ldsC").textContent=this.tr(this.tips[Math.floor(Math.random()*this.tips.length)])}};
+LDS.tt=setInterval(()=>LDS.tip(),3500);
+document.addEventListener("load",e=>{if(e.target.tagName==="SCRIPT"){LDS.n++;LDS.set(LDS.n/42*18,"Cargando el motor del juego")}},true);
+document.addEventListener("error",e=>{if(e.target.tagName==="SCRIPT"&&/three/.test(e.target.src))LDS.fail("No se pudo cargar el juego. Comprueba tu conexión a internet.")},true);
+addEventListener("keydown",e=>{if(LDS.done)return;e.stopImmediatePropagation();if(e.code==="Enter"||e.code==="Space")LDS.start()},true);
+LDS.el("ldsGo").onclick=()=>LDS.start();LDS.el("lds").onclick=()=>LDS.start();LDS.tip();
+</script>
 <canvas id="c"></canvas>
 <canvas id="mini" width="190" height="190" hidden></canvas>
 <canvas id="hud" width="240" height="240" hidden></canvas>
@@ -40,7 +58,7 @@
  <div class="pn" id="garP" hidden></div>
  <div class="pn" id="onlP" hidden></div>
 </div>
-<div id="raceH" hidden><span id="rcT">0:00.000</span><span id="rcD"></span><small id="rcCp"></small><small id="rcGh" onclick="ghostToggle()"></small></div>
+<div id="raceH" hidden><span id="rcT">0:00.000</span><span id="rcD"></span><small id="rcCp"></small><small id="rcGh" onclick="ghostToggle()"></small><button id="rcX" onclick="raceQuit()" data-i18n="Salir de la carrera">Salir de la carrera</button></div>
 <div id="rcC" hidden></div>
 <div id="rcBar" hidden></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>

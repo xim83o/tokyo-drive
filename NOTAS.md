@@ -163,7 +163,17 @@ Pedido por el usuario (todo con permiso ya dado; descargas permitidas: partes de
 - Cambio manual: de momento no.
 - El usuario quiere más realismo gráfico en el futuro.
 
+## Hecho el 2026-11-06 (tanda de pantalla de carga, rampas, carreras y calcomanías)
+- Pantalla de carga antes de todo: logo, barra, porcentaje, qué carga y consejos. Espera a texturas y shaders; "Pulsa para empezar" activa el sonido.
+- Sonido: viento más suave; tren con rodadura, zumbido, traqueteo y bocina. Incidencias → "Llamar a un tren aquí". Sin oírlo yo: lo comprueba el usuario.
+- Autopista (highway.js): las rampas normales llegan a 16 m antes de tocar el tablero y se unen en paralelo 48 m. Dos finales: sur (baja a la calle por tierra, no por el canal) y este (antes de las vías). Parte baja maciza con muro de cierre, columnas redondas con choque. Al ampliar el mapa: quitar las rampas `end` de HWY_RAMPS.
+- Tráfico: en el final de una calle partida en dos dan media vuelta (uturnLane).
+- Templo: muro por todo el contorno de la grava.
+- Carreras: botón de salir (pantalla y pausa), arcos por punto de control con haz de luz, ruta amarilla en el minimapa, 5 s para volver a la ruta o reaparece en el último punto.
+- Calcomanías: pestañas Pintura / Capas / Imagen entera. Capas con formas, texto, color, opacidad, ancho, orden, duplicar, reflejar y arrastre sobre el coche. Imagen entera con plantilla por coche o estampado repetido (se guarda en td-stk con wrap:1).
+
 ## Pendiente de revisar por el usuario
+- Lista desde Carreras (ver el chat), rampas con teclado, tren y viento, editor de capas y plantilla con una imagen real.
 - Fluidez en PC y móvil con los gráficos nuevos (1,7 M triángulos en Alta con sombras).
 - Sonido del motor real, faros, noche, letreros, LED, templo, torre, marcas viales.
 

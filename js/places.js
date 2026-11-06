@@ -142,18 +142,22 @@ function templeWall(set,pth,pw,gl){const N=GSN,GS=GSS,SD=GSD,WD=1.2,K=new Set();
    let ok=true;for(let t=.25;t<1;t+=.25)if(roadAt(x+(cx-x)*t,z+(cz-z)*t)>=0)ok=false;if(ok)return true}return false};
  const roadNear=(x,z)=>{for(let k=0;k<8;k++){const a=k*PI/4;if(roadAt(x+Math.cos(a)*2.6,z+Math.sin(a)*2.6)>=0)return true}return false};
  const B=vcBuild();let n=0;
+ // Un trozo de muro (salvo dentro de un edificio o del agua, en los caminos y en las puertas)
+ const put=(a,b,l,mx,mz)=>{if(inBuilding(mx,mz)||inBuilding(a[0],a[1])||inBuilding(b[0],b[1])||inWater(mx,mz))return;if(pth.some(p=>Math.hypot(p[0]-mx,p[1]-mz)<pw+1.4))return;
+  if(gl.some(([gx,gz,ga])=>{const c=Math.cos(ga),s=Math.sin(ga),dx=mx-gx,dz=mz-gz;return Math.abs(dx*c-dz*s)<7.6&&Math.abs(dx*s+dz*c)<6}))return;
+  const W=M4(mx,CURB,mz,Math.atan2(-(b[1]-a[1]),b[0]-a[0]));B.at(W,PBOX,"#77746c",0,.2,0,l+.4,.4,.8);B.at(W,PBOX,"#d8c08a",0,1.25,0,l+.32,1.7,.56);
+  for(let s=0;s<5;s++)B.at(W,PBOX,"#f1ece0",0,1.45+s*.13,0,l+.33,.05,.58);B.at(W,PBOX,"#6b4a32",0,2.15,0,l+.34,.12,.6);B.at(W,PPRI,"#3b3f45",0,2.45,0,l+.6,.42,.8);addCaps(a[0],a[1],b[0],b[1],.4);n++};
  for(const o of K){const i=o%N,j=(o/N)|0;if(i<1||j<1||i>N-3||j>N-3)continue;
   const C=[[i*GS,j*GS,SD[o]-WD],[(i+1)*GS,j*GS,SD[o+1]-WD],[(i+1)*GS,(j+1)*GS,SD[o+N+1]-WD],[i*GS,(j+1)*GS,SD[o+N]-WD]],X=[];
   for(let k=0;k<4;k++){const a=C[k],b=C[(k+1)%4];if((a[2]>0)!==(b[2]>0)){const t=a[2]/(a[2]-b[2]);X.push([a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t])}}
   for(let k=0;k+1<X.length;k+=2){const a=X[k],b=X[k+1],mx=(a[0]+b[0])/2,mz=(a[1]+b[1])/2,l=Math.hypot(b[0]-a[0],b[1]-a[1]);if(l<.05)continue;
-   if(inBuilding(mx,mz)||inBuilding(a[0],a[1])||inBuilding(b[0],b[1])||inWater(mx,mz)||!roadNear(mx,mz)||!near(mx,mz))continue;
-   if(pth.some(p=>Math.hypot(p[0]-mx,p[1]-mz)<pw+1.4))continue;
-   if(gl.some(([gx,gz,ga])=>{const c=Math.cos(ga),s=Math.sin(ga),dx=mx-gx,dz=mz-gz;return Math.abs(dx*c-dz*s)<7.6&&Math.abs(dx*s+dz*c)<6}))continue;
-   const W=M4(mx,CURB,mz,Math.atan2(-(b[1]-a[1]),b[0]-a[0]));
-   B.at(W,PBOX,"#77746c",0,.2,0,l+.4,.4,.8);B.at(W,PBOX,"#d8c08a",0,1.25,0,l+.32,1.7,.56);
-   for(let s=0;s<5;s++)B.at(W,PBOX,"#f1ece0",0,1.45+s*.13,0,l+.33,.05,.58);
-   B.at(W,PBOX,"#6b4a32",0,2.15,0,l+.34,.12,.6);B.at(W,PPRI,"#3b3f45",0,2.45,0,l+.6,.42,.8);
-   addCaps(a[0],a[1],b[0],b[1],.4);n++}}
+   if(!roadNear(mx,mz)||!near(mx,mz))continue;put(a,b,l,mx,mz)}}
+ // El resto del contorno (lo que no da a la calle) sigue el borde de la grava, con las esquinas en diagonal para que no salga en escalera.
+ // Así el patio queda cerrado y las casas de alrededor se quedan fuera del muro
+ const val=(i,j)=>{let c=0;for(const[u,v]of[[0,0],[-1,0],[0,-1],[-1,-1]])if(set.has((j+v)*N+i+u))c++;return c/4-.4},rdNear=(x,z)=>{for(let k=0;k<8;k++){const a=k*PI/4;for(const r of[2.6,5.5])if(roadAt(x+Math.cos(a)*r,z+Math.sin(a)*r)>=0)return true}return false};
+ for(const o of K){const i=o%N,j=(o/N)|0;if(i<1||j<1||i>N-3||j>N-3)continue;const C=[[i*GS,j*GS,val(i,j)],[(i+1)*GS,j*GS,val(i+1,j)],[(i+1)*GS,(j+1)*GS,val(i+1,j+1)],[i*GS,(j+1)*GS,val(i,j+1)]],X=[];
+  for(let k=0;k<4;k++){const a=C[k],b=C[(k+1)%4];if((a[2]>0)!==(b[2]>0)){const t=a[2]/(a[2]-b[2]);X.push([a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t])}}
+  for(let k=0;k+1<X.length;k+=2){const a=X[k],b=X[k+1],mx=(a[0]+b[0])/2,mz=(a[1]+b[1])/2,l=Math.hypot(b[0]-a[0],b[1]-a[1]);if(l<.05||rdNear(mx,mz))continue;put(a,b,l,mx,mz)}}
  B.mesh();PLC.wall=n}
 // Pagoda de cinco pisos, campanario, fuente para lavarse las manos, puesto de amuletos y tablillas de deseos,
 // en los sitios despejados de la grava (lejos de los caminos, los farolillos, los árboles y el borde)
@@ -312,7 +316,7 @@ function buildTrains(){const key=(x,z)=>Math.round(x)+"_"+Math.round(z),nd=new M
  for(let i=0;i<4;i++){const cars=[];for(let k=0;k<4;k++){const G=new THREE.Group(),src=k===0||k===3?mC:k===1?mP:mM,bd=new THREE.Mesh(src.geometry,src.material);bd.castShadow=true;if(k===3)bd.rotation.y=Math.PI;G.add(bd,new THREE.Mesh(sg,S));G.visible=false;sc.add(G);cars.push(G)}TRN.pool.push({cars,r:null,d:0,dir:1})}}
 const _pa=new THREE.Vector3(),_pb=new THREE.Vector3();
 function routeAt(r,s,o){const D=r.D;let a=0,b=D.length-1;while(b-a>1){const m=(a+b)>>1;if(D[m]<=s)a=m;else b=m}const f=(s-D[a])/((D[b]-D[a])||1),p=r.pts[a],q=r.pts[b];return o.set(p[0]+(q[0]-p[0])*f,p[1]+(q[1]-p[1])*f+2.05,p[2]+(q[2]-p[2])*f)}
-function trainsTick(dt){if(!TRN.routes.length)return;TRN.t+=dt;if(TRN.t>45){const f=TRN.routes.filter(r=>!r.busy),t=TRN.pool.find(q=>!q.r);if(f.length&&t){TRN.t=0;t.r=f[Math.floor(Math.random()*f.length)];t.r.busy=true;t.d=0;t.dir=Math.random()<.5?1:-1}}
+function trainsTick(dt){if(!TRN.routes.length)return;TRN.t+=dt;if(TRN.t>45){const f=TRN.routes.filter(r=>!r.busy),t=TRN.pool.find(q=>!q.r);if(f.length&&t){TRN.t=0;t.r=f[Math.floor(Math.random()*f.length)];t.r.busy=true;t.d=0;t.dir=Math.random()<.5?1:-1;t.hk=false;t.prevD=undefined}}
  for(const t of TRN.pool){if(!t.r)continue;const r=t.r;t.d+=36*dt;t.cars.forEach((m,k)=>{const s=t.d-k*20.6-10;if(s<10||s>r.L-10){m.visible=false;return}const u=t.dir>0?s:r.L-s,e=t.dir;routeAt(r,u+9*e,_pa);routeAt(r,u-9*e,_pb);m.visible=true;m.position.addVectors(_pa,_pb).multiplyScalar(.5);m.lookAt(_pa)});
   if(t.d-3*20.6-10>r.L){r.busy=false;t.r=null;for(const m of t.cars)m.visible=false}}}
 function placesTick(dt){conesTick(dt);trainsTick(dt);raceTick(dt);ambAudio(dt);onlTick(dt)}

@@ -91,7 +91,9 @@ function setupPost(){if(!THREE.EffectComposer||composer)return;composer=new THRE
  bloom=new THREE.UnrealBloomPass(new THREE.Vector2(innerWidth,innerHeight),.5,.5,.8);composer.addPass(bloom);grade=new THREE.ShaderPass(GRADE);composer.addPass(grade);
  fxaa=new THREE.ShaderPass(THREE.FXAAShader);composer.addPass(fxaa);postSize()}
 function postSize(){if(!composer)return;const pr=rd.getPixelRatio();composer.setPixelRatio(pr);composer.setSize(innerWidth,innerHeight);fxaa.material.uniforms.resolution.value.set(1/(innerWidth*pr),1/(innerHeight*pr))}
-function renderFrame(){const lv=qLevel(),bl=ENV.bl==="auto"?lv>=2:ENV.bl==="on";if(composer&&(lv>=1||bl)){bloom.enabled=bl;bloom.strength=.1+NF*.7+WEA.wet*.1;bloom.threshold=.78-NF*.12;
+// Con nieve en el suelo casi todo es blanco: el resplandor y las luces se bajan para que no se queme la imagen
+const isSnowy=()=>SEASON===3||(WEA.snow||0)>.05;
+function renderFrame(){const lv=qLevel(),bl=ENV.bl==="auto"?lv>=2:ENV.bl==="on";if(composer&&(lv>=1||bl)){const snw=isSnowy();bloom.enabled=bl;bloom.strength=(.1+NF*.7+WEA.wet*.1)*(snw?.45:1);bloom.threshold=snw?.96:.78-NF*.12;
   // Reflejos: en Alta o más cuando el suelo está mojado; en Realista, siempre un brillo suave y sombras de contacto
   // (la nieve no brilla: con invierno o suelo nevado no hay reflejos; y el brillo seco de Realista es muy suave para no igualar calzada y acera)
   const R=lv===4,snowy=SEASON===3||(WEA.snow||0)>.05,wet=lv>=2&&!snowy?Math.min(.9,WEA.wet*1.1):0,U=realP.uniforms;U.uWet.value=wet>.06?wet:R&&!snowy?.05:0;U.uAO.value=R?1:0;U.uSky.value.copy(sc.fog.color);realP.enabled=R||U.uWet.value>0;
@@ -122,12 +124,12 @@ function envUpdate(dt){HOUR=hourNow();const e=Math.sin((HOUR-6)/12*PI),day=sstep
  if(NM.lampHead)NM.lampHead.emissiveIntensity=NF*2;if(NM.glow)NM.glow.opacity=NF*.9;
  // Sitios especiales (places.js): focos del campo de béisbol, marcador, anuncios y luz sobre el césped
  if(NM.plN)for(const[m,b,k]of NM.plN)m.emissiveIntensity=b+NF*k;if(NM.plO)for(const[m,k]of NM.plO)m.opacity=NF*k;
- if(ROADMAT)ROADMAT.lightMapIntensity=NF*1.5;if(WATERM){WATERM.lightMapIntensity=NF*1.1;WATERM.reflectivity=.5*(1-NF*.6);WATERU.uTime.value=performance.now()/1000;WATERU.uNightW.value=NF}if(GROUNDMAT)GROUNDMAT.lightMapIntensity=NF*1.3;if(NM.vend)NM.vend.emissiveIntensity=.15+NF*.85;
+ const snL=isSnowy()?.35:1;if(ROADMAT)ROADMAT.lightMapIntensity=NF*1.5*snL;if(WATERM){WATERM.lightMapIntensity=NF*1.1;WATERM.reflectivity=.5*(1-NF*.6);WATERU.uTime.value=performance.now()/1000;WATERU.uNightW.value=NF}if(GROUNDMAT)GROUNDMAT.lightMapIntensity=NF*1.3*snL;if(NM.vend)NM.vend.emissiveIntensity=.15+NF*.85;
  if(NM.head)NM.head.emissiveIntensity=.2+NF*1.8;if(NM.tail)NM.tail.emissiveIntensity=.25+NF*1.3;
  if(towerMat)towerMat.emissive.copy(PAL.tw).multiplyScalar(NF*.55);for(const m of NM.ledT)m.color.setScalar(.85+NF*.15);
  if(ROADMAT){const dw=SEASON===3?0:WEA.wet;ROADMAT.specular.setScalar(.05+dw*.75);ROADMAT.shininess=30+dw*70;ROADMAT.color.setScalar(1-dw*.35)}
  HL.intensity=NF>.2?NF*7:0;if(car){const fx=Math.sin(h),fz=Math.cos(h),f=cur.l/2+.3;HL.position.set(px+fx*f,.8+bodyY,pz+fz*f);HL.target.position.set(px+fx*26,0,pz+fz*26);HL.target.updateMatrixWorld();
-  HLU.uHLP.value.set(px+fx*f,pz+fz*f);HLU.uHLD.value.set(fx,fz);HLU.uHLI.value=NF>.2&&spawned?NF*1.4:0}
+  HLU.uHLP.value.set(px+fx*f,pz+fz*f);HLU.uHLD.value.set(fx,fz);HLU.uHLI.value=NF>.2&&spawned?NF*1.4*(isSnowy()?.3:1):0}
  // Farolas más cercanas al jugador con luz de verdad (se reparten cada 0,3 s) y detalle cercano de los edificios
  lampT+=dt;const doL=lampT>.3;if(doL){lampT=0;lodUpdate()}if(doL&&LPL.length&&LAMPS.length){const tx=px,tz=pz,best=[];for(let i=0;i<LAMPS.length;i+=3){const d=(LAMPS[i]-tx)**2+(LAMPS[i+2]-tz)**2;if(best.length<LPL.length||d<best[best.length-1][0]){best.push([d,i]);best.sort((a,b)=>a[0]-b[0]);if(best.length>LPL.length)best.pop()}}
   LPL.forEach((l,k)=>{const b=best[k];if(b)l.position.set(LAMPS[b[1]],LAMPS[b[1]+1],LAMPS[b[1]+2])})}

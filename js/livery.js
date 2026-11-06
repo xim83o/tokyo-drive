@@ -66,7 +66,36 @@ function cusTex(id){if(CUST[id])return CUST[id];const c=CUS.find(q=>q.id===id),t
 function addCus(file,done){const rd2=new FileReader();rd2.onload=()=>{const im=new Image();im.onload=()=>{const cv=document.createElement("canvas");cv.width=cv.height=256;const g=cv.getContext("2d"),k=Math.min(256/im.width,256/im.height),w=im.width*k,h=im.height*k;
   g.drawImage(im,128-w/2,128-h/2,w,h);let url=cv.toDataURL("image/webp",.9);if(!url.startsWith("data:image/webp"))url=cv.toDataURL("image/png");
   const id=Date.now();CUS.push({id,url,n:file.name.replace(/\.[^.]+$/,"").slice(0,24)});if(!saveCus()){CUS.pop();alert(T("No queda espacio para más imágenes: borra alguna."));return}done(id)};im.onerror=()=>alert(T("No se pudo leer esa imagen."));im.src=rd2.result};rd2.readAsDataURL(file)}
-const stkName=k=>k.ci!==undefined?((CUS.find(q=>q.id===k.ci)||{}).n||T("Mi imagen")):T(STK[k.i].n);
+// Capas del editor: pegatina (i), imagen propia (ci), forma (sh) o texto (txt). col: color · a: opacidad · sx: ancho
+const SHP=[["Cuadrado",g=>g.fillRect(28,28,200,200)],["Círculo",g=>{g.beginPath();g.arc(128,128,108,0,7);g.fill()}],["Anillo",g=>{g.beginPath();g.arc(128,128,108,0,7);g.arc(128,128,66,0,7,true);g.fill()}],["Triángulo",g=>{g.beginPath();g.moveTo(128,24);g.lineTo(236,220);g.lineTo(20,220);g.closePath();g.fill()}],["Rombo",g=>{g.beginPath();g.moveTo(128,16);g.lineTo(240,128);g.lineTo(128,240);g.lineTo(16,128);g.closePath();g.fill()}],
+ ["Estrella",g=>{g.beginPath();for(let k=0;k<10;k++){const a=k/10*PI*2-PI/2,r=k%2?46:112;g.lineTo(128+Math.cos(a)*r,128+Math.sin(a)*r)}g.closePath();g.fill()}],["Hexágono",g=>{g.beginPath();for(let k=0;k<6;k++){const a=k/6*PI*2;g.lineTo(128+Math.cos(a)*112,128+Math.sin(a)*112)}g.closePath();g.fill()}],
+ ["Flecha",g=>{g.beginPath();g.moveTo(16,100);g.lineTo(140,100);g.lineTo(140,44);g.lineTo(240,128);g.lineTo(140,212);g.lineTo(140,156);g.lineTo(16,156);g.closePath();g.fill()}],["Chevron",g=>{g.beginPath();g.moveTo(40,28);g.lineTo(120,28);g.lineTo(216,128);g.lineTo(120,228);g.lineTo(40,228);g.lineTo(136,128);g.closePath();g.fill()}],
+ ["Barra",g=>g.fillRect(0,100,256,56)],["Diagonal",g=>{g.beginPath();g.moveTo(0,256);g.lineTo(92,0);g.lineTo(164,0);g.lineTo(72,256);g.closePath();g.fill()}],["Rayas",g=>{for(const y of[40,104,168])g.fillRect(0,y,256,44)}]];
+const SHPT=[],TXTT=new Map(),TFONT=["italic 900 Spx system-ui","bold Spx 'Yu Mincho','MS Mincho',serif","900 Spx Impact,'Arial Black',sans-serif","bold Spx ui-monospace,Consolas,monospace"];
+const shpTex=i=>SHPT[i]||(SHPT[i]=canvasTex(256,256,g=>{g.fillStyle="#fff";SHP[i][1](g)}));
+function txtTex(t,f){const q=f+"|"+t;if(TXTT.has(q))return TXTT.get(q);const x=canvasTex(512,256,g=>{g.fillStyle="#fff";g.textAlign="center";g.textBaseline="middle";const fn=z=>TFONT[f].replace("S",z);g.font=fn(150);const w=g.measureText(t).width||1;g.font=fn(Math.min(190,150*490/w));g.fillText(t,256,132)});TXTT.set(q,x);return x}
+const lyrHide=k=>k.sh!==undefined||k.txt!==undefined?false:k.ci!==undefined?!CUS.some(q=>q.id===k.ci):STK[k.i].hide,lyrTex=k=>k.sh!==undefined?shpTex(k.sh):k.txt!==undefined?txtTex(k.txt,k.f||0):k.ci!==undefined?cusTex(k.ci):stkTex(k.i);
+const stkName=k=>k.sh!==undefined?T(SHP[k.sh][0]):k.txt!==undefined?`“${k.txt}”`:k.ci!==undefined?((CUS.find(q=>q.id===k.ci)||{}).n||T("Mi imagen")):T(STK[k.i].n);
+// --- Imagen entera: la carrocería se despliega en un lienzo cuadrado con cinco zonas (arriba el lado izquierdo, en medio el techo y el capó, abajo el lado derecho y, a
+// la derecha, el frontal y la trasera), como una plantilla. Modo 0: la imagen sigue la plantilla · modo 1: se repite por toda la carrocería como un estampado
+let LB=null;const WRT={},WRM={};
+function wrapTex(id){if(WRT[id])return WRT[id];const c=CUS.find(q=>q.id===id),t=canvasTex(1024,1024,()=>{},true);WRT[id]=t;if(c){const im=new Image();im.onload=()=>{const g=t.image.getContext("2d");g.clearRect(0,0,1024,1024);g.drawImage(im,0,0,1024,1024);t.needsUpdate=true};im.src=c.url}return t}
+const wrapMat=id=>WRM[id]||(WRM[id]=new THREE.MeshPhongMaterial({map:wrapTex(id),transparent:true,polygonOffset:true,polygonOffsetFactor:-2,shininess:60,specular:0x222222}));
+const wrapZone=T3=>{const ax=T3[3]-T3[0],ay=T3[4]-T3[1],az=T3[5]-T3[2],bx=T3[6]-T3[0],by=T3[7]-T3[1],bz=T3[8]-T3[2],nx=ay*bz-az*by,ny=az*bx-ax*bz,nz=ax*by-ay*bx,X=Math.abs(nx),Y=Math.abs(ny),Z=Math.abs(nz);return Y>=X&&Y>=Z?2:X>=Z?(nx>0?0:1):(nz>0?3:4)};
+function wrapUV(T3,B,W2,uv,o){const{bb,s}=B,z=wrapZone(T3),asp=(CUS.find(q=>q.id===W2.ci)||{}).asp||1;for(let k=0;k<3;k++){const x=T3[k*3],y=T3[k*3+1],zz=T3[k*3+2];let pu,pv,du,dv,U,V;
+  if(z<3){pu=(bb.max.z-zz)/s.z;du=s.z}else{pu=z===3?(x-bb.min.x)/s.x:(bb.max.x-x)/s.x;du=s.x}if(z===0||z===1){if(z===1)pu=1-pu;pv=(y-bb.min.y)/s.y;dv=s.y}else if(z===2){pv=(x-bb.min.x)/s.x;dv=s.x}else{pv=(y-bb.min.y)/s.y;dv=s.y}
+  if(W2.m){const q=s.z*(W2.s||1);U=(pu-.5)*du/q+.5+(W2.ox||0);V=(pv-.5)*dv/q*asp+.5+(W2.oy||0)}else if(z===0){U=pu*.75;V=.66+pv*.34}else if(z===1){U=pu*.75;V=pv*.34}else if(z===2){U=pu*.75;V=.34+pv*.32}else if(z===3){U=.75+pu*.25;V=.5+pv*.5}else{U=.75+pu*.25;V=pv*.5}
+  uv[o+k*2]=U;uv[o+k*2+1]=V}}
+// Plantilla del coche actual: las cinco zonas con el dibujo de la carrocería encima, para pintarla en cualquier programa
+function wrapTemplate(){if(!LB)return;const c=document.createElement("canvas");c.width=c.height=1024;const g=c.getContext("2d");g.fillStyle="#f4f4f6";g.fillRect(0,0,1024,1024);const Z=[["Lado izquierdo",0,0,768,348],["Techo y capó",0,348,768,328],["Lado derecho",0,676,768,348],["Frontal",768,0,256,512],["Trasera",768,512,256,512]];
+ g.font="bold 24px system-ui";Z.forEach(([n,x,y,w,h],i)=>{g.fillStyle=["#dfe9f7","#e9f3e2","#f7e8e1","#efe4f4","#f5efd9"][i];g.fillRect(x,y,w,h);g.strokeStyle="#333";g.lineWidth=2;g.strokeRect(x,y,w,h);g.fillStyle="#333";g.fillText(T(n),x+12,y+30)});
+ g.strokeStyle="rgba(0,0,0,.28)";g.lineWidth=1;const o=LB.out,uv=new Float32Array(6),T3=new Float32Array(9);for(let i=0;i<o.length;i+=9){for(let k=0;k<9;k++)T3[k]=o[i+k];wrapUV(T3,LB,{m:0,ci:0},uv,0);g.beginPath();for(let k=0;k<3;k++)g[k?"lineTo":"moveTo"](uv[k*2]*1024,(1-uv[k*2+1])*1024);g.closePath();g.stroke()}
+ g.fillStyle="#e5173f";g.font="bold 20px system-ui";g.fillText("◄ "+T("delante"),12,340);g.fillText("◄ "+T("delante"),12,668);g.fillText(T("delante")+" ►",12,1016);
+ const a=document.createElement("a");a.href=c.toDataURL("image/png");a.download="plantilla-"+cur.n.replace(/[^\w-]+/g,"-")+".png";document.body.appendChild(a);a.click();a.remove()}
+function addWrap(file,done){const rd2=new FileReader();rd2.onload=()=>{const im=new Image();im.onload=()=>{const cv=document.createElement("canvas");cv.width=cv.height=1024;cv.getContext("2d").drawImage(im,0,0,1024,1024);let url=cv.toDataURL("image/webp",.85);if(!url.startsWith("data:image/webp"))url=cv.toDataURL("image/png");
+  const id=Date.now();CUS.push({id,url,wrap:1,asp:im.width/im.height,n:file.name.replace(/\.[^.]+$/,"").slice(0,24)});if(!saveCus()){CUS.pop();alert(T("No queda espacio para más imágenes: borra alguna."));return}done(id)};im.onerror=()=>alert(T("No se pudo leer esa imagen."));im.src=rd2.result};rd2.readAsDataURL(file)}
+// Quita la imagen entera de este coche (y del navegador, si ningún otro coche la usa)
+function delWrap(L){const id=L.wrap&&L.wrap.ci;delete L.wrap;if(id&&!LIV.some(q=>q.wrap&&q.wrap.ci===id)){CUS=CUS.filter(q=>q.id!==id);saveCus();delete WRM[id];delete WRT[id]}}
 // Al cargar una imagen se redibujan sus pegatinas (texturas ya creadas y miniaturas del editor)
 for(const src of new Set(STK.filter(s=>s.src).map(s=>s.src))){const im=new Image();IMGS[src]=im;im.onload=()=>{STK.forEach((s,i)=>{if(s.src!==src||!STKT[i])return;const c=STKT[i].image,g=c.getContext("2d");g.clearRect(0,0,256,256);s.d(g);STKT[i].needsUpdate=true});if(state==="liv")drawLiv()};im.src=src}
 // Franjas: 0 ninguna · 1 central · 2 doble · 3 lateral · 4 diagonal
@@ -91,10 +120,10 @@ const PACKS=[{n:"Franja negra",o:{st:1,sc:0x111111}},{n:"Rayas de carreras",o:{s
  {n:"🏁 Resistencia",o:{c:0x1b1c20,st:3,sc:0x2fae5a,num:44,nc:0x2fae5a,tint:.9,wc:0x2fae5a,stk:[{i:NS+3,sd:0,u:.3,v:.4,s:.9},{i:NS+3,sd:1,u:.3,v:.4,s:.9},{i:NS+5,sd:2,u:0,v:.5,s:1}]}},
  {n:"🎌 Tanuki",o:{c:0xffc4dc,st:1,sc:0xf2f2f2,stk:[{i:NS+6,sd:0,u:0,v:.5,s:1.3},{i:NS+6,sd:1,u:0,v:.5,s:1.3},{i:NS+6,sd:2,u:0,v:.5,s:1.2}]}},
  {n:"🎌 Neón",o:{c:0x2a1650,st:4,sc:0x00e5ff,tint:.9,wc:0xff2fb3,stk:[{i:NS+8,sd:0,u:0,v:.45,s:1.4},{i:NS+8,sd:1,u:0,v:.45,s:1.4},{i:7,sd:2,u:0,v:.5,s:1}]}},
- {n:"🎌 Guren",o:{c:0x14151a,st:3,sc:0xff3b1f,tint:.9,wc:0xff3b1f,stk:[{i:NS+7,sd:0,u:0,v:.5,s:1.3},{i:NS+7,sd:1,u:0,v:.5,s:1.3},{i:8,sd:2,u:0,v:.3,s:1.1}]}}];
+ {n:"🎌 Guren",o:{c:0x14151a,st:3,sc:0xff3b1f,tint:.9,wc:0xff3b1f,stk:[{i:NS+7,sd:0,u:0,v:.5,s:1.3},{i:NS+7,sd:1,u:0,v:.5,s:1.3},{i:8,sd:2,u:0,v:.5,s:1.1}]}}];
 // Lados donde se pega: 0 izquierda · 1 derecha · 2 capó · 3 techo · 4 detrás
 const SIDES=["Izquierda","Derecha","Capó","Techo","Detrás"];
-const DMAT=new Map();const dmat=t=>{if(!DMAT.has(t))DMAT.set(t,new THREE.MeshPhongMaterial({map:t,transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-4,shininess:60,specular:0x222222}));return DMAT.get(t)};
+const DMAT=new Map();const dmat=(t,col,op)=>{const q=t.uuid+"|"+col+"|"+op;if(!DMAT.has(q))DMAT.set(q,new THREE.MeshPhongMaterial({map:t,color:col===undefined?0xffffff:col,opacity:op===undefined?1:op,transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-4,shininess:60,specular:0x222222}));return DMAT.get(q)};
 let DEC=[];
 function applyDecals(){if(!car||!carBody||!THREE.DecalGeometry)return;for(const m of DEC){car.remove(m);m.geometry.dispose()}DEC=[];const L=LIV[carK];
  // Llantas y neumáticos, cada uno de su color
@@ -113,12 +142,14 @@ function applyDecals(){if(!car||!carBody||!THREE.DecalGeometry)return;for(const 
  const MD=MODELS[cur.f],glass=MD.glass,trim=MD.trim;
  const out=[];for(const[a,b,c2,cell]of TR)if(cell!==glass&&cell!==trim)out.push(...a,...b,...c2);
  const pg=new THREE.BufferGeometry();pg.setAttribute("position",new THREE.Float32BufferAttribute(out,3));pg.computeVertexNormals();const pm=new THREE.Mesh(pg);
- const add=(tex,pos,rot,size)=>{const g=new THREE.DecalGeometry(pm,pos,rot,size);if(!g.attributes.position.count)return;const m=new THREE.Mesh(g,dmat(tex));m.renderOrder=2;car.add(m);DEC.push(m)};
+ const add=(tex,pos,rot,size,col,op,ord)=>{const g=new THREE.DecalGeometry(pm,pos,rot,size);if(!g.attributes.position.count)return;const m=new THREE.Mesh(g,dmat(tex,col,op));m.renderOrder=3+(ord||0);car.add(m);DEC.push(m)};
+ // Imagen entera: una copia de la carrocería (sin cristales ni bajos) con la imagen encima, por debajo de las capas
+ LB={bb,c,s,out};if(L.wrap&&CUS.some(q=>q.id===L.wrap.ci)){const n=out.length/9,uv=new Float32Array(n*6),T3=new Float32Array(9);for(let i=0;i<n;i++){for(let k=0;k<9;k++)T3[k]=out[i*9+k];wrapUV(T3,LB,L.wrap,uv,i*6)}const wg=new THREE.BufferGeometry();wg.setAttribute("position",new THREE.Float32BufferAttribute(out,3));wg.setAttribute("uv",new THREE.BufferAttribute(uv,2));wg.computeVertexNormals();const wm=new THREE.Mesh(wg,wrapMat(L.wrap.ci));wm.renderOrder=1;car.add(wm);DEC.push(wm)}
  // El lado izquierdo del coche es +x (el coche mira hacia +z); el giro de cada proyección hace que los textos se lean desde fuera
  const side=(sd,u,v,sz,rz)=>{rz=rz||0;if(sd<2){const x=sd?bb.min.x:bb.max.x;return[new THREE.Vector3(x,bb.min.y+s.y*v,c.z+u*s.z*.45),new THREE.Euler(0,sd?-PI/2:PI/2,rz),new THREE.Vector3(sz,sz,s.x*.8)]}
   // Capó: se lee desde delante del coche (mirando hacia fuera)
-  if(sd===2)return[new THREE.Vector3(c.x,bb.max.y,c.z+s.z*(.3+u*.12)),new THREE.Euler(-PI/2,0,rz),new THREE.Vector3(sz,sz,s.y*1.2)];
-  if(sd===3)return[new THREE.Vector3(c.x,bb.max.y,c.z+u*s.z*.2),new THREE.Euler(-PI/2,0,PI+rz),new THREE.Vector3(sz,sz,s.y*.6)];
+  if(sd===2)return[new THREE.Vector3(c.x+(v-.5)*s.x,bb.max.y,c.z+s.z*(.3+u*.12)),new THREE.Euler(-PI/2,0,rz),new THREE.Vector3(sz,sz,s.y*1.2)];
+  if(sd===3)return[new THREE.Vector3(c.x+(v-.5)*s.x,bb.max.y,c.z+u*s.z*.2),new THREE.Euler(-PI/2,0,PI+rz),new THREE.Vector3(sz,sz,s.y*.6)];
   return[new THREE.Vector3(c.x+u*s.x*.3,bb.min.y+s.y*v,bb.min.z),new THREE.Euler(0,PI,rz),new THREE.Vector3(sz,sz,s.z*.5)]};
  if(L.st){const t=stripeTex(L.st,L.sc);if(L.st===3)for(const sd of[0,1])add(t,new THREE.Vector3(sd?bb.max.x:bb.min.x,bb.min.y+s.y*.42,c.z),new THREE.Euler(0,sd?PI/2:-PI/2,PI/2),new THREE.Vector3(s.y*1.2,s.z*1.05,s.x*.8));
   else add(t,new THREE.Vector3(c.x,bb.max.y,c.z),new THREE.Euler(-PI/2,0,0),new THREE.Vector3(s.x*.9,s.z*1.05,s.y*2.2))}
@@ -130,7 +161,7 @@ function applyDecals(){if(!car||!carBody||!THREE.DecalGeometry)return;for(const 
   // a través del hueco del parabrisas)
   NUMD=[s.x*.3,s.x*.3,99,s.y*.2,s.z*.15];
   for(const sd of(L.np||[0,1,2])){const f=fitNum(pm,side,sd,sd<2?.45:sd===4?.55:.5,sd<2?Math.min(s.y*.62,s.z*.3):sd===4?Math.min(s.y*.5,s.x*.4):s.x*.5);if(f)add(t,...f)}}
- for(const k of L.stk){if(k.ci!==undefined?!CUS.some(q=>q.id===k.ci):STK[k.i].hide)continue;const[p,r,z]=side(k.sd,k.u,k.v,s.y*.55*k.s,k.r);add(k.ci!==undefined?cusTex(k.ci):stkTex(k.i),p,r,z)}
+ L.stk.forEach((k,j)=>{if(lyrHide(k))return;const[p,r,z]=side(k.sd,k.u,k.v,s.y*.55*k.s,k.r);z.x*=k.sx||1;add(lyrTex(k),p,r,z,k.col,k.a,j+1)});
  car.position.copy(P);car.rotation.copy(R);car.updateMatrixWorld(true)}
 
 // Ajuste del dorsal a la carrocería (pm, en coordenadas del coche). Devuelve [posición, giro, tamaño] para DecalGeometry o null
@@ -200,7 +231,8 @@ function studio(){dealerTick();const dl=dealerOn();if(SHOW)SHOW.visible=dl;if(st
  const on=state==="liv"&&(dl||NF>.12),c=livCenter();STUDIO.forEach((l,i)=>{l.intensity=on?(dl?[1.1,1.1,.8][i]:NF*(i===2?.45:.75)):0;if(!on)return;const a=h+[.9,-2.2,PI][i],d=[5.5,5.5,6.5][i];
  l.position.set(c.x+Math.sin(a)*d,c.y+[4.5,4,6][i],c.z+Math.cos(a)*d);l.target.position.set(c.x,c.y+.6,c.z);l.target.updateMatrixWorld()})}
 // --- Editor ---
-let livK=0,livSel=-1,livPrev="cars",livA=.6;
+let livK=0,livSel=-1,livPrev="cars",livA=.6,livTab="p",livRAF=0;
+const livDirty=()=>{saveLiv();if(!livRAF)livRAF=requestAnimationFrame(()=>{livRAF=0;applyDecals()})};
 function openLiv(){livPrev=state;state="liv";livK=carK;if(livBg==="dealer")buildShowroom();$("ov").hidden=false;$("ov").classList.add("liv");$("carsP").hidden=$("mapP").hidden=$("setP").hidden=true;$("livP").hidden=false;hudVis(false);$("touch").hidden=true;drawLiv()}
 function closeLiv(){saveLiv();$("livP").hidden=true;$("ov").classList.remove("liv");if(livPrev==="play")resume();else show("cars")}
 function livSet(o){Object.assign(LIV[livK],o);saveLiv();if(livK!==carK||"c" in o||"tint" in o||"gc" in o||"bc" in o)buildCar(livK);else applyDecals()}
@@ -210,8 +242,9 @@ function drawLiv(){const P=$("livP"),L=LIV[livK];P.innerHTML=`<h1>${T("Calcoman�
  const sw=(r,cur2,f,allowNone)=>{if(allowNone)btn(r,"Original",cur2===undefined,()=>f(undefined));for(const c of PAL8)btn(r,"",cur2===c,()=>f(c),`background:#${c.toString(16).padStart(6,"0")};width:26px;height:26px;padding:0;border-radius:13px`);
   const i=document.createElement("input");i.type="color";i.value="#"+((cur2===undefined?0xffffff:cur2).toString(16).padStart(6,"0"));i.oninput=()=>f(parseInt(i.value.slice(1),16));r.appendChild(i)};
  let r=row();CARS.forEach((c,i)=>btn(r,c.n,i===livK,()=>{livK=i;livSel=-1;buildCar(i);drawLiv()}));
+ r=row();r.style.marginTop="10px";[["p","Pintura"],["l","Capas"],["w","Imagen entera"]].forEach(([v,t])=>btn(r,t,livTab===v,()=>{livTab=v;livSel=-1;drawLiv()}));
  sec("Fondo");r=row();[["city","Ciudad"],["dealer","Concesionario"]].forEach(([v,t])=>btn(r,t,livBg===v,()=>{livBg=v;ENV.livbg=v;saveEnv();if(v==="dealer")buildShowroom();drawLiv()}));
- sec("Diseños completos");r=row();PACKS.forEach(p=>btn(r,p.n,false,()=>{LIV[livK]=Object.assign(LIVDEF(),JSON.parse(JSON.stringify(p.o)));saveLiv();buildCar(livK);drawLiv()}));btn(r,"Quitar todo",false,()=>{LIV[livK]=LIVDEF();saveLiv();buildCar(livK);drawLiv()});
+ if(livTab==="p"){sec("Diseños completos");r=row();PACKS.forEach(p=>btn(r,p.n,false,()=>{LIV[livK]=Object.assign(LIVDEF(),JSON.parse(JSON.stringify(p.o)));saveLiv();buildCar(livK);drawLiv()}));btn(r,"Quitar todo",false,()=>{LIV[livK]=LIVDEF();saveLiv();buildCar(livK);drawLiv()});
  sec("Color de carrocería");sw(row(),L.c===undefined?CARS[livK].c:L.c,c=>livSet({c:c===undefined?CARS[livK].c:c}));
  sec("Llantas");sw(row(),L.wc,c=>{LIV[livK].wc=c;saveLiv();buildCar(livK)},true);
  sec("Neumáticos");sw(row(),L.tc,c=>{LIV[livK].tc=c;saveLiv();buildCar(livK)},true);
@@ -225,25 +258,51 @@ function drawLiv(){const P=$("livP"),L=LIV[livK];P.innerHTML=`<h1>${T("Calcoman�
  if(L.num){sw(row(),L.nc,c=>livSet({nc:c}));
   // Dónde va (se pueden marcar varios sitios); el tamaño se ajusta solo a la chapa de cada sitio
   r=row();const np=L.np||[0,1,2];SIDES.forEach((t,q)=>btn(r,t,np.includes(q),()=>{const a=(L.np||[0,1,2]).slice(),i=a.indexOf(q);if(i>=0)a.splice(i,1);else a.push(q);livSet({np:a.sort()});drawLiv()}))}
+ }
+ if(livTab==="w")livWrapUI(P,sec,row,btn,L);
+ if(livTab==="l"){
+ sec("Formas");{const p=document.createElement("p");p.style.cssText="font-size:11px;margin:0 0 6px";p.textContent=T("Cada forma, texto o pegatina es una capa. Con una capa elegida, arrastra sobre el coche para colocarla; arrastra fuera del coche para girar la vista.");P.appendChild(p)}
+ {const g=document.createElement("div");g.className="stkg";SHP.forEach((s,i)=>{const b=document.createElement("button");b.title=T(s[0]);const cv=document.createElement("canvas");cv.width=cv.height=64;const x=cv.getContext("2d");x.scale(.25,.25);x.fillStyle="#e5173f";s[1](x);b.appendChild(cv);b.onclick=()=>{L.stk.push({i:1,sh:i,sd:0,u:0,v:.5,s:1.4,sx:1,r:0,a:1,col:0xe5173f});livSel=L.stk.length-1;saveLiv();applyDecals();drawLiv()};g.appendChild(b)});P.appendChild(g)}
+ sec("Texto");{const tr=row(),ti=document.createElement("input");ti.type="text";ti.maxLength=24;ti.placeholder=T("Escribe aquí");ti.onkeydown=e=>e.stopPropagation();tr.appendChild(ti);btn(tr,"Añadir texto",false,()=>{const v=ti.value.trim();if(!v)return;L.stk.push({i:1,txt:v,f:0,sd:0,u:0,v:.5,s:1.1,sx:2,r:0,a:1,col:0xffffff});livSel=L.stk.length-1;saveLiv();applyDecals();drawLiv()})}
+ sec("Capas (la última queda encima)");if(!L.stk.length){const p=document.createElement("p");p.style.cssText="font-size:12px;margin:0";p.textContent=T("Aún no hay capas.");P.appendChild(p)}
+ L.stk.forEach((k,j)=>{if(lyrHide(k))return;const d=document.createElement("div");d.className="stki"+(j===livSel?" on":"");d.innerHTML=`<b>${j+1}. ${stkName(k)}</b>`;d.onclick=e=>{if(e.target===d||e.target.tagName==="B"){livSel=j===livSel?-1:j;drawLiv()}};P.appendChild(d);
+  // × para quitar la pegatina directamente desde la lista
+  const x=document.createElement("button");x.className="cusx stkx";x.textContent="×";x.title=T("Quitar pegatina");x.onclick=e=>{e.stopPropagation();L.stk.splice(j,1);livSel=-1;saveLiv();applyDecals();drawLiv()};d.appendChild(x);
+  if(j!==livSel)return;const rr=document.createElement("div");rr.className="lrow";SIDES.forEach((t,q)=>btn(rr,t,k.sd===q,()=>{k.sd=q;k.u=0;k.v=.5;saveLiv();applyDecals();drawLiv()}));d.appendChild(rr);
+  for(const[key,t,mn,mx,st]of[["u","Delante / detrás",-2.5,2.5,.02],["v",k.sd===2||k.sd===3?"A los lados":"Altura",.05,.95,.01],["s","Tamaño",.2,6,.05],["sx","Ancho",.2,5,.05],["r","Giro",-3.14,3.14,.05],["a","Opacidad",.1,1,.05]]){const q=document.createElement("label");q.className="lsl";q.innerHTML=`<span>${T(t)}</span><input type="range" min="${mn}" max="${mx}" step="${st}" value="${k[key]===undefined?(key==="sx"||key==="a"?1:0):k[key]}">`;
+   q.querySelector("input").oninput=e=>{k[key]=+e.target.value;livDirty()};d.appendChild(q)}
+  if(k.sh!==undefined||k.txt!==undefined){const cr=document.createElement("div");cr.className="lrow";cr.style.marginTop="6px";sw(cr,k.col,c=>{k.col=c;livDirty()});d.appendChild(cr)}
+  if(k.txt!==undefined){const tr=document.createElement("div");tr.className="lrow";tr.style.marginTop="6px";const ti=document.createElement("input");ti.type="text";ti.maxLength=24;ti.value=k.txt;ti.onkeydown=e=>e.stopPropagation();ti.oninput=()=>{k.txt=ti.value;livDirty()};tr.appendChild(ti);["Itálica","Japonesa","Gruesa","Técnica"].forEach((n,q)=>btn(tr,n,(k.f||0)===q,()=>{k.f=q;saveLiv();applyDecals();drawLiv()}));d.appendChild(tr)}
+  const ar=document.createElement("div");ar.className="lrow";ar.style.marginTop="6px";btn(ar,"↑ Subir capa",false,()=>{if(j<L.stk.length-1){L.stk.splice(j+1,0,L.stk.splice(j,1)[0]);livSel=j+1;saveLiv();applyDecals();drawLiv()}});btn(ar,"↓ Bajar capa",false,()=>{if(j>0){L.stk.splice(j-1,0,L.stk.splice(j,1)[0]);livSel=j-1;saveLiv();applyDecals();drawLiv()}});
+  btn(ar,"Duplicar",false,()=>{L.stk.splice(j+1,0,JSON.parse(JSON.stringify(k)));livSel=j+1;saveLiv();applyDecals();drawLiv()});if(k.sd<2)btn(ar,"Reflejar al otro lado",false,()=>{const c=JSON.parse(JSON.stringify(k));c.sd=1-k.sd;c.r=-(k.r||0);L.stk.push(c);livSel=L.stk.length-1;saveLiv();applyDecals();drawLiv()});d.appendChild(ar);
+  const del=document.createElement("button");del.className="b g";del.textContent=T("Quitar pegatina");del.onclick=()=>{L.stk.splice(j,1);livSel=-1;saveLiv();applyDecals();drawLiv()};d.appendChild(del)});
  sec("Pegatinas");{const p=document.createElement("p");p.style.cssText="font-size:11px;margin:0 0 6px";p.textContent=T("Las 11 primeras están dibujadas para el juego. Personaje Hachi: HachiStudio (CC0). Chica anime redonda: «Anime Girl» de Niabot (CC BY 3.0).");P.appendChild(p)}
  const g=document.createElement("div");g.className="stkg";STK.forEach((s,i)=>{if(s.hide)return;const b=document.createElement("button");b.title=T(s.n);const cv=document.createElement("canvas");cv.width=cv.height=64;const x=cv.getContext("2d");x.scale(.25,.25);s.d(x);b.appendChild(cv);
   b.onclick=()=>{L.stk.push({i,sd:0,u:0,v:.5,s:1,r:0});livSel=L.stk.length-1;saveLiv();applyDecals();drawLiv()};g.appendChild(b)});P.appendChild(g);
  // Mis imágenes: subir desde el ordenador o el móvil, ponerlas y borrarlas
- sec("Mis imágenes");{const g2=document.createElement("div");g2.className="stkg";for(const c of CUS){const w=document.createElement("div");w.className="cusw";const b=document.createElement("button");b.title=c.n;const im=document.createElement("img");im.src=c.url;b.appendChild(im);
+ sec("Mis imágenes");{const g2=document.createElement("div");g2.className="stkg";for(const c of CUS){if(c.wrap)continue;const w=document.createElement("div");w.className="cusw";const b=document.createElement("button");b.title=c.n;const im=document.createElement("img");im.src=c.url;b.appendChild(im);
    b.onclick=()=>{L.stk.push({i:0,ci:c.id,sd:0,u:0,v:.5,s:1,r:0});livSel=L.stk.length-1;saveLiv();applyDecals();drawLiv()};
    const x=document.createElement("button");x.className="cusx";x.textContent="×";x.title=T("Borrar imagen");x.onclick=()=>{if(!confirm(T("¿Borrar esta imagen?")))return;CUS=CUS.filter(q=>q.id!==c.id);saveCus();for(const q of LIV)q.stk=q.stk.filter(s=>s.ci!==c.id);saveLiv();livSel=-1;applyDecals();drawLiv()};
    w.appendChild(b);w.appendChild(x);g2.appendChild(w)}P.appendChild(g2);
   const fi=document.createElement("input");fi.type="file";fi.accept="image/*";fi.hidden=true;fi.onchange=()=>{const f=fi.files[0];if(f)addCus(f,id=>{L.stk.push({i:0,ci:id,sd:0,u:0,v:.5,s:1,r:0});livSel=L.stk.length-1;saveLiv();applyDecals();drawLiv()})};
   const ub=document.createElement("button");ub.className="b g";ub.textContent=T("📷 Subir imagen");ub.onclick=()=>fi.click();P.appendChild(fi);P.appendChild(ub);
   const p=document.createElement("p");p.style.cssText="font-size:11px;margin:6px 0 0";p.textContent=T("Tus imágenes se guardan solo en este navegador. Las PNG con fondo transparente quedan mejor.");P.appendChild(p)}
- L.stk.forEach((k,j)=>{if(k.ci===undefined&&STK[k.i].hide)return;const d=document.createElement("div");d.className="stki"+(j===livSel?" on":"");d.innerHTML=`<b>${j+1}. ${stkName(k)}</b>`;d.onclick=e=>{if(e.target===d||e.target.tagName==="B"){livSel=j===livSel?-1:j;drawLiv()}};P.appendChild(d);
-  // × para quitar la pegatina directamente desde la lista
-  const x=document.createElement("button");x.className="cusx stkx";x.textContent="×";x.title=T("Quitar pegatina");x.onclick=e=>{e.stopPropagation();L.stk.splice(j,1);livSel=-1;saveLiv();applyDecals();drawLiv()};d.appendChild(x);
-  if(j!==livSel)return;const rr=document.createElement("div");rr.className="lrow";SIDES.forEach((t,q)=>btn(rr,t,k.sd===q,()=>{k.sd=q;saveLiv();applyDecals();drawLiv()}));d.appendChild(rr);
-  for(const[key,t,mn,mx,st]of[["u","Delante / detrás",-1,1,.05],["v","Altura",.1,.9,.02],["s","Tamaño",.3,2.5,.05],["r","Giro",-3.14,3.14,.05]]){const q=document.createElement("label");q.className="lsl";q.innerHTML=`<span>${T(t)}</span><input type="range" min="${mn}" max="${mx}" step="${st}" value="${k[key]||0}">`;
-   q.querySelector("input").oninput=e=>{k[key]=+e.target.value;saveLiv();applyDecals()};d.appendChild(q)}
-  const del=document.createElement("button");del.className="b g";del.textContent=T("Quitar pegatina");del.onclick=()=>{L.stk.splice(j,1);livSel=-1;saveLiv();applyDecals();drawLiv()};d.appendChild(del)});
+ }
  const ok=document.createElement("button");ok.className="b";ok.textContent=T("Listo");ok.onclick=closeLiv;P.appendChild(ok)}
+// Pestaña "Imagen entera"
+function livWrapUI(P,sec,row,btn,L){const W2=L.wrap,note=t=>{const p=document.createElement("p");p.style.cssText="font-size:12px;margin:6px 0";p.textContent=T(t);P.appendChild(p)};
+ sec("Imagen entera");note("Envuelve toda la carrocería con una imagen tuya. Descarga la plantilla de este coche, píntala en cualquier programa y súbela. Con el modo Estampado sirve cualquier imagen, sin plantilla.");
+ let r=row();btn(r,"📐 Descargar plantilla",false,wrapTemplate);const fi=document.createElement("input");fi.type="file";fi.accept="image/*";fi.hidden=true;P.appendChild(fi);fi.onchange=()=>{const f=fi.files[0];if(f)addWrap(f,id=>{delWrap(L);L.wrap={ci:id,m:0,s:1,ox:0,oy:0};saveLiv();applyDecals();drawLiv()})};btn(r,W2?"📷 Cambiar imagen":"📷 Subir imagen",false,()=>fi.click());
+ if(!W2){note("Las imágenes con transparencia dejan ver el color del coche.");return}
+ const c=CUS.find(q=>q.id===W2.ci);if(c){const im=document.createElement("img");im.src=c.url;im.style.cssText="display:block;width:120px;margin:8px 0;border-radius:6px;background:#8884";P.appendChild(im)}
+ sec("Cómo se coloca");r=row();[[0,"Plantilla"],[1,"Estampado"]].forEach(([v,t])=>btn(r,t,(W2.m||0)===v,()=>{W2.m=v;saveLiv();applyDecals();drawLiv()}));
+ if(W2.m)for(const[key,t,mn,mx,st]of[["s","Tamaño",.2,2,.02],["ox","Mover en horizontal",-1,1,.01],["oy","Mover en vertical",-1,1,.01]]){const q=document.createElement("label");q.className="lsl";q.innerHTML=`<span>${T(t)}</span><input type="range" min="${mn}" max="${mx}" step="${st}" value="${W2[key]||(key==="s"?1:0)}">`;q.querySelector("input").oninput=e=>{W2[key]=+e.target.value;livDirty()};P.appendChild(q)}
+ r=row();r.style.marginTop="10px";btn(r,"Quitar imagen entera",false,()=>{delWrap(L);saveLiv();applyDecals();drawLiv()})}
+// Mover una capa arrastrando sobre el coche: el punto que se toca decide en qué lado va y dónde
+const LRC=new THREE.Raycaster();let livDrag=false;
+function livHit(e){if(!carBody||!LB)return null;const r=$("c").getBoundingClientRect();LRC.setFromCamera({x:(e.clientX-r.left)/r.width*2-1,y:-(e.clientY-r.top)/r.height*2+1},cam);const h=LRC.intersectObject(carBody,false)[0];if(!h)return null;const q=car.quaternion.clone().invert(),n=h.face.normal.clone().transformDirection(carBody.matrixWorld).applyQuaternion(q),p=car.worldToLocal(h.point.clone());return{p,n}}
+function livMove(H){const k=LIV[livK].stk[livSel];if(!k)return;const{p,n}=H,{bb,c,s}=LB,lim=(v,a,b)=>Math.max(a,Math.min(b,v));let sd;if(n.y>.6)sd=p.z>c.z+s.z*.12?2:3;else if(Math.abs(n.x)>=Math.abs(n.z))sd=n.x>0?0:1;else sd=n.z<0?4:2;k.sd=sd;
+ if(sd<2){k.u=lim((p.z-c.z)/(s.z*.45),-1.3,1.3);k.v=lim((p.y-bb.min.y)/s.y,.05,.95)}else if(sd===2){k.u=lim(((p.z-c.z)/s.z-.3)/.12,-2.5,2.5);k.v=lim(.5+(p.x-c.x)/s.x,.05,.95)}else if(sd===3){k.u=lim((p.z-c.z)/(s.z*.2),-2.5,2.5);k.v=lim(.5+(p.x-c.x)/s.x,.05,.95)}else{k.u=lim((p.x-c.x)/(s.x*.3),-1.3,1.3);k.v=lim((p.y-bb.min.y)/s.y,.05,.95)}livDirty()}
 // Girar la vista del coche arrastrando sobre la imagen mientras el editor está abierto
-{let dx=null;$("c").addEventListener("pointerdown",e=>{if(state==="liv")dx=e.clientX});addEventListener("pointermove",e=>{if(state==="liv"&&dx!==null){livA-=(e.clientX-dx)*.01;dx=e.clientX}});addEventListener("pointerup",()=>dx=null)}
+{let dx=null;$("c").addEventListener("pointerdown",e=>{if(state!=="liv")return;if(livTab==="l"&&livSel>=0){const H=livHit(e);if(H){livDrag=true;livMove(H);return}}dx=e.clientX});addEventListener("pointermove",e=>{if(state!=="liv")return;if(livDrag){const H=livHit(e);if(H)livMove(H);return}if(dx!==null){livA-=(e.clientX-dx)*.01;dx=e.clientX}});addEventListener("pointerup",()=>{dx=null;if(livDrag){livDrag=false;if(state==="liv")drawLiv()}})}
 {const b=document.createElement("button");b.className="b g";b.dataset.i18n="🎨 Calcomanías";b.textContent=T("🎨 Calcomanías");b.onclick=()=>{if(!ready)return;if(!spawned){buildCar(carK);spawnC();spawned=true}openLiv()};$("carsP").appendChild(b)}

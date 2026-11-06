@@ -3,6 +3,18 @@
 :root[data-theme="dark"]{--bg:#0c0d12;--pn:rgba(18,19,26,.94);--tx:#f2f2f5;--mu:#9a9aa6}
 html,body{height:100%;margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;overflow:hidden}
 [hidden]{display:none!important}
+/* Pantalla de carga */
+#lds{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 120%,#3a0a18 0,#0a0b10 60%);color:#f2f2f5;padding:20px;transition:opacity .4s}
+#lds.off{opacity:0;pointer-events:none}
+#ldsI{width:min(520px,92vw);text-align:center}
+#ldsI h1{margin:0;font:italic 900 clamp(38px,9vw,68px)/1 system-ui,sans-serif;letter-spacing:.02em;color:#fff;text-shadow:0 0 22px rgba(255,42,50,.75)}
+#ldsI small{display:block;margin:6px 0 34px;font-size:15px;letter-spacing:.4em;color:#ff7d86}
+#ldsB{height:8px;border-radius:4px;background:rgba(255,255,255,.14);overflow:hidden}#ldsB u{display:block;width:0;height:100%;border-radius:4px;background:#ff2a32;box-shadow:0 0 14px #ff2a32;transition:width .2s}
+#ldsR{display:flex;justify-content:space-between;gap:12px;margin-top:8px;font-size:13px;color:#b9bcc6}#ldsR b{color:#fff}
+#ldsC{min-height:40px;margin:22px 0 0;font-size:14px;color:#8f92a0}
+#ldsGo{margin-top:6px;padding:12px 30px;border:0;border-radius:8px;background:#e5173f;color:#fff;font:700 16px system-ui;cursor:pointer;animation:ldsP 1.4s ease-in-out infinite}
+@keyframes ldsP{50%{box-shadow:0 0 22px #ff2a32}}
+@media (prefers-reduced-motion:reduce){#ldsGo{animation:none}#ldsB u{transition:none}#lds{transition:none}}
 #c{position:fixed;inset:0;width:100%;height:100%}
 .ov{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.35);padding:12px}
 .pn{background:var(--pn);border-radius:14px;padding:18px;max-width:96vw;max-height:94vh;overflow:auto;text-align:center}
@@ -35,6 +47,7 @@ button.b:disabled{opacity:.4;cursor:default}button.g{background:rgba(128,128,128
 #raceH{position:fixed;z-index:4;top:calc(12px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;padding:6px 18px;border-radius:12px;background:rgba(0,0,0,.6);color:#fff;font:600 13px system-ui;pointer-events:none}
 #rcT{font:700 26px ui-monospace,Consolas,monospace}#rcD{font:700 15px ui-monospace,Consolas,monospace}#rcGh{pointer-events:auto;cursor:pointer}
 #rcC{position:fixed;z-index:4;top:32%;left:50%;transform:translate(-50%,-50%);color:#fff;font:800 96px system-ui;text-shadow:0 4px 18px rgba(0,0,0,.7);pointer-events:none}
+#rcC.warn{font:800 34px system-ui;color:#ffb000}#rcX{margin-top:4px;padding:3px 10px;border:0;border-radius:10px;background:rgba(255,255,255,.2);color:#fff;font:600 12px system-ui;cursor:pointer;pointer-events:auto}
 #rcBar{position:fixed;z-index:6;bottom:calc(18px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);display:flex;gap:8px}
 .stabs{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:6px}
 .stabs button{padding:7px 14px;border:0;border-radius:16px;font:600 13px system-ui;cursor:pointer;color:inherit;background:rgba(128,128,128,.25)}.stabs button.on{background:var(--ac);color:#fff}
@@ -51,6 +64,7 @@ button.b:disabled{opacity:.4;cursor:default}button.g{background:rgba(128,128,128
 .lrow button,.stki button:not(.b){padding:5px 10px;border:2px solid transparent;border-radius:14px;font:600 12px system-ui;cursor:pointer;color:inherit;background:rgba(128,128,128,.25)}
 .lrow button.on{border-color:var(--ac);background:rgba(229,23,63,.25)}
 .lrow input[type=color]{width:30px;height:28px;border:0;padding:0;background:none;cursor:pointer}.lrow input[type=number]{width:110px;padding:6px;border-radius:8px;border:1px solid rgba(128,128,128,.5);background:transparent;color:inherit}
+.lrow input[type=text]{flex:1;min-width:120px;padding:6px;border-radius:8px;border:1px solid rgba(128,128,128,.5);background:transparent;color:inherit}
 .stkg{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}.stkg button{padding:2px;border:0;border-radius:8px;background:rgba(128,128,128,.2);cursor:pointer}.stkg canvas{width:100%;display:block}
 .cusw{position:relative}.cusw>button:first-child{width:100%;padding:2px;border:0;border-radius:8px;background:rgba(128,128,128,.2);cursor:pointer}.cusw img{width:100%;display:block;aspect-ratio:1;object-fit:contain}
 .cusx{position:absolute;top:-6px;right:-6px;width:20px;height:20px;border:0;border-radius:10px;background:var(--ac);color:#fff;font:700 13px/20px system-ui;cursor:pointer;padding:0}
