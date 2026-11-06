@@ -5,7 +5,7 @@
 // · Rampa de final (end): la autopista se acaba en d (un vértice del canal) y la rampa es su continuación hacia out. zone: dónde se quita el tablero sobrante.
 //   Al ampliar el mapa se quitan estas rampas de final y el tablero vuelve a salir solo
 const HWY_H=16;
-const HWY_RAMPS=[{g:[880,1648],d:[1085,1625],ph:.6,ls:.3,le:.45},{g:[1250,1612],d:[1410,1733]},{g:[1512,1708],d:[1699,1751]},
+const HWY_RAMPS=[{g:[880,1648],d:[1085,1625],ph:.6,st:31,ls:.3,le:.45},{g:[1263,1632],d:[1410,1733]},{g:[1512,1708],d:[1699,1751]},
  {g:[516,2195],d:[469.1,2003.4],inl:true,dir:[.12,-.99],ls:.7,le:.35,end:true,out:[.21,.98],zone:[400,1950,620,2420]},{g:[2172,1781],d:[2009,1804.5],end:true,out:[1,.1],zone:[1950,1700,2420,1950]}];
 // Tablero que se quita más allá de cada final
 const hwyCut=(x,z)=>HWY_RAMPS.some(R=>R.end&&x>R.zone[0]&&z>R.zone[1]&&x<R.zone[2]&&z<R.zone[3]&&(x-R.d[0])*R.out[0]+(z-R.d[1])*R.out[1]>0);
@@ -27,7 +27,7 @@ function hwyPlan(){const Y=HWY_H,herm=(a,ta,b,tb,t)=>{const t2=t*t,t3=t2*t,p=2*t
   else{if(td[0]*o0[0]+td[1]*o0[1]<0)td=[-td[0],-td[1]];const nv=[td[1],-td[0]];sd=(gx-dx)*nv[0]+(gz-dz)*nv[1]<0?-1:1;A=[dx+nv[0]*sd*10.5,dz+nv[1]*sd*10.5];arr=td}
   const nr=[tg[1],-tg[0]],sg=(A[0]-c[0])*nr[0]+(A[1]-c[1])*nr[1]<0?-1:1,d0=Math.hypot(A[0]-c[0],A[1]-c[1]);if(tg[0]*(A[0]-c[0])+tg[1]*(A[1]-c[1])<0)tg=[-tg[0],-tg[1]];
   let M,out;if(R.inl){const E=Math.hypot(sa[0]-gx,sa[1]-gz)<Math.hypot(sb[0]-gx,sb[1]-gz)?[sa,sb]:[sb,sa],l=Math.hypot(E[0][0]-E[1][0],E[0][1]-E[1][1])||1;out=[(E[0][0]-E[1][0])/l,(E[0][1]-E[1][1])/l];M=[E[0][0]-out[0]*6,E[0][1]-out[1]*6];if(R.dir)out=R.dir}
-  else{const ph=R.ph||1.05;out=[tg[0]*Math.cos(ph)+nr[0]*sg*Math.sin(ph),tg[1]*Math.cos(ph)+nr[1]*sg*Math.sin(ph)];const B=[c[0]+out[0]*(rh+13),c[1]+out[1]*(rh+13)];M=[B[0]-out[0]*6,B[1]-out[1]*6];R.stub=[c,B];MAP.roads.push({p:new Float32Array([c[0],c[1],B[0],B[1]]),w:9.5,t:4,o:0})}
+  else{const ph=R.ph||1.05;out=[tg[0]*Math.cos(ph)+nr[0]*sg*Math.sin(ph),tg[1]*Math.cos(ph)+nr[1]*sg*Math.sin(ph)];const st=R.st||rh+13,B=[c[0]+out[0]*st,c[1]+out[1]*st];M=[B[0]-out[0]*6,B[1]-out[1]*6];R.stub=[c,B];MAP.roads.push({p:new Float32Array([c[0],c[1],B[0],B[1]]),w:9.5,t:4,o:0})}
   const L=Math.hypot(A[0]-M[0],A[1]-M[1]);
   const n=Math.ceil(L/4),C=[],K=R.le||(R.end?.5:.7);let S=0;for(let i=0;i<=n;i++){const q=herm(M,[out[0]*L*(R.ls||.5),out[1]*L*(R.ls||.5)],A,[arr[0]*L*K,arr[1]*L*K],i/n);if(i)S+=Math.hypot(q[0]-C[i-1][0],q[1]-C[i-1][1]);C.push([q[0],q[1],S])}
   const P=C.map(q=>{const s=q[2];return[q[0],q[2]===0?.02:Math.max(Y*hwySm(s/S),.17*Math.min(1,s/6)),q[1],s,R.end?4+2.5*hwySm((s-S+45)/45):4,0]});
@@ -44,9 +44,10 @@ function hwyRamps(){for(const P of HWL.rp)for(let i=1;i<P.length;i++){const a=P[
 const hwyMouth=(x,z)=>HWL.rp.some(P=>Math.hypot(x-P[0][0],z-P[0][2])<8);
 // ¿Sitio libre de rampas? (para árboles, farolas y demás)
 function hwyFree(x,z){const l=HWL.grid.get(Math.floor(x/HWC)*4096+Math.floor(z/HWC));if(!l)return true;for(const k of l){const S=HWL.segs[k];if(!S[7]||Math.min(S[1],S[4])>13)continue;if(segD2(x,z,S[0],S[2],S[3],S[5])<(S[6]+2.5)**2)return false}return true}
-// Pretil del tablero, abierto solo donde una rampa se une a él
+// Pretil del tablero, abierto solo a lo largo de la unión de una rampa (y sin pasarse de su final, donde el muro de la rampa enlaza con el pretil)
+const hwyJoin=(x,z)=>HWL.rp.some(P=>{for(let i=1;i<P.length;i++){const a=P[i-1],b=P[i];if(!a[5]||!b[5])continue;const dx=b[0]-a[0],dz=b[2]-a[2],t=((x-a[0])*dx+(z-a[2])*dz)/(dx*dx+dz*dz||1);if(t>=0&&t<=(i===P.length-1?.75:1)&&Math.hypot(x-a[0]-dx*t,z-a[2]-dz*t)<5.5)return true}return false});
 function hwyWall(vq,hw,A,B,Y){const l=Math.hypot(B[0]-A[0],B[1]-A[1]),n=Math.max(1,Math.ceil(l/3));for(let i=0;i<n;i++){const x0=A[0]+(B[0]-A[0])*i/n,z0=A[1]+(B[1]-A[1])*i/n,x1=A[0]+(B[0]-A[0])*(i+1)/n,z1=A[1]+(B[1]-A[1])*(i+1)/n,mx=(x0+x1)/2,mz=(z0+z1)/2;
-  if(HWL.rp.some(P=>P.some(q=>q[5]&&Math.hypot(q[0]-mx,q[2]-mz)<4.6)))continue;vq(hw,x0,z0,x1,z1,Y-.8,Y+1.1)}}
+  if(hwyJoin(mx,mz))continue;vq(hw,x0,z0,x1,z1,Y-.8,Y+1.1)}}
 // Dibuja las rampas: asfalto, parte de abajo, pretiles y columnas redondas. Por debajo de 3 m la rampa es maciza (muro hasta el suelo)
 function hwyGeo(hd,hs,hw,WY,Y){const up=(t,A,B,C)=>{const f=(B[2]-A[2])*(C[0]-A[0])-(B[0]-A[0])*(C[2]-A[2])<0;for(const q of f?[A,C,B]:[A,B,C])t.push(q[0],q[1],q[2])},wl=(x0,z0,a0,b0,x1,z1,a1,b1)=>hw.push(x0,a0,z0,x1,a1,z1,x1,b1,z1,x0,a0,z0,x1,b1,z1,x0,b0,z0);
  HWY_RAMPS.forEach(R=>{const P=R.P,N=P.map((q,i)=>{const a=P[Math.max(0,i-1)],b=P[Math.min(P.length-1,i+1)],l=Math.hypot(b[0]-a[0],b[2]-a[2])||1;return[(b[2]-a[2])/l,-(b[0]-a[0])/l]});let last=-99;   // N: lateral común de cada punto, para que los tramos curvos no dejen rendijas

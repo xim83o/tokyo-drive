@@ -175,6 +175,7 @@ Pedido por el usuario (todo con permiso ya dado; descargas permitidas: partes de
 - Rampas con cruce propio: de la calle sale un ramal corto de asfalto (se añade a MAP.roads sin `n`, así no lleva tráfico) y la rampa empieza al final, fuera de la calzada. La rampa sur continúa la calle sin salida (516,2195), por tierra. La autopista termina en (469,2003) y (2009,1804). Comprobar al mover una rampa: que no pise calles por debajo de 4,6 m ni pase sobre el canal por debajo de 9 m.
 - Tráfico: no entra en calles de sentido único que se cortan en el borde. Sin semáforos a menos de 45 m del borde. Edificios de más de 13 m que tocaban la autopista, quitados. En la autopista la cámara no sale de los pretiles.
 - Al acabar cada tanda, las capturas revisadas van a la Papelera de Windows.
+- Rampas (capturas de las 19:02): la boca de la rampa 1 estaba dentro de la avenida de 17 m (el ramal ahora mide 31 m, `st`); la 2 salía de la calzada norte y caía sobre la sur, ahora sale de la sur. Al mover una rampa, comprobar que la parte baja no pise NINGUNA calzada, también las paralelas. El pretil se abre solo a lo largo de la unión (hwyJoin). En las rampas la cámara ya no se limita a los pretiles.
 
 ## Pendiente de revisar por el usuario
 - Lista desde Carreras (ver el chat), rampas con teclado, tren y viento, editor de capas y plantilla con una imagen real.

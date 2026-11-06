@@ -7,7 +7,7 @@ function startSpec(){if(!spawned)return;closeSettings();SPEC.x=px-Math.sin(h)*20
 {let dg=null;addEventListener("pointerdown",e=>{if(state==="spec")dg=[e.clientX,e.clientY]});addEventListener("pointermove",e=>{if(state==="spec"&&dg){SPEC.a-=(e.clientX-dg[0])*.005;SPEC.p=Math.max(-1.4,Math.min(1.4,SPEC.p-(e.clientY-dg[1])*.005));dg=[e.clientX,e.clientY]}});addEventListener("pointerup",()=>dg=null)}const LK=new THREE.Vector3();
 // La cámara no atraviesa nada: edificios, árboles, postes, coches ni la Torre de Tokio. Si algo se interpone entre el coche
 // y la cámara, la cámara se acerca al coche
-function camHit(x,y,z){if(HWL.on){const q=hwyNear(x,z,HWL.y);if(!q||q[2]>HWL.segs[q[0]][6]-.3)return true}   // en la autopista la cámara no sale de los pretiles
+function camHit(x,y,z){if(HWL.on){let q=hwyNear(px,pz,HWL.y);if(!q||!HWL.segs[q[0]][7]){q=hwyNear(x,z,HWL.y);if(!q||q[2]>HWL.segs[q[0]][6]-.3)return true}}   // en el tablero la cámara no sale de los pretiles; en las rampas sí puede (son curvas y estrechas: si no, se pega al coche)
  if(camBlocked(x,y,z))return true;const c=gq(x,z);
  for(const k of c.o){const b=k*3,r=CI[b+2]+.6;if(y<10&&(x-CI[b])**2+(z-CI[b+1])**2<r*r)return true}
  // Coches: solo si el punto cae dentro de su caja de verdad (largo, ancho y alto, con un margen pequeño). Antes era un círculo de 2,5 m
