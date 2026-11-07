@@ -1,25 +1,37 @@
 // Carreras (circuitos con vueltas) y contrarreloj (de un punto a otro) por las calles reales, con puntos de control y mejor tiempo guardado;
 // coche fantasma de cualquiera de tus tiempos guardados (se elige en el menú y se enciende o apaga con la tecla G); repetición de los
 // últimos 20 s al acabar una carrera; y modo foto (cámara libre alrededor del coche y guardar la imagen)
-const RTS=[{id:"torre",n:"Circuito de la Torre",tipo:"Carrera",laps:2,loop:true,w:[[1020,1020],[1400,1000],[1420,1400],[1020,1400]]},
- {id:"canal",n:"Circuito del Canal",tipo:"Carrera",laps:2,loop:true,w:[[800,1500],[1250,1650],[1600,1780],[1560,1450],[1000,1300]]},
- {id:"kuro2",n:"Torre de Tokio → Kurogane",tipo:"Contrarreloj",laps:1,w:[[1201,1090],[1500,1100],[1600,1500],[1000,1450],[1364,1680]]},
- {id:"beis2",n:"Béisbol → Zona de derrape",tipo:"Contrarreloj",laps:1,w:[[1139,900],[800,1000],[900,1500],[1400,1450],[1650,1250]]},
- {id:"cruce",n:"Cruce de Tokio",tipo:"Contrarreloj",laps:1,w:[[320,1200],[2100,1250]]}];
+// Recorridos trazados a mano por avenidas: w son puntos de paso seguidos (en coordenadas del plano ×1,5) y entre dos puntos la ruta va por la calle grande que los une.
+// Para cambiar una carrera basta con mover sus puntos (ver los planos en la carpeta planos/)
+const RWP=a=>a.map(([x,z])=>[x*1.5,z*1.5]);
+const RTS=[{id:"torre3",n:"Circuito de la Torre",tipo:"Carrera",laps:2,loop:true,w:RWP([[730,712],[800,765],[893,812],[830,960],[780,1060],[700,880],[652,705]])},
+ {id:"canal3",n:"Circuito del Canal",tipo:"Carrera",laps:1,loop:true,w:RWP([[300,975],[600,1050],[780,1065],[1000,1120],[1068,1100],[1100,850],[1115,728],[1010,705],[900,800],[815,1040],[782,1180],[780,1285],[500,1265],[285,1245],[290,1100]])},
+ {id:"kuro3",n:"Torre de Tokio → Kurogane",tipo:"Contrarreloj",laps:1,w:RWP([[655,690],[790,475],[900,545],[1040,575],[1010,700],[1115,728],[1095,880],[1068,1100],[960,1125],[930,1110]])},
+ {id:"beis3",n:"Béisbol → Zona de derrape",tipo:"Contrarreloj",laps:1,w:RWP([[745,555],[652,705],[700,880],[780,1060],[1000,1120],[1068,1100],[1095,880],[1100,840]])},
+ {id:"cruce3",n:"Cruce de Tokio",tipo:"Contrarreloj",laps:1,w:RWP([[60,470],[340,605],[600,730],[652,705],[730,712],[880,800],[960,840],[1090,856],[1090,905],[1300,930],[1480,960]])}];
 const RACE={on:false,rt:null,cp:0,t:0,cd:0,rec:[],split:[],ghost:null,gOn:true,recT:0};
 const RDT=.05,CPD=400;
 const rStore=()=>{try{return JSON.parse(localStorage.getItem("td-race")||"{}")}catch(e){return{}}},rSave=s=>{try{localStorage.setItem("td-race",JSON.stringify(s))}catch(e){}};
 const fmtT=t=>{const m=Math.floor(t/60),s=t-m*60;return m+":"+(s<10?"0":"")+s.toFixed(3)};
 // --- Rutas: camino más corto por el grafo de calles, prefiriendo las avenidas ---
 let RG=null;
-function raceGraph(){if(RG)return RG;RG=new Map();const nd=(id,x,z)=>{let n=RG.get(id);if(!n){n={id,x,z,e:[]};RG.set(id,n)}return n},TC=[1,1,1.2,1.7,3];
- MAP.roads.forEach(r=>{if(!r.n)return;for(let i=1;i<r.n.length;i++){const a=nd(r.n[i-1],r.p[i*2-2],r.p[i*2-1]),b=nd(r.n[i],r.p[i*2],r.p[i*2+1]),l=Math.hypot(a.x-b.x,a.z-b.z),c=l*TC[r.t];a.e.push([b,c]);b.e.push([a,c*(r.o?2:1)])}});return RG}
+function raceGraph(){if(RG)return RG;RG=new Map();const nd=(id,x,z)=>{let n=RG.get(id);if(!n){n={id,x,z,e:[],t:9};RG.set(id,n)}return n},TC=[1,1,1.2,2,12];
+ MAP.roads.forEach(r=>{if(!r.n)return;for(let i=1;i<r.n.length;i++){const a=nd(r.n[i-1],r.p[i*2-2],r.p[i*2-1]),b=nd(r.n[i],r.p[i*2],r.p[i*2+1]),l=Math.hypot(a.x-b.x,a.z-b.z),c=l*TC[r.t];a.t=Math.min(a.t,r.t);b.t=Math.min(b.t,r.t);a.e.push([b,c]);b.e.push([a,c*(r.o?8:1)])}});return RG}   // (callejas casi prohibidas; contramano en sentido único, muy cara)
 function rNear(x,z){let b=null,bd=1e18;for(const n of raceGraph().values()){if(!n.e.length)continue;const d=(n.x-x)**2+(n.z-z)**2;if(d<bd){bd=d;b=n}}return b}
+// Camino más barato desde a hasta el mejor candidato de bs (nodos de avenida a menos de 40 m del punto de paso: así no se va a una calleja ni a la calzada contraria)
+function rPathC(a,bs,used){let best=null,bv=1e18;const dist=new Map([[a,0]]),prev=new Map(),H=[[0,a]],up=()=>{let i=H.length-1;while(i){const p=(i-1)>>1;if(H[p][0]<=H[i][0])break;[H[p],H[i]]=[H[i],H[p]];i=p}},
+  dn=()=>{let i=0;for(;;){let m=i;for(const c of[2*i+1,2*i+2])if(c<H.length&&H[c][0]<H[m][0])m=c;if(m===i)break;[H[m],H[i]]=[H[i],H[m]];i=m}};
+ while(H.length){const[d,n]=H[0],l=H.pop();if(H.length){H[0]=l;dn()}if(d>bv)break;if(d>dist.get(n))continue;const k=bs.get(n);if(k!==undefined&&n!==a&&d+k<bv){bv=d+k;best=n}for(const[m,c]of n.e){const nc=d+c*(used.has(n.id+"_"+m.id)?6:1);if(nc<(dist.has(m)?dist.get(m):1e18)){dist.set(m,nc);prev.set(m,n);H.push([nc,m]);up()}}}
+ if(!best)return null;const P=[best];for(let n=best;n!==a;){n=prev.get(n);P.unshift(n)}for(let i=1;i<P.length;i++){used.add(P[i-1].id+"_"+P[i].id);used.add(P[i].id+"_"+P[i-1].id)}return P}
+function rCand(x,z){const m=new Map();for(const n of raceGraph().values()){if(!n.e.length||n.t>3)continue;const d=Math.hypot(n.x-x,n.z-z);if(d<40)m.set(n,d*3)}if(!m.size){const n=rNear(x,z);m.set(n,0)}return m}
 function rPath(a,b,used){const dist=new Map([[a,0]]),prev=new Map(),H=[[0,a]],up=()=>{let i=H.length-1;while(i){const p=(i-1)>>1;if(H[p][0]<=H[i][0])break;[H[p],H[i]]=[H[i],H[p]];i=p}},
   dn=()=>{let i=0;for(;;){let m=i;for(const c of[2*i+1,2*i+2])if(c<H.length&&H[c][0]<H[m][0])m=c;if(m===i)break;[H[m],H[i]]=[H[i],H[m]];i=m}};
  while(H.length){const[d,n]=H[0],l=H.pop();if(H.length){H[0]=l;dn()}if(n===b)break;if(d>dist.get(n))continue;for(const[m,c]of n.e){const nc=d+c*(used.has(n.id+"_"+m.id)?6:1);if(nc<(dist.has(m)?dist.get(m):1e18)){dist.set(m,nc);prev.set(m,n);H.push([nc,m]);up()}}}
  if(!prev.has(b))return null;const P=[b];for(let n=b;n!==a;){n=prev.get(n);P.unshift(n)}for(let i=1;i<P.length;i++){used.add(P[i-1].id+"_"+P[i].id);used.add(P[i].id+"_"+P[i-1].id)}return P}
-function rBuild(R){if(R.pts)return R;const W=R.w.map(([x,z])=>rNear(x,z));if(R.loop)W.push(W[0]);const used=new Set();let P=[W[0]];for(let i=1;i<W.length;i++){const q=rPath(W[i-1],W[i],used);if(!q)return null;P=P.concat(q.slice(1))}
+function rBuild(R){if(R.pts)return R;const C=rCand(R.w[0][0],R.w[0][1]);let a=null,bv=1e18;for(const[n,v]of C)if(v<bv){bv=v;a=n}const used=new Set();let P=[a];
+ for(let i=1;i<=R.w.length-(R.loop?0:1);i++){const bs=i<R.w.length?rCand(R.w[i][0],R.w[i][1]):new Map([[P[0],0]]),q=rPathC(P[P.length-1],bs,used);if(!q)return null;P=P.concat(q.slice(1))}
+ // Sin picos de ir y volver (A→B→A)
+ for(let k=0;k<3;k++)for(let i=1;i<P.length-1;i++)if(P[i-1]===P[i+1]){P.splice(i,2);i=Math.max(0,i-2)}
  R.pts=P.map(n=>[n.x,n.z]);const S=[0];for(let i=1;i<R.pts.length;i++)S.push(S[i-1]+Math.hypot(R.pts[i][0]-R.pts[i-1][0],R.pts[i][1]-R.pts[i-1][1]));const D=S[S.length-1],cps=[];
  const at=s=>{s=Math.max(0,Math.min(D,s));let i=1;while(i<S.length-1&&S[i]<s)i++;const f=(s-S[i-1])/((S[i]-S[i-1])||1),[a,b]=R.pts[i-1],[c,d]=R.pts[i];return{x:a+(c-a)*f,z:b+(d-b)*f,i}};
  // Los puntos de control van en un tramo recto (se busca hasta 80 m antes o después) y orientados con la calle, para que los banderines queden de frente
@@ -54,12 +66,17 @@ function rFind(){const R=RACE.rt,N=R.pts.length-1,S=R.S;let bd=1e18;const t=i=>{
  RF.d=Math.sqrt(bd);RACE.pi=RF.i}
 // Barrera invisible, solo para el jugador: no deja salir de la calle de la ruta (calzada y un poco de acera) y funciona como un muro. El tráfico no la nota
 function rBarrier(){if(HWL.on)return;const d=RF.d,lim=RACE.rt.hw[RF.i];if(d<=lim||d>=28)return;const nx=(px-RF.x)/d,nz=(pz-RF.z)/d;px=RF.x+nx*lim;pz=RF.z+nz*lim;const vn=vx*nx+vz*nz;if(vn>0){vx-=vn*nx;vz-=vn*nz;if(vn>3&&performance.now()-crashT>250){crashT=performance.now();thump(vn)}}}
-// Flechas azules pintadas en la calzada, solo en los próximos metros de la ruta. Están fijas en el suelo: las que quedan atrás desaparecen y salen otras delante
-const RAS=9,RAN=20;let RA=null;const RAD=new THREE.Object3D();
-function rArrows(){const R=RACE.rt;if(!RA){const s=new THREE.Shape();s.moveTo(0,3);s.lineTo(3.3,-3);s.lineTo(0,-1.1);s.lineTo(-3.3,-3);s.closePath();RA=new THREE.InstancedMesh(new THREE.ShapeGeometry(s).rotateX(PI/2),new THREE.MeshBasicMaterial({color:0x2a8cf0,transparent:true,opacity:.9,depthWrite:false,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}),RAN);RA.frustumCulled=false;sc.add(RA)}
- const S=R.S,D=S[S.length-1],n=R.cps.length,q=R.pts[RF.i-1],L=S[RF.i-1]+Math.hypot(RF.x-q[0],RF.z-q[1]),last=!R.loop||(Math.floor(RACE.cp/n)>=R.laps-1&&RACE.cp%n>=2),s0=(Math.floor(L/RAS)+1)*RAS;let c=0;
- for(let k=0;k<RAN;k++){let s=s0+k*RAS;if(s>=D){if(last)break;s-=D}const a=R.at(s-4),b=R.at(s),e=R.at(s+4);RAD.position.set(b.x,.06,b.z);RAD.rotation.set(0,Math.atan2(e.x-a.x,e.z-a.z),0);RAD.updateMatrix();RA.setMatrixAt(c++,RAD.matrix)}
- RA.count=c;RA.instanceMatrix.needsUpdate=true;RA.visible=true}
+// Flechas azules pintadas en la calzada, solo antes de cada giro: una fila de 7 que se va torciendo y apartando hacia el lado del giro y acaba antes del cruce
+// (en las rectas no hay). Los giros se buscan al construir la ruta (rTurns)
+const RAN=21;let RA=null;const RAD=new THREE.Object3D();
+function rTurns(R){const D=R.S[R.S.length-1],T=[],hd=(p,q)=>Math.atan2(q.x-p.x,q.z-p.z);let best=null;
+ for(let s=8;s<D-8;s+=4){const a=R.at(s-22),b=R.at(s),c=R.at(s+22),d=ad(hd(b,c),hd(a,b));if(Math.abs(d)>.6){if(!best||Math.abs(d)>Math.abs(best.d))best={s,d}}else if(best){T.push(best);best=null}}if(best)T.push(best);R.turns=T}
+function rArrows(){const R=RACE.rt;if(!R.turns)rTurns(R);if(!RA){const s=new THREE.Shape();s.moveTo(0,1.6);s.lineTo(1.35,-1.6);s.lineTo(0,-.6);s.lineTo(-1.35,-1.6);s.closePath();RA=new THREE.InstancedMesh(new THREE.ShapeGeometry(s).rotateX(PI/2),new THREE.MeshBasicMaterial({color:0x2a8cf0,transparent:true,opacity:.92,depthWrite:false,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}),RAN);RA.frustumCulled=false;sc.add(RA)}
+ const S=R.S,D=S[S.length-1],n=R.cps.length,q=R.pts[RF.i-1],L=S[RF.i-1]+Math.hypot(RF.x-q[0],RF.z-q[1]),last=!R.loop||(Math.floor(RACE.cp/n)>=R.laps-1&&RACE.cp%n>=2);let c=0;
+ for(const t of R.turns){let ds=t.s-L;if(R.loop&&!last&&ds<-30)ds+=D;if(ds<-15||ds>180)continue;const sT=L+ds,ang=Math.max(-1.1,Math.min(1.1,t.d));
+  for(let k=0;k<7&&c<RAN;k++){const s=sT-58+k*8.5;if(s<L+3)continue;const ss=s>=D?s-D:s,a=R.at(ss-4),b=R.at(ss),e=R.at(ss+4),h0=Math.atan2(e.x-a.x,e.z-a.z),f=k/6,off=Math.sign(ang)*1.6*f*f;
+   RAD.position.set(b.x+Math.cos(h0)*off,.06,b.z-Math.sin(h0)*off);RAD.rotation.set(0,h0+ang*.85*f,0);RAD.updateMatrix();RA.setMatrixAt(c++,RAD.matrix)}}
+ RA.count=c;RA.instanceMatrix.needsUpdate=true;RA.visible=c>0}
 // Fuera de la ruta o tras saltarse un arco: al acabarse los 5 s, vuelve al último punto por el que pasó (el tiempo sigue corriendo)
 function rBack(){const R=RACE.rt,n=R.cps.length,k=RACE.cp%n,q=R.cps[k];let x=RACE.sx,z=RACE.sz,hd=RACE.sh;if(RACE.cp>0){const o=R.cps[(RACE.cp-1)%n];x=o.x;z=o.z;hd=Math.atan2(o.dx,o.dz)}RACE.pi=RACE.cp>0?R.cps[(RACE.cp-1)%n].i:0;spawnAt({x,z,h:hd});RACE.off=null;RACE.safe=1.5}
 function raceQuit(){raceAbort();if(state==="set")closeSettings()}

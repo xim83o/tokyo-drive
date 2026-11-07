@@ -77,3 +77,15 @@ function devScnTick(dt){const st=DV.spd,sub=st<1?1:st,d=dt*(st<1?st:1);for(let i
  const c=$("devCnt");if(c)c.innerHTML=`${SCN.t.toFixed(1)} s · cruzando ${inside} · ya han cruzado <b>${done}</b> de ${SCN.cars.length} · solapes <b style="color:${sp?"#ff6b6b":"#7dff9a"}">${sp.toFixed(1)} %</b>`+
   SCN.cars.map((n,i)=>` · ${i+1}: ${(n.v*3.6)|0} km/h`).join("");
  cam.position.set(SCN.g.x,55,SCN.g.z+20);cam.lookAt(SCN.g.x,0,SCN.g.z);cam.fov=60;cam.updateProjectionMatrix();sc.fog.far=FOGF}
+
+// Planos de las carreras (solo desarrollador): dibuja el mapa con avenidas y recorridos y lo guarda en capturas/ con devPlanSave()
+function devPlan(routes,opt){opt=opt||{};const S=opt.S||1600,x0=opt.x0||0,z0=opt.z0||0,sz=opt.sz||W,f=S/sz,X=x=>(x-x0)*f,Z=z=>(z-z0)*f,c=document.createElement("canvas");c.width=c.height=S;const g=c.getContext("2d");g.fillStyle="#f4f1ea";g.fillRect(0,0,S,S);
+ for(const r of MAP.rivers){g.strokeStyle="#9cc8ec";g.lineWidth=(r.w||20)*f;g.lineCap="round";g.beginPath();for(let i=0;i<r.p.length;i+=2)g[i?"lineTo":"moveTo"](X(r.p[i]),Z(r.p[i+1]));g.stroke()}
+ const col=["#c0392b","#e67e22","#c9a227","#9a9a9a","#d0d0d0"];g.lineCap="round";for(const t of[4,3,2,1,0])for(const r of MAP.roads){if(!r.n||r.t!==t)continue;g.strokeStyle=col[t];g.lineWidth=Math.max(1.2,r.w*f*(t<2?1.1:.8));g.beginPath();for(let i=0;i<r.p.length;i+=2)g[i?"lineTo":"moveTo"](X(r.p[i]),Z(r.p[i+1]));g.stroke()}
+ const lm=(x,z,t)=>{g.fillStyle="#d0021b";g.beginPath();g.arc(X(x),Z(z),6,0,7);g.fill();g.fillStyle="#000";g.font="bold 15px sans-serif";g.fillText(t,X(x)+8,Z(z)+5)};lm(TX,TZ,T("Torre de Tokio"));for(const L of landmarks()||[])if(L.n&&Math.hypot(L.x-TX,L.z-TZ)>30)lm(L.x,L.z,L.n);
+ (routes||[]).forEach((R,ri)=>{const C=["#0a6cff","#00a050","#b000c8","#ff2a7a","#008c99"][ri%5];g.strokeStyle=C;g.lineWidth=6;g.lineJoin="round";g.beginPath();R.pts.forEach((p,i)=>g[i?"lineTo":"moveTo"](X(p[0]),Z(p[1])));g.stroke();
+  let acc=0;g.fillStyle=C;for(let i=1;i<R.pts.length;i++){const[a,b]=R.pts[i-1],[cx,cz]=R.pts[i],l=Math.hypot(cx-a,cz-b);acc+=l;if(acc>150&&l>20){acc=0;g.save();g.translate(X((a+cx)/2),Z((b+cz)/2));g.rotate(Math.atan2(cz-b,cx-a));g.beginPath();g.moveTo(13,0);g.lineTo(-9,-9);g.lineTo(-9,9);g.closePath();g.fill();g.restore()}}
+  (R.cps||[]).forEach((q,i)=>{g.fillStyle=q.end?"#000":"#fff";g.strokeStyle=C;g.lineWidth=3;g.beginPath();g.arc(X(q.x),Z(q.z),12,0,7);g.fill();g.stroke();g.fillStyle=q.end?"#fff":"#000";g.font="bold 13px sans-serif";g.textAlign="center";g.fillText(q.end?"M":String(i+1),X(q.x),Z(q.z)+5);g.textAlign="left"});
+  const s=R.pts[0];g.fillStyle="#00c853";g.beginPath();g.arc(X(s[0]),Z(s[1]),12,0,7);g.fill();g.fillStyle="#000";g.font="bold 14px sans-serif";g.fillText("S",X(s[0])-5,Z(s[1])+5)});
+ if(opt.title){g.fillStyle="rgba(255,255,255,.9)";g.fillRect(0,S-40,S,40);g.fillStyle="#000";g.font="bold 22px sans-serif";g.fillText(opt.title,12,S-12)}return c}
+async function devPlanSave(c,nota){const r=await fetch("/captura",{method:"POST",body:JSON.stringify({png:c.toDataURL("image/png"),nota,info:{}})});return(await r.json()).nombre}
