@@ -180,6 +180,15 @@ Pedido por el usuario (todo con permiso ya dado; descargas permitidas: partes de
 - Carreras: el aviso central (3-2-1 y "Vuelve a la ruta") se oculta con cualquier panel abierto y vuelve al cerrarlo. Banderines decorados en vez de arcos (el siguiente brilla; solo se ven el siguiente y el de después). Un punto cada 400 m, en tramo recto y orientado con la calle; radio de 26 m. Salida de circuitos 25 m antes de la meta. Flechas azules grandes pintadas en la calzada (rArrows, 20 cada 9 m por delante). Barrera invisible solo para el jugador (rBarrier: calzada de la ruta + 2,5 m). La posición en la ruta avanza tramo a tramo (rFind, RACE.pi) para no confundirse donde la ruta pasa dos veces por la misma calle; un punto solo cuenta al llegar por la ruta. En carrera se oculta la interfaz (body.rcUI) y solo funciona Esc. El minimapa muestra solo el tramo hasta el siguiente punto. Rutas kuro2 y beis2 alargadas a ~2,8 km (ids nuevos: sus tiempos empiezan de cero).
 - Pasos de cebra: si otra calle corta más del 20 % del paso, no se pinta.
 
+## Hecho el 2026-11-07 (carreras a mano y multijugador)
+- Carreras trazadas a mano por avenidas (RTS en race.js: puntos de paso en coordenadas del plano ×1,5; ids nuevos *3, tiempos desde cero). La ruta evita callejas (coste ×12), contramano (×8) y picos de ir y volver. Planos en planos/ (devPlan / devPlanSave en dev.js, solo desarrollador).
+- Flechas azules pequeñas solo antes de cada giro (rTurns): fila de 7 que se tuerce hacia el giro y acaba antes del cruce.
+- Inicio: «Pulsa para empezar» y luego «Un jugador» / «Multijugador».
+- Salas (online.js): lista de salas por el canal td-lobby (anuncios cada 3 s; la presencia de Supabase no llegaba entre pestañas). Nombre y contraseña opcional; la contraseña la comprueba el creador y no se guarda. Hasta 6. Si el creador sale, la sala se cierra.
+- Choques entre jugadores (peerHit, en physics.js): cada uno empuja su coche con la velocidad que manda el otro. Calcomanías del compañero: se manda LIV del coche e imágenes (la entera a 512 px) y se dibujan con applyDecals cambiando un momento el coche actual.
+- Carreras de sala: solo el creador elige; salen todos a la vez en parrilla de dos en fondo. Quien llega mira a otro (estado "watch") y al final sale la clasificación. Abandonar = «no terminó».
+- Probado con dos pestañas en este PC; falta probarlo entre dos ordenadores de verdad.
+
 ## Pendiente de revisar por el usuario
 - Lista desde Carreras (ver el chat), rampas con teclado, tren y viento, editor de capas y plantilla con una imagen real.
 - Fluidez en PC y móvil con los gráficos nuevos (1,7 M triángulos en Alta con sombras).

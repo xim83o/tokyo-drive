@@ -49,6 +49,7 @@ function loop(n){requestAnimationFrame(loop);const dt=Math.min(.05,(n-last)/1e3)
   if(state==="set"&&spawned&&setPrev==="play"){}
   // Modo espectador: cámara libre (WASD mover, Q/E bajar y subir, flechas o arrastrar para girar, Mayús rápido, Esc salir); el tráfico sigue
   else if(state==="photo"||state==="replay")raceCam(dt);
+  else if(state==="watch"){npcs(dt);onlWatchCam(dt)}   // carrera de sala: ya has llegado y miras a otro
   else if(state==="devcity")devCityTick(dt);else if(state==="devscn")devScnTick(dt);
   else if(state==="spec"){npcs(dt);const k=(keys.ShiftLeft||keys.ShiftRight?60:18)*dt,f=SPEC,fw=[Math.sin(f.a),Math.cos(f.a)];if(keys.ArrowLeft)f.a+=dt*1.5;if(keys.ArrowRight)f.a-=dt*1.5;if(keys.ArrowUp)f.p=Math.min(1.4,f.p+dt);if(keys.ArrowDown)f.p=Math.max(-1.4,f.p-dt);
    if(keys.KeyW){f.x+=fw[0]*k;f.z+=fw[1]*k}if(keys.KeyS){f.x-=fw[0]*k;f.z-=fw[1]*k}if(keys.KeyA){f.x+=fw[1]*k;f.z-=fw[0]*k}if(keys.KeyD){f.x-=fw[1]*k;f.z+=fw[0]*k}if(keys.KeyE)f.y+=k;if(keys.KeyQ)f.y=Math.max(1.5,f.y-k);

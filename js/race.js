@@ -79,7 +79,7 @@ function rArrows(){const R=RACE.rt;if(!R.turns)rTurns(R);if(!RA){const s=new THR
  RA.count=c;RA.instanceMatrix.needsUpdate=true;RA.visible=c>0}
 // Fuera de la ruta o tras saltarse un arco: al acabarse los 5 s, vuelve al último punto por el que pasó (el tiempo sigue corriendo)
 function rBack(){const R=RACE.rt,n=R.cps.length,k=RACE.cp%n,q=R.cps[k];let x=RACE.sx,z=RACE.sz,hd=RACE.sh;if(RACE.cp>0){const o=R.cps[(RACE.cp-1)%n];x=o.x;z=o.z;hd=Math.atan2(o.dx,o.dz)}RACE.pi=RACE.cp>0?R.cps[(RACE.cp-1)%n].i:0;spawnAt({x,z,h:hd});RACE.off=null;RACE.safe=1.5}
-function raceQuit(){raceAbort();if(state==="set")closeSettings()}
+function raceQuit(){raceAbort();if(state==="set")closeSettings();rQuitMp()}
 // --- Coche fantasma: copia translúcida de tu coche ---
 let GHC=null;
 function ghostCar(){if(GHC){sc.remove(GHC)}GHC=car.clone(true);const m=new THREE.MeshBasicMaterial({color:0x66ccff,transparent:true,opacity:.35,depthWrite:false});if(intG){const i=car.children.indexOf(intG);if(i>=0)GHC.remove(GHC.children[i])}
@@ -96,14 +96,16 @@ function raceSetup(R,gi){if(ENV.rcSkip){raceStart(R,gi);return}const P=$("raceP"
  const lb=document.createElement("label");lb.className="rcChk";lb.innerHTML=`<input type="checkbox"> ${T("No volver a mostrar esta pantalla")}`;const ck=lb.firstChild;ck.onchange=()=>{ENV.rcSkip=ck.checked;saveEnv()};P.appendChild(lb);
  const w=document.createElement("div"),s=document.createElement("button");s.className="b";s.textContent=T("Empezar");s.onclick=()=>raceStart(R,+sel.value);const c=document.createElement("button");c.className="b g";c.textContent=T("Volver");c.onclick=raceMenu;w.append(s,c);P.appendChild(w)}
 function rGhostSel(runs){const sel=document.createElement("select");sel.title=T("Coche fantasma");const o0=document.createElement("option");o0.value=-1;o0.textContent="👻 "+T("Sin fantasma");sel.appendChild(o0);runs.forEach((r,i)=>{const o=document.createElement("option");o.value=i;o.textContent=`👻 ${fmtT(r.t)} · ${r.c}`;sel.appendChild(o)});sel.value=runs.length?0:-1;return sel}
-function raceStart(R,gi){if(!rBuild(R))return;if(RACE.prevT===undefined||RACE.prevT===null)RACE.prevT=npcLvl;setNpc(ENV.rcT);if(state==="race")$("raceP").hidden=true;let[a,b]=R.pts[0];const[a0,b0]=R.pts[0],[c,d]=R.pts[1];let hd=Math.atan2(c-a,d-b);   // (mirando en el sentido de la calle, no hacia un punto más lejano)
- // En los circuitos la salida va 25 m antes de la meta, no encima
- if(R.loop){let left=25;for(let i=R.pts.length-1;i>0&&left>0;i--){const[x0,z0]=R.pts[i],[x1,z1]=R.pts[i-1],l=Math.hypot(x1-x0,z1-z0)||1,f=Math.min(1,left/l);a=x0+(x1-x0)*f;b=z0+(z1-z0)*f;hd=Math.atan2(x0-x1,z0-z1);left-=l}}
+function raceStart(R,gi,slot){if(!rBuild(R))return;if(RACE.prevT===undefined||RACE.prevT===null)RACE.prevT=npcLvl;setNpc(ENV.rcT);if(state==="race")$("raceP").hidden=true;let a,b,hd;
+ // Salida mirando en el sentido de la calle; en los circuitos, 25 m antes de la meta. En una carrera de sala, parrilla de dos en fondo, 9 m entre filas
+ {const n=ONL.mp?ONL.mp.ids.length:1,sl=slot||0,row=Math.floor(sl/2),rows=Math.ceil(n/2),s=R.loop?R.len-25-row*9:6+(rows-1-row)*9,p=R.at(s),q=R.at(s+4);hd=Math.atan2(q.x-p.x,q.z-p.z);a=p.x;b=p.z;if(n>1){const o=sl%2?-2.4:2.4;a+=Math.cos(hd)*o;b-=Math.sin(hd)*o}}
  spawnAt({x:a,z:b,h:hd});bodyY=0;RACE.on=true;RACE.rt=R;RACE.pi=0;RACE.cp=0;RACE.t=0;RACE.cd=3.4;RACE.rec=[];RACE.split=[];RACE.recT=0;RACE.sx=a;RACE.sz=b;RACE.sh=hd;RACE.gi=gi;RACE.off=null;RACE.safe=0;gatesBuild(R);
  const st=rStore()[R.id],run=st&&st.runs&&gi>=0?st.runs[gi]:null;RACE.ghost=run||null;ghostCar();if(GHC)GHC.visible=false;resume();rPlace();rHud();$("rcD").textContent=""}
 function raceAbort(){RACE.on=false;if(RACE.prevT!==undefined&&RACE.prevT!==null){setNpc(RACE.prevT);RACE.prevT=null}gatesClear();RACE.off=null;if(GHC)GHC.visible=false;$("raceH").hidden=true;$("rcC").hidden=true;$("rcC").className=""}
 function raceEnd(){const R=RACE.rt,t=RACE.t,s=rStore(),e=s[R.id]||(s[R.id]={runs:[]}),old=e.runs.length?e.runs[0].t:null,sm=[];for(let i=0;i<RACE.rec.length;i+=6)sm.push(+RACE.rec[i].toFixed(1),+RACE.rec[i+1].toFixed(1),+RACE.rec[i+2].toFixed(3));
- e.runs.push({t,d:new Date().toLocaleDateString(),c:cur.n,dt:RDT*2,s:sm,split:RACE.split});e.runs.sort((a,b)=>a.t-b.t);e.runs.length=Math.min(5,e.runs.length);rSave(s);RACE.lastT=t;RACE.rec2=RACE.rec;raceAbort();vx=vz=0;raceResults(R,t,old)}
+ e.runs.push({t,d:new Date().toLocaleDateString(),c:cur.n,dt:RDT*2,s:sm,split:RACE.split});e.runs.sort((a,b)=>a.t-b.t);e.runs.length=Math.min(5,e.runs.length);rSave(s);RACE.lastT=t;RACE.rec2=RACE.rec;raceAbort();vx=vz=0;if(onlMyFin(t))return;raceResults(R,t,old)}
+// Abandonar una carrera de sala cuenta como «no terminó» para los demás
+function rQuitMp(){if(ONL.mp&&!ONL.mp.fin.has(ONL.id))onlMyFin(null)}
 // --- Cada fotograma ---
 // (con cualquier panel abierto el aviso central se oculta, y vuelve al cerrarlo)
 const RC_UI=["ov","mapP","setP","livP","raceP","garP","onlP","radioL"];
@@ -121,12 +123,15 @@ function raceMiniDot(a,b,cc,d,c){if(!RACE.on)return;const q=RACE.rt.cps[RACE.cp%
 // --- Menú y resultados ---
 function raceMenu(){state="race";$("ov").hidden=false;$("carsP").hidden=$("mapP").hidden=$("setP").hidden=$("livP").hidden=true;$("raceP").hidden=false;hudVis(false);$("touch").hidden=true;const P=$("raceP"),S=rStore();P.innerHTML="";
  const h1=document.createElement("h1");h1.textContent=T("Carreras");P.appendChild(h1);
+ // En una sala solo el creador elige: la carrera empieza a la vez para todos
+ if(ONL.ch&&ONL.ok&&!ONL.host){const p=document.createElement("p");p.textContent=T("Estás en una sala: la carrera la elige quien la creó y empezará para todos a la vez.");P.appendChild(p);const c=document.createElement("button");c.className="b g";c.textContent=T("Cerrar");c.onclick=resume;P.appendChild(c);return}
+ const mp=ONL.ch&&ONL.ok&&ONL.host;if(mp){const p=document.createElement("p");p.textContent=T("Sala: al pulsar Correr salís todos a la vez.");P.appendChild(p)}
  for(const R of RTS){const e=S[R.id],runs=e&&e.runs||[],d=document.createElement("div");d.className="rcRow";const inf=document.createElement("div");inf.innerHTML=`<b>${T(R.n)}</b><small>${T(R.tipo)}${R.laps>1?` · ${R.laps} ${T("vueltas")}`:""} · ${T("Récord")}: ${runs.length?fmtT(runs[0].t):"—"}</small>`;d.appendChild(inf);
   const sel=rGhostSel(runs);d.appendChild(sel);
-  const b=document.createElement("button");b.className="b";b.textContent=T("Correr");b.onclick=()=>raceSetup(R,+sel.value);d.appendChild(b);P.appendChild(d)}
+  const b=document.createElement("button");b.className="b";b.textContent=T("Correr");b.onclick=()=>mp?onlRaceStart(R):raceSetup(R,+sel.value);d.appendChild(b);P.appendChild(d)}
  const n=document.createElement("p");n.textContent=T("G enciende o apaga el fantasma durante la carrera.");P.appendChild(n);
  const lb=document.createElement("label");lb.className="rcChk";lb.innerHTML=`<input type="checkbox"> ${T("Mostrar la pantalla de tráfico antes de salir")}`;const ck=lb.firstChild;ck.checked=!ENV.rcSkip;ck.onchange=()=>{ENV.rcSkip=!ck.checked;saveEnv()};P.appendChild(lb);
- const row=document.createElement("div");if(RACE.on){const a=document.createElement("button");a.className="b g";a.textContent=T("Abandonar carrera");a.onclick=()=>{raceAbort();resume()};row.appendChild(a)}const c=document.createElement("button");c.className="b g";c.textContent=T("Cerrar");c.onclick=resume;row.appendChild(c);P.appendChild(row)}
+ const row=document.createElement("div");if(RACE.on){const a=document.createElement("button");a.className="b g";a.textContent=T("Abandonar carrera");a.onclick=()=>{raceAbort();resume();rQuitMp()};row.appendChild(a)}const c=document.createElement("button");c.className="b g";c.textContent=T("Cerrar");c.onclick=resume;row.appendChild(c);P.appendChild(row)}
 function raceResults(R,t,old){state="race";$("ov").hidden=false;$("carsP").hidden=$("mapP").hidden=$("setP").hidden=$("livP").hidden=true;hudVis(false);$("touch").hidden=true;const P=$("raceP");P.hidden=false;P.innerHTML="";const rec=old===null||t<old;
  const h1=document.createElement("h1");h1.textContent=rec?T("¡Nuevo récord!"):T("Meta");P.appendChild(h1);const p=document.createElement("p");p.innerHTML=`<b style="font-size:30px">${fmtT(t)}</b><br>${old===null?"":`${T("Récord anterior")}: ${fmtT(old)}`}`;P.appendChild(p);
  for(const[n,f,g]of[["Repetir",()=>{const s=rStore()[R.id];raceStart(R,s&&s.runs.length?0:-1)},0],["🎬 Ver repetición",replayStart,1],["Otra carrera",raceMenu,1],["Conducción libre",resume,1]]){const b=document.createElement("button");b.className=g?"b g":"b";b.textContent=T(n);b.onclick=f;P.appendChild(b)}}

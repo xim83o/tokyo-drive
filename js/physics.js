@@ -17,7 +17,7 @@ function step(dt,i){thrL=i.t;brkL=i.b;stV+=(i.s-stV)*Math.min(1,dt*10);
  slipV=Math.abs(vl);const vl0=vl;vl*=Math.exp(-rg*dt);vf=(vf>=0?1:-1)*Math.sqrt(vf*vf+(vl0*vl0-vl*vl)*.9);vf=Math.max(-14,Math.min(cur.vm,vf));
  vx=fx*vf+rx*vl;vz=fz*vf+rz*vl;const sv=Math.hypot(vx,vz);if(sv>cur.vm){vx*=cur.vm/sv;vz*=cur.vm/sv}
  // Movimiento en subpasos de 0,4 m como máximo para no atravesar paredes a mucha velocidad
- hwyEnter();const n=Math.max(1,Math.ceil(Math.hypot(vx,vz)*dt/.4));for(let k=0;k<n;k++){px+=vx*dt/n;pz+=vz*dt/n;if(HWL.on)hwyHit(dt);else carHit(dt)}
+ hwyEnter();const n=Math.max(1,Math.ceil(Math.hypot(vx,vz)*dt/.4));for(let k=0;k<n;k++){px+=vx*dt/n;pz+=vz*dt/n;if(HWL.on)hwyHit(dt);else carHit(dt);peerHit(dt)}
  // Borde del mapa: muro invisible (la niebla lo tapa)
  if(px<8||px>W-8){px=Math.max(8,Math.min(W-8,px));vx=0}if(pz<8||pz>W-8){pz=Math.max(8,Math.min(W-8,pz));vz=0}
  // Si el coche acaba en el agua (fuera de un puente), se hunde y reaparece en la calle más cercana

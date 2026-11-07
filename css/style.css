@@ -109,3 +109,6 @@ body.rcUI #topbar,body.rcUI #help,body.rcUI #radioL,body.rcUI #mz{display:none!i
 #spd{min-width:150px;justify-content:center;padding-top:6px}
 #rot{position:fixed;inset:0;z-index:50;background:#000;color:#fff;align-items:center;justify-content:center;font-size:20px;line-height:1.6;text-align:center;padding:20px}
 @media (orientation:portrait){.mobile #rot{display:flex}}
+
+#ldsM{display:flex;gap:12px;justify-content:center;margin-top:6px}#ldsM[hidden]{display:none}#ldsM button{padding:12px 26px;border:0;border-radius:8px;background:#e5173f;color:#fff;font:700 16px system-ui;cursor:pointer}#ldsM #ldsMp{background:#2a6cf0}#ldsM button:focus{outline:3px solid #fff}
+.onlL{list-style:none;padding:0;margin:6px 0}.onlL li{padding:3px 0}.onlM{color:#ffb000}.onlRes{font-size:18px;line-height:1.7;text-align:left;display:inline-block}
