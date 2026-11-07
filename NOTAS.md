@@ -153,6 +153,7 @@ Pedido por el usuario (todo con permiso ya dado; descargas permitidas: partes de
 - Apuntado para más adelante: dinero o puntos para comprar coches y mejoras.
 
 ## Pendiente / ideas
+- HECHO (mainMenu en online.js, estado "menu"): Menú principal (elegido el 2026-11-07, idea 1): la misma pantalla del inicio (logo TOKYO DRIVE + «Un jugador» / «Multijugador») con la ciudad girando de fondo. Se vuelve a él al cerrar Multijugador sin sala, con un botón «Menú principal» en Ajustes (Esc), al salir de una sala y cuando el creador la cierra. El coche se queda donde estaba: «Un jugador» sigue en el mismo sitio.
 - Modos de juego (apuntado el 2026-11-05): modo conducción libre (el actual) y modo carreras, para correr por las calles de Tokio.
 - Autopista Shuto elevada.
 - Más coches para elegir (apuntado el 2026-11-04): ampliar la lista de coches del juego más adelante.

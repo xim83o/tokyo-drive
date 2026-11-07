@@ -14,7 +14,9 @@ const LDS={p:0,n:0,done:false,go:false,tr:t=>typeof T==="function"?T(t):t,
  ready(){this.set(100,"Todo listo");this.go=true;this.el("ldsGo").hidden=false;this.el("ldsGo").focus()},
  // Primero «Pulsa para empezar» y luego se elige un jugador o multijugador (lista de salas)
  pick(){if(!this.go||this.done||this.picked)return;this.picked=true;initAudio();this.el("ldsGo").hidden=true;this.el("ldsM").hidden=false;this.el("ldsS").focus()},
- start(mp){if(!this.go||this.done)return;this.done=true;initAudio();clearInterval(this.tt);const e=this.el("lds");e.classList.add("off");setTimeout(()=>e.hidden=true,400);if(mp)setTimeout(()=>onlOpen(),60)},
+ start(mp){if(!this.go||this.done)return;this.done=true;initAudio();clearInterval(this.tt);const e=this.el("lds"),wasMenu=this.menu;this.menu=false;e.classList.add("off");setTimeout(()=>{e.hidden=true;e.classList.remove("menu")},400);
+  // Desde el menú principal: «Un jugador» vuelve a conducir donde estabas (o a elegir coche si aún no hay)
+  if(mp)setTimeout(()=>onlOpen(),60);else if(wasMenu){if(spawned)resume();else show("cars")}},
  tips:["Mantén el freno de mano en las curvas cerradas para derrapar.","Pulsa B para abrir las carreras.","Pulsa F para entrar en el modo foto.","Pulsa V para cambiar de cámara.","Pulsa M para abrir el mapa y aparecer donde quieras.","En el concesionario puedes pintar tu coche y ponerle calcomanías.","La autopista elevada tiene rampas de entrada y de salida.","En invierno el coche agarra menos.","Pulsa R para encender la radio.","En una carrera, si te sales de la ruta, tienes 5 segundos para volver."],
  tip(){this.el("ldsC").textContent=this.tr(this.tips[Math.floor(Math.random()*this.tips.length)])}};
 LDS.tt=setInterval(()=>LDS.tip(),3500);

@@ -17,13 +17,16 @@ async function onlPull(){const sb=onlSb(),{data,error}=await sb.from("saves").se
  localStorage.setItem("td-liv",JSON.stringify(d.liv||[]));localStorage.setItem("td-gar",JSON.stringify(d.gar||[]));localStorage.setItem("td-race",JSON.stringify(d.race||{}));localStorage.setItem("td-stk",JSON.stringify(d.stk||[]));location.reload();return true}
 function onlOpen(){state="onl";onlSb();onlLobby();$("ov").hidden=false;$("carsP").hidden=$("mapP").hidden=$("setP").hidden=$("livP").hidden=$("raceP").hidden=$("garP").hidden=true;$("onlP").hidden=false;hudVis(false);$("touch").hidden=true;onlDraw()}
 function onlMsg(t){ONL.msg=t;if(state==="onl")onlDraw()}
-// Cerrar el panel: sin coche todavía, a elegir coche
-function onlClose(){if(spawned)resume();else show("cars")}
+// Cerrar el panel: sin sala, al menú principal; dentro de una sala, a conducir (o a elegir coche si aún no hay)
+function onlClose(){if(!ONL.ch&&!ONL.wait)mainMenu();else if(spawned)resume();else show("cars")}
+// Menú principal: la pantalla del principio («Un jugador» / «Multijugador») con la ciudad girando detrás. El coche se queda donde estaba
+function mainMenu(msg){if(state==="set")closeSettings();if(RACE.on){raceAbort();rQuitMp()}if(state==="watch")onlWatchEnd();for(const k of["ov","rcBar","raceH","rcC"])$(k).hidden=true;hudVis(false);$("touch").hidden=true;state="menu";
+ const e=$("lds");e.hidden=false;e.classList.remove("off");e.classList.add("menu");LDS.done=false;LDS.picked=true;LDS.menu=true;$("ldsGo").hidden=true;$("ldsM").hidden=false;$("ldsC").textContent=msg?T(msg):"";$("ldsS").focus()}
 function onlDraw(){const P=$("onlP");P.innerHTML="";const add=(tag,txt,cl,to)=>{const e=document.createElement(tag);if(txt)e.textContent=T(txt);if(cl)e.className=cl;(to||P).appendChild(e);return e},btn=(t,f,g,to)=>{const b=add("button",t,g?"b g":"b",to);b.onclick=f;return b},inp=(type,ph,v,to)=>{const i=add("input",null,"onlI",to);i.type=type;i.placeholder=T(ph);i.value=v||"";return i};
  add("h1","Multijugador");if(!window.supabase){add("p","No se pudo conectar con el servicio en línea desde esta página.");btn("Cerrar",onlClose,1);return}
  if(ONL.ch){const R=ONL.room||{};const p=add("p");p.innerHTML=`<b style="font-size:22px">${esc(R.name||"")}</b>${R.pw?" 🔒":""}<br>${T(ONL.host?"Eres el creador de la sala: tú eliges las carreras.":"Las carreras las elige quien creó la sala.")}`;
   const ul=add("ul","","onlL");const me=add("li","",null,ul);me.textContent="🚗 "+(ONL.name||"?")+" ("+T("tú")+")";for(const[id,q]of ONL.peers){const li=add("li","",null,ul);li.textContent=(id===ONL.hostId?"👑 ":"🚗 ")+(q.n||"?")}
-  add("p",`${T("Jugadores")}: ${ONL.peers.size+1}/${ONL_MAX}`);btn(ONL.host?"Cerrar la sala":"Salir de la sala",()=>{onlLeave();onlDraw()},1)}
+  add("p",`${T("Jugadores")}: ${ONL.peers.size+1}/${ONL_MAX}`);btn(ONL.host?"Cerrar la sala":"Salir de la sala",()=>{onlLeave();mainMenu()},1)}
  else if(ONL.wait)add("p","Esperando permiso para entrar…");
  else{const n=inp("text","Tu nombre",ONL.name);n.maxLength=14;n.oninput=()=>{ONL.name=n.value.trim();try{localStorage.setItem("td-name",ONL.name)}catch(e){}};
   add("h3","Salas abiertas");if(!ONL.rooms.length)add("p",ONL.lobby?"No hay ninguna sala abierta. ¡Crea una!":"Buscando salas…");
@@ -50,7 +53,7 @@ function onlEnter(r,pw){onlLeave();ONL.host=false;ONL.room={code:r.code,name:r.n
  onlJoin(r.code,()=>ONL.ch.send({type:"broadcast",event:"join",payload:{id:ONL.id,n:ONL.name,pw:pw||""}}));onlDraw()}
 function onlJoined(){onlMsg("");if(!spawned)show("cars");else if(state==="onl")onlDraw()}
 function onlJoin(code,ready){const sb=onlSb();if(!sb)return;ONL.code=code;const ch=sb.channel("room-"+code,{config:{broadcast:{self:false}}});
- ch.on("broadcast",{event:"p"},m=>peerMsg(m.payload)).on("broadcast",{event:"bye"},m=>{const q=m.payload;if(q.host&&!ONL.host){onlLeave();onlMsg("El creador ha cerrado la sala.");if(state!=="onl"&&state!=="play")resume()}else peerDel(q.id)})
+ ch.on("broadcast",{event:"p"},m=>peerMsg(m.payload)).on("broadcast",{event:"bye"},m=>{const q=m.payload;if(q.host&&!ONL.host){onlLeave();mainMenu("El creador ha cerrado la sala.")}else peerDel(q.id)})
   .on("broadcast",{event:"join"},m=>onlAsk(m.payload)).on("broadcast",{event:"acc"},m=>onlAcc(m.payload)).on("broadcast",{event:"liv"},m=>peerLiv(m.payload))
   .on("broadcast",{event:"race"},m=>onlRaceGo(m.payload)).on("broadcast",{event:"fin"},m=>onlFin(m.payload));
  ch.subscribe(s=>{if(s==="SUBSCRIBED"){ONL.ch=ch;if(ready)ready()}else if(s==="CHANNEL_ERROR"||s==="TIMED_OUT"){onlMsg("No se pudo conectar con la sala.")}})}

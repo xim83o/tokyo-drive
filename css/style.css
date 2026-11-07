@@ -112,3 +112,5 @@ body.rcUI #topbar,body.rcUI #help,body.rcUI #radioL,body.rcUI #mz{display:none!i
 
 #ldsM{display:flex;gap:12px;justify-content:center;margin-top:6px}#ldsM[hidden]{display:none}#ldsM button{padding:12px 26px;border:0;border-radius:8px;background:#e5173f;color:#fff;font:700 16px system-ui;cursor:pointer}#ldsM #ldsMp{background:#2a6cf0}#ldsM button:focus{outline:3px solid #fff}
 .onlL{list-style:none;padding:0;margin:6px 0}.onlL li{padding:3px 0}.onlM{color:#ffb000}.onlRes{font-size:18px;line-height:1.7;text-align:left;display:inline-block}
+#lds.menu{background:rgba(6,7,12,.42)}#lds.menu #ldsB,#lds.menu #ldsR{display:none}#lds.menu #ldsC{color:#ffb000}
+#lds.menu~#topbar,#lds.menu~#mini,#lds.menu~#hud{display:none!important}
