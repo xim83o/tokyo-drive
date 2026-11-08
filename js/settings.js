@@ -5,7 +5,7 @@ const ACTS=[["up","Acelerar"],["down","Frenar / marcha atrás"],["left","Girar a
 const KEYDEF=JSON.parse(JSON.stringify(ENV.keys));
 function keyName(c){if(!c)return"—";const m={Space:"Espacio",Escape:"Esc",ArrowUp:"↑",ArrowDown:"↓",ArrowLeft:"←",ArrowRight:"→",ShiftLeft:"Mayús izq.",ShiftRight:"Mayús der.",ControlLeft:"Ctrl izq.",ControlRight:"Ctrl der.",Enter:"Intro",Tab:"Tab",Backspace:"Borrar"};
  return(m[c]?T(m[c]):0)||c.replace(/^Key/,"").replace(/^Digit/,"").replace(/^Numpad/,"Num ")}
-function openSettings(){if(state!=="set")setPrev=state;state="set";$("ov").hidden=false;$("carsP").hidden=$("mapP").hidden=true;$("setP").hidden=false;hudVis(false);$("touch").hidden=true;drawSettings()}
+function openSettings(){if(state!=="set")setPrev=state;state="set";$("ov").hidden=false;$("carsP").hidden=$("mapP").hidden=$("onlP").hidden=$("raceP").hidden=$("garP").hidden=$("livP").hidden=true;$("setP").hidden=false;hudVis(false);$("touch").hidden=true;drawSettings()}
 function closeSettings(){rebind=null;$("setP").hidden=true;saveEnv();if(setPrev==="menu"){state="menu";mainMenu();return}if(setPrev==="play")resume();else show(setPrev)}
 function drawSettings(){const P=$("setP");P.innerHTML=`<h1>${T(setPrev==="play"?"Pausa":"Ajustes")}</h1>`;
  // Menú de Esc conduciendo: accesos grandes a lo que antes estaba a la derecha (las teclas siguen funcionando)

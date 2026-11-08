@@ -30,7 +30,8 @@ function thDraw(cv,p,k,a){if(!cv||!p)return;for(const q of CTH.cache.values())q.
 // Con el ratón encima (tras wait ms) el coche da vueltas sin parar; al salir vuelve a la foto. En el móvil, solo la foto
 function thHover(el,cv,p,k,wait){if(MOBILE)return;el.onmouseenter=()=>{const tok={};CTH.spin=tok;let a=.7;const f=()=>{if(CTH.spin!==tok||!el.isConnected)return;a+=.03;thDraw(cv,p,k,a);requestAnimationFrame(f)};setTimeout(f,wait||0)};el.onmouseleave=()=>{CTH.spin=null;thDraw(cv,p,k,.7)}}
 function carThumbs(){if(!ready||!MODELS[CARS[0].f])return;[...$("cards").children].forEach((d,i)=>{const cv=d.querySelector(".cth"),p=thObj(i,LIV[i]);thDraw(cv,p,i,.7);thHover(d,cv,p,i,0)})}
-function show(w){state=w;if(w==="cars")setTimeout(carThumbs,30);$("ov").hidden=false;$("carsP").hidden=w!=="cars";$("mapP").hidden=w!=="map";$("setP").hidden=true;$("livP").hidden=true;$("ov").classList.remove("liv");if(w==="map"){pend=null;$("ok").disabled=true;mapV={z:1,x:W/2,z0:W/2};drawMap()}
+function show(w){state=w;if(w==="cars")setTimeout(carThumbs,30);$("ov").hidden=false;for(const k of["raceP","garP","onlP"])$(k).hidden=true;   // (que no se quede abierto otro panel al lado)
+$("carsP").hidden=w!=="cars";$("mapP").hidden=w!=="map";$("setP").hidden=true;$("livP").hidden=true;$("ov").classList.remove("liv");if(w==="map"){pend=null;$("ok").disabled=true;mapV={z:1,x:W/2,z0:W/2};drawMap()}
  hudVis(false);$("touch").hidden=true}
 // Al volver a conducir, la cámara va de donde estaba a su sitio detrás del coche en 0,5 s (main.js), en vez de saltar
 const CT={t:1,p:new THREE.Vector3(),q:new THREE.Quaternion()};

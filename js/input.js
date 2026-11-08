@@ -2,6 +2,8 @@
 const keys={};let prev=[];
 const K=a=>{const k=ENV.keys[a];return!!(keys[k[0]]||(k[1]&&keys[k[1]]))},isK=(a,code)=>ENV.keys[a].includes(code);
 function act(a){initAudio();if(RACE.on&&state==="play"&&a!=="set")return;   // en carrera solo vale Esc
+ // Esc (o Start en el mando) conduciendo lleva al menú principal; en una carrera, a la pausa (para no perderla sin querer). ⚙️ abre los ajustes
+ if(a==="set"&&state==="play"&&!RACE.on){mainMenu();return}
  if(a==="set"){if(state==="set")closeSettings();else if(state==="play"||state==="cars")openSettings();return}
  if(a==="onl"){if(state==="onl")resume();else if(state==="play")onlOpen();return}if(a==="race"&&state==="race"){resume();return}if(a==="photo"&&state==="photo"){photoEnd();return}
  if(state!=="play")return;if(a==="map")show("map");else if(a==="cars")show("cars");else if(a==="cam")mode=(mode+1)%4;else if(a==="race")raceMenu();else if(a==="photo")photoStart()}
