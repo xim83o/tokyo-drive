@@ -113,6 +113,7 @@ ca:{"WASD / flechas · Espacio: freno de mano · V: cámara · M: mapa · C: coc
 [["Flechas","Arrows","矢印","Fletxes"],["Mejor tiempo","Best time","ベストタイム","Millor temps"]].forEach(([s,en,ja,ca])=>{I18N.en[s]=en;I18N.ja[s]=ja;I18N.ca[s]=ca});
 [["Coche","Car","車","Cotxe"]].forEach(([s,en,ja,ca])=>{I18N.en[s]=en;I18N.ja[s]=ja;I18N.ca[s]=ca});
 [["Jugadores máx.","Max players","最大人数","Jugadors màx."],["En la sala, esto lo elige quien la creó.","In a room, the creator chooses this.","ルームでは作成者が決めます。","A la sala, això ho tria qui l'ha creada."]].forEach(([s,en,ja,ca])=>{I18N.en[s]=en;I18N.ja[s]=ja;I18N.ca[s]=ca});
+[["Antes de entrar, ponte un nombre: es el que verán los demás.","Before joining, choose a name: it's what others will see.","入る前に名前を決めてください。他の人に表示されます。","Abans d'entrar, posa't un nom: és el que veuran els altres."],["El nombre tiene que tener al menos 2 letras.","The name must have at least 2 characters.","名前は2文字以上にしてください。","El nom ha de tenir com a mínim 2 lletres."],["Continuar","Continue","続ける","Continua"]].forEach(([s,en,ja,ca])=>{I18N.en[s]=en;I18N.ja[s]=ja;I18N.ca[s]=ca});
 const T=s=>(LANG!=="es"&&I18N[LANG]&&I18N[LANG][s])||s;
 // Textos fijos de la página (data-i18n guarda el original en español)
 function applyI18n(){document.documentElement.lang=LANG;for(const e of document.querySelectorAll("[data-i18n]"))e.textContent=T(e.dataset.i18n);const hp=document.getElementById("help");if(hp)hp.textContent+=" · "+T("B: carreras · F: modo foto · G: fantasma")}
