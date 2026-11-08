@@ -54,12 +54,12 @@ function gatesClear(){for(const q of GTS)sc.remove(q.G);GTS=[];for(const g of LE
 // Dirección de la calle real en un punto (el tramo de calle más cercano), para que los banderines queden siempre de frente
 function rRoad(x,z){let b=null,bd=1e18;for(const k of gq(x,z).r){const o=k*6,d=segD2(x,z,RSG[o],RSG[o+1],RSG[o+2],RSG[o+3]);if(d<bd){bd=d;b=o}}if(b===null)return null;const dx=RSG[b+2]-RSG[b],dz=RSG[b+3]-RSG[b+1],l=Math.hypot(dx,dz)||1;return{dx:dx/l,dz:dz/l}}
 function gatesBuild(R){gatesClear();const M=gateMats();ledBuild(R);R.cps.forEach((c,i)=>{const rr=rRoad(c.x,c.z);if(rr){const s=rr.dx*c.dx+rr.dz*c.dz<0?-1:1;c.dx=rr.dx*s;c.dz=rr.dz*s}const hw=rHW(c.x,c.z)+1.2,G=new THREE.Group(),P=[],F=[],H=[],C=[],add=(g,x,y,z)=>{const m=new THREE.Mesh(g,M.far);m.position.set(x,y,z);G.add(m);P.push(m)};
-  for(const s of[-1,1]){const fg=s>0?M.fgR:M.fgL;for(const z of[-3,3]){add(M.pg,s*hw,0,z);add(M.ts,s*hw,7.7,z);add(M.tb,s*hw,.1,z);const B=new THREE.Mesh(fg,c.end?M.fin:M.tf);B.position.set(s*hw,1,z);B.userData.a=0;if(!c.end)C.push(B);F.push(B);G.add(B);const A=new THREE.Mesh(fg,M.hl);A.scale.set(1.3,1.12,1);A.position.set(-.3*s,-.38,-.03);B.add(A);H.push(A)}
+  for(const s of[-1,1]){const fg=s>0?M.fgR:M.fgL;for(const z of[-3,3]){add(M.pg,s*hw,0,z);add(M.ts,s*hw,7.7,z);add(M.tb,s*hw,.1,z);const B=new THREE.Mesh(fg,c.end?M.fin:M.tf);B.position.set(s*hw,1,z);B.userData.a=0;B.userData.end=!!c.end;C.push(B);F.push(B);G.add(B);const A=new THREE.Mesh(fg,M.hl);A.scale.set(1.3,1.12,1);A.position.set(-.3*s,-.38,-.03);B.add(A);H.push(A)}
    for(let t=1;t<=5;t++)add(M.tg,s*hw,7.45-Math.sin(PI*t/6)*.7,t-3)}   // (guirnalda de banderitas entre los dos mástiles)
   G.position.set(c.x,0,c.z);G.rotation.y=Math.atan2(c.dx,c.dz);G.visible=false;sc.add(G);c.hw=hw;c.r=Math.max(hw+4,26);GTS.push({G,P,F,H,C})})}   // (radio amplio: en avenidas con dos calzadas también cuenta si vas por la otra)
 // Los banderines ondean un poco y el resplandor del siguiente punto late
 function gatesWave(){const t=performance.now()/1000;ledTick(t);GTM.hl.opacity=.42+Math.sin(t*4)*.16;for(const q of GTS)if(q.G.visible)q.F.forEach((B,i)=>B.rotation.y=B.userData.a+Math.sin(t*2.4+i*1.3)*.2)}
-function rPlace(){const R=RACE.rt,n=R.cps.length,k=RACE.cp%n,tot=n*R.laps;GTS.forEach((q,i)=>{const d=(i-k+n)%n;q.G.visible=d<2&&RACE.cp+d<tot;for(const m of q.P)m.material=d===0?GTM.next:GTM.far;for(const m of q.C)m.material=d===0?GTM.tn:GTM.tf;for(const m of q.H)m.visible=d===0});const c=R.cps[k];GTM.beam.position.set(c.x,0,c.z);GTM.beam.visible=true}
+function rPlace(){const R=RACE.rt,n=R.cps.length,k=RACE.cp%n,tot=n*R.laps;GTS.forEach((q,i)=>{const d=(i-k+n)%n;q.G.visible=d<2&&RACE.cp+d<tot;for(const m of q.P)m.material=d===0?GTM.next:GTM.far;for(const m of q.C)m.material=m.userData.end&&Math.floor(RACE.cp/n)>=R.laps-1?GTM.fin:d===0?GTM.tn:GTM.tf;for(const m of q.H)m.visible=d===0});const c=R.cps[k];GTM.beam.position.set(c.x,0,c.z);GTM.beam.visible=true}
 // ¿Va por la ruta? Se mira el tramo entre el último punto de control y el siguiente (no vale atajar a otra parte del recorrido ni subir a la autopista)
 function rOnRoute(){return!HWL.on&&RF.d<28}
 // Por dónde va el coche en la ruta: se avanza tramo a tramo desde la última posición, solo a tramos contiguos que estén más cerca. Así, si la ruta pasa dos veces por la misma
@@ -91,15 +91,16 @@ function ledTex(){if(LEDT)return LEDT;const mk=(dir)=>{const cv=document.createE
  LEDT={a:{"1":mk(1),"-1":mk(-1)},c:{"1":neon(1),"-1":neon(-1)},f:-1};ledDraw(0);return LEDT}
 // Panel A: 3 chevrones de puntos; se enciende uno cada vez, del lado contrario al giro hacia donde apunta
 function ledDraw(fr){for(const dir of[1,-1]){const t=LEDT.a[dir],g=t.image.getContext("2d");g.fillStyle="#0b0b0f";g.fillRect(0,0,256,80);const lit=dir>0?fr:2-fr;
-  for(let k=0;k<3;k++)for(let y=0;y<7;y++)for(let x=0;x<8;x++){const cy=Math.abs(y-3),xx=dir>0?x:7-x,on=xx-cy>=1&&xx-cy<=3;if(!on)continue;const L=k===lit;g.fillStyle=L?"#ffb000":"#3a2608";g.shadowColor="#ffb000";g.shadowBlur=L?8:0;g.beginPath();g.arc(16+k*84+x*8.4,13+y*9,3.4,0,7);g.fill()}t.needsUpdate=true}}
+  for(let k=0;k<3;k++)for(let y=0;y<7;y++)for(let x=0;x<8;x++){const cy=Math.abs(y-3),xx=dir>0?7-x:x,on=xx-cy>=1&&xx-cy<=3;if(!on)continue;const L=k===lit;g.fillStyle=L?"#ffb000":"#3a2608";g.shadowColor="#ffb000";g.shadowBlur=L?8:0;g.beginPath();g.arc(16+k*84+x*8.4,13+y*9,3.4,0,7);g.fill()}t.needsUpdate=true}}
 function ledTick(t){if(!LEDS.length||!LEDT)return;const fr=Math.floor(t*6)%3;if(fr!==LEDT.f){LEDT.f=fr;ledDraw(fr)}for(const m of[LEDT.cm,LEDT.cm2])if(m)m.opacity=.75+Math.sin(t*5)*.25}
 function ledBuild(R){if(!R.turns)rTurns(R);const T2=ledTex(),post=new THREE.MeshLambertMaterial({color:0x2a2c30}),pg=new THREE.CylinderGeometry(.08,.1,3.2,6).translate(0,1.6,0),bk=new THREE.MeshLambertMaterial({color:0x111216});
  if(!T2.cm)T2.cm=new THREE.MeshBasicMaterial({map:T2.c["1"],transparent:true,depthWrite:false});
  for(const t of R.turns){if(Math.abs(t.d)<.75)continue;const a=R.at(t.s-30),b=R.at(t.s),h=Math.atan2(b.x-a.x,b.z-a.z),fx=Math.sin(h),fz=Math.cos(h),hw=rHW(b.x,b.z),dir=t.d>0?-1:1;
   // Sitio para el panel A: en la esquina de fuera del giro, pasado el cruce, fuera de la calzada y sin edificio encima
   const ox=t.d>0?-Math.cos(h):Math.cos(h),oz=t.d>0?Math.sin(h):-Math.sin(h),G=new THREE.Group(),free=(x,z)=>roadAt(x,z)<0&&!inBuilding(x,z)&&!inBuilding(x+fz*2.7,z-fx*2.7)&&!inBuilding(x-fz*2.7,z+fx*2.7);let A=null;
-  for(const fw of[hw+3,hw+6,hw+10,hw+14])for(const sd of[0,hw*.5+2,hw+3]){const x=b.x+fx*fw+ox*sd,z=b.z+fz*fw+oz*sd;if(!A&&free(x,z))A=[x,z]}
-  let W=null;if(!A)for(const sd of[0,hw*.6,-hw*.6]){for(let d=hw+1;d<=45;d+=1){const x=b.x+fx*d+ox*sd,z=b.z+fz*d+oz*sd;if(inBuilding(x,z)){if(!W||d<W[2])W=[x-fx*.4,z-fz*.4,d];break}}}
+  // (en la esquina de fuera, justo al otro lado de la calle a la que se gira: no al fondo de una avenida ancha)
+  const cw=rHW(R.at(t.s+30).x,R.at(t.s+30).z);for(const fw of[cw+2,cw+4,cw+6,-(cw+3),-(cw+6),-(cw+9)])for(const sd of[hw+2,hw+4,hw*.5+2,0]){if(fw<0&&sd<hw)continue;const x=b.x+fx*fw+ox*sd,z=b.z+fz*fw+oz*sd;if(!A&&free(x,z))A=[x,z]}   // (si al otro lado no hay sitio, en la esquina de fuera antes del cruce)
+  let W=null;if(!A)for(const sd of[0,hw*.6,-hw*.6]){for(let d=cw+1;d<=cw+14;d+=1){const x=b.x+fx*d+ox*sd,z=b.z+fz*d+oz*sd;if(inBuilding(x,z)){if(!W||d<W[2])W=[x-fx*.4,z-fz*.4,d];break}}}
   if(A){for(const s of[-2,2]){const p=new THREE.Mesh(pg,post);p.position.set(s,0,0);G.add(p)}const back=new THREE.Mesh(new THREE.BoxGeometry(5.2,1.8,.14),bk);back.position.set(0,3.6,-.09);G.add(back);
    const pn=new THREE.Mesh(new THREE.PlaneGeometry(5,1.56),new THREE.MeshBasicMaterial({map:T2.a[dir]}));pn.position.set(0,3.6,0);G.add(pn);G.position.set(A[0],0,A[1])}
   else if(W){const m=dir>0?T2.cm:(T2.cm2||(T2.cm2=T2.cm.clone()));m.map=T2.c[dir];const pn=new THREE.Mesh(new THREE.PlaneGeometry(4.2,1.8),m);pn.position.set(0,5,0);G.add(pn);G.position.set(W[0],0,W[1])}
