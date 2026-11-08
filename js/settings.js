@@ -10,7 +10,7 @@ function closeSettings(){rebind=null;$("setP").hidden=true;saveEnv();if(setPrev=
 function drawSettings(){const P=$("setP");P.innerHTML=`<h1>${T(setPrev==="play"?"Pausa":"Ajustes")}</h1>`;
  // Menú de Esc conduciendo: accesos grandes a lo que antes estaba a la derecha (las teclas siguen funcionando)
  if(spawned&&setPrev==="play"&&!RACE.on){const q=document.createElement("div");q.className="qrow";const go=(ic,t,f)=>{const b=document.createElement("button");b.innerHTML=`<i>${ic}</i>${T(t)}`;b.onclick=f;q.appendChild(b);return b},cl=f=>()=>{closeSettings();f()};
-  go("🏁","Carreras",cl(()=>act("race")));go("📷","Modo foto",cl(()=>act("photo")));go("🌐","Multijugador",cl(()=>act("onl")));go("🗺️","Mapa",cl(()=>act("map")));
+  go("🏁","Carreras",cl(()=>act("race")));go("📷","Modo foto",cl(()=>act("photo")));go("🗺️","Mapa",cl(()=>act("map")));
   const tb=go("🚗",T("Tráfico")+": "+T(NLAB[npcLvl]),()=>{setNpc(npcLvl+1);tb.innerHTML=`<i>🚗</i>${T("Tráfico")}: ${T(NLAB[npcLvl])}`});
   const sb=go(mute?"🔇":"🔊",mute?"Activar sonido":"Silenciar",()=>{initAudio();setMute(!mute);sb.innerHTML=`<i>${mute?"🔇":"🔊"}</i>${T(mute?"Activar sonido":"Silenciar")}`});P.appendChild(q)}
  const tabs=[["gfx","Gráficos"],["time","Hora y clima"],["snd","Sonido"],["radio","📻 Radio"],["trf","Tráfico"],["scr","Pantalla"],["lang","Idioma"]];if(!MOBILE)tabs.push(["keys","Teclas"]);if(typeof DEV!=="undefined"&&DEV)tabs.push(["dev","Desarrollador"]);

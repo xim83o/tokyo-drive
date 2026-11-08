@@ -17,7 +17,7 @@ const LDS={p:0,n:0,done:false,go:false,tr:t=>typeof T==="function"?T(t):t,
  start(mp){if(!this.go||this.done)return;this.done=true;initAudio();clearInterval(this.tt);const e=this.el("lds"),wasMenu=this.menu;this.menu=false;e.classList.add("off");setTimeout(()=>{e.hidden=true;e.classList.remove("menu")},400);
   // Desde el menú principal: «Un jugador» vuelve a conducir donde estabas (o a elegir coche si aún no hay)
   // (mp: true multijugador · "gar" garaje · "set" ajustes; al cerrar esos dos se vuelve a este menú)
-  if(mp===true)setTimeout(()=>onlOpen(),60);else if(mp==="gar"){MENUB=true;garOpen()}else if(mp==="set"){state="menu";openSettings()}else if(wasMenu){if(spawned)resume();else show("cars")}},
+  if(mp===true)setTimeout(()=>onlOpen(),60);else if(mp==="gar"){MENUB=true;garOpen()}else if(mp==="set"){state="menu";openSettings()}else{show("cars");if(typeof carThumbs==="function")setTimeout(carThumbs,40)}},   // «Un jugador»: siempre a «Selecciona coche»
  tips:["Mantén el freno de mano en las curvas cerradas para derrapar.","Pulsa B para abrir las carreras.","Pulsa F para entrar en el modo foto.","Pulsa V para cambiar de cámara.","Pulsa M para abrir el mapa y aparecer donde quieras.","En el concesionario puedes pintar tu coche y ponerle calcomanías.","La autopista elevada tiene rampas de entrada y de salida.","En invierno el coche agarra menos.","Pulsa R para encender la radio.","En una carrera, si te sales de la ruta, tienes 5 segundos para volver."],
  tip(){this.el("ldsC").textContent=this.tr(this.tips[Math.floor(Math.random()*this.tips.length)])}};
 LDS.tt=setInterval(()=>LDS.tip(),3500);
@@ -34,6 +34,7 @@ LDS.el("ldsGo").onclick=e=>{e.stopPropagation();LDS.pick()};LDS.el("lds").onclic
 <div id="topbar">
  <button class="tb" id="gear" onclick="act('set')">⚙️</button>
  <button class="tb" id="rad" onclick="initAudio();radPanel()">📻</button>
+ <button class="tb" id="onlB" hidden onclick="act('onl')" title="Multijugador">🌐</button>
  <button class="tb mob" onclick="act('cam')">🎥</button>
  <!-- (el resto de accesos están en el menú de Esc; estos dos se quedan ocultos porque el código les pone el texto) -->
  <span hidden><button id="snd"></button><button id="trf"></button></span>
@@ -48,7 +49,7 @@ LDS.el("ldsGo").onclick=e=>{e.stopPropagation();LDS.pick()};LDS.el("lds").onclic
 <div id="spd" hidden><div id="spdB"><u></u></div><span id="spdN">0</span><small id="spdU">km/h</small><b id="spdG">N</b></div>
 <div id="rot">🔄<br><span data-i18n="Gira el móvil en horizontal para jugar">Gira el móvil en horizontal para jugar</span></div>
 <div class="ov" id="ov">
- <div class="pn" id="carsP"><h1 data-i18n="Elige tu coche">Elige tu coche</h1><div id="tabs"></div><div id="cards"></div></div>
+ <div class="pn" id="carsP"><h1 data-i18n="Selecciona coche">Selecciona coche</h1><div id="tabs"></div><div id="cards"></div></div>
  <div class="pn" id="mapP" hidden><h1 data-i18n="¿Dónde quieres aparecer?">¿Dónde quieres aparecer?</h1><p data-i18n="Haz clic en una calle y confirma. Otro clic en el mismo sitio cambia el sentido. Rueda, pellizco o + y − para hacer zoom; arrastra para moverte. En rojo, la Torre de Tokio y los templos.">Haz clic en una calle y confirma. Otro clic en el mismo sitio cambia el sentido. Rueda, pellizco o + y − para hacer zoom; arrastra para moverte. En rojo, la Torre de Tokio y los templos.</p>
   <canvas id="mp" width="640" height="640"></canvas>
   <div><button class="b g" onclick="mapZoom(1)">+</button><button class="b g" onclick="mapZoom(-1)">−</button><button class="b" id="ok" disabled data-i18n="Confirmar">Confirmar</button><button class="b g" id="cancel" data-i18n="Cancelar">Cancelar</button></div></div>
