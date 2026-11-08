@@ -6,8 +6,13 @@ const KEYDEF=JSON.parse(JSON.stringify(ENV.keys));
 function keyName(c){if(!c)return"—";const m={Space:"Espacio",Escape:"Esc",ArrowUp:"↑",ArrowDown:"↓",ArrowLeft:"←",ArrowRight:"→",ShiftLeft:"Mayús izq.",ShiftRight:"Mayús der.",ControlLeft:"Ctrl izq.",ControlRight:"Ctrl der.",Enter:"Intro",Tab:"Tab",Backspace:"Borrar"};
  return(m[c]?T(m[c]):0)||c.replace(/^Key/,"").replace(/^Digit/,"").replace(/^Numpad/,"Num ")}
 function openSettings(){if(state!=="set")setPrev=state;state="set";$("ov").hidden=false;$("carsP").hidden=$("mapP").hidden=true;$("setP").hidden=false;hudVis(false);$("touch").hidden=true;drawSettings()}
-function closeSettings(){rebind=null;$("setP").hidden=true;saveEnv();if(setPrev==="play")resume();else show(setPrev)}
-function drawSettings(){const P=$("setP");P.innerHTML=`<h1>${T("Ajustes")}</h1>`;
+function closeSettings(){rebind=null;$("setP").hidden=true;saveEnv();if(setPrev==="menu"){state="menu";mainMenu();return}if(setPrev==="play")resume();else show(setPrev)}
+function drawSettings(){const P=$("setP");P.innerHTML=`<h1>${T(setPrev==="play"?"Pausa":"Ajustes")}</h1>`;
+ // Menú de Esc conduciendo: accesos grandes a lo que antes estaba a la derecha (las teclas siguen funcionando)
+ if(spawned&&setPrev==="play"&&!RACE.on){const q=document.createElement("div");q.className="qrow";const go=(ic,t,f)=>{const b=document.createElement("button");b.innerHTML=`<i>${ic}</i>${T(t)}`;b.onclick=f;q.appendChild(b);return b},cl=f=>()=>{closeSettings();f()};
+  go("🏁","Carreras",cl(()=>act("race")));go("📷","Modo foto",cl(()=>act("photo")));go("🌐","Multijugador",cl(()=>act("onl")));go("🗺️","Mapa",cl(()=>act("map")));
+  const tb=go("🚗",T("Tráfico")+": "+T(NLAB[npcLvl]),()=>{setNpc(npcLvl+1);tb.innerHTML=`<i>🚗</i>${T("Tráfico")}: ${T(NLAB[npcLvl])}`});
+  const sb=go(mute?"🔇":"🔊",mute?"Activar sonido":"Silenciar",()=>{initAudio();setMute(!mute);sb.innerHTML=`<i>${mute?"🔇":"🔊"}</i>${T(mute?"Activar sonido":"Silenciar")}`});P.appendChild(q)}
  const tabs=[["gfx","Gráficos"],["time","Hora y clima"],["snd","Sonido"],["trf","Tráfico"],["scr","Pantalla"],["lang","Idioma"]];if(!MOBILE)tabs.push(["keys","Teclas"]);if(typeof DEV!=="undefined"&&DEV)tabs.push(["dev","Desarrollador"]);
  const tb=document.createElement("div");tb.className="stabs";tabs.forEach(([k,t])=>{const b=document.createElement("button");b.textContent=T(t);b.className=k===setTab?"on":"";b.onclick=()=>{setTab=k;rebind=null;drawSettings()};tb.appendChild(b)});P.appendChild(tb);
  const box=document.createElement("div");box.id="envUI";P.appendChild(box);
@@ -33,7 +38,10 @@ function drawSettings(){const P=$("setP");P.innerHTML=`<h1>${T("Ajustes")}</h1>`
   row("Sonido",[[0,"Activado"],[1,"Silenciado"]],()=>mute?1:0,v=>{initAudio();setMute(!!v)});
   slider("Radio","radio");row("País de la radio",RCOUNTRY,()=>ENV.radio.c,v=>{ENV.radio.c=v;radioReset()});row("Estilo",RTAG,()=>ENV.radio.t,v=>{ENV.radio.t=v;radioReset()});
   {const b=document.createElement("button");b.className="b g";b.textContent="📻 "+T("Siguiente emisora");b.onclick=()=>{initAudio();if(!RADIO.on)radioToggle();else radioNext(1)};box.appendChild(b)}
-  note("La radio usa emisoras en directo de radio-browser.info: necesita internet y la música (y los anuncios) son los que pongan ellas.")}
+  note("La radio usa emisoras en directo de radio-browser.info: necesita internet y la música (y los anuncios) son los que pongan ellas.");
+  {const h=document.createElement("h3");h.textContent="Spotify";box.appendChild(h);const r=document.createElement("div");r.className="lrow";r.style.justifyContent="center";const i=document.createElement("input");i.type="text";i.className="onlI";i.style.maxWidth="440px";i.placeholder=T("Enlace de una lista, álbum o canción de Spotify");i.value=ENV.spot||"";
+   const s=document.createElement("button");s.className="b";s.textContent=T("Guardar");const m=document.createElement("p");s.onclick=()=>{const v=i.value.trim();if(v&&!spotEmbed(v)){m.textContent=T("Ese enlace no es de Spotify.");return}ENV.spot=v;saveEnv();spotSet();m.textContent=T(v?"Guardado: lo tienes en el panel 📻.":"Quitado.")};r.append(i,s);box.append(r,m)}
+  note("En Spotify copia «Compartir → Copiar enlace» y pégalo aquí. Suena con el reproductor oficial dentro del panel 📻: si tienes la sesión de Spotify iniciada en este navegador las canciones suenan enteras; si no, solo 30 s. Mientras suena Spotify la radio del juego se apaga. Su volumen se cambia en su propio reproductor.")}
  else if(setTab==="trf"){row("Tráfico",NLAB.map((t,i)=>[i,t]),()=>npcLvl,v=>setNpc(v));note("Más coches hace la ciudad más viva, pero pide más al ordenador o al móvil.");
 }
  else if(setTab==="scr"){row("Velocidad en",[["kmh","km/h"],["mph","mph"]],()=>ENV.units,v=>ENV.units=v);
@@ -53,5 +61,5 @@ function drawSettings(){const P=$("setP");P.innerHTML=`<h1>${T("Ajustes")}</h1>`
  if(spawned){const q=document.createElement("button");q.className="b g";q.textContent=T("Menú principal");q.onclick=()=>mainMenu();P.appendChild(q)}
  const ok=document.createElement("button");ok.className="b";ok.textContent=T("Volver");ok.onclick=closeSettings;P.appendChild(ok)}
 setNpc(npcLvl);
-// Botón de ajustes en el menú de coches
-{const b=document.createElement("button");b.className="b g";b.dataset.i18n="⚙️ Ajustes";b.textContent=T("⚙️ Ajustes");b.onclick=()=>act("set");$("carsP").appendChild(b)}
+// Spotify: del enlace de una lista, álbum o canción se saca el del reproductor oficial (se ve en el panel de la radio)
+function spotEmbed(u){const m=String(u||"").match(/open\.spotify\.com\/(?:intl-[\w-]+\/)?(playlist|album|track|artist|show|episode)\/([A-Za-z0-9]+)/);return m?`https://open.spotify.com/embed/${m[1]}/${m[2]}?theme=0`:""}

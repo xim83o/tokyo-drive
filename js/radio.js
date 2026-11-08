@@ -20,8 +20,22 @@ async function radioNext(d){if(!RADIO.on)return;radioMsg("📻 "+T("Buscando emi
  RADIO.el.src=s.u;radioVol();RADIO.el.play().then(()=>{RADIO.fails=0;radioMsg("📻 "+s.n+(s.c?" · "+s.c:""))}).catch(e=>{if(e&&e.name==="NotAllowedError"){radioMsg("📻 "+T("El navegador bloquea el sonido: pulsa 📻 otra vez"));RADIO.on=false;$("rad").classList.remove("on");return}radioFail()})}
 function radioFail(){if(!RADIO.on)return;if(++RADIO.fails>8){RADIO.fails=0;radioMsg("📻 "+T("Las emisoras no responden (¿VPN o bloqueador de anuncios?)"));return}radioNext(1)}
 RADIO.el.addEventListener("error",()=>{if(RADIO.on&&RADIO.el.src&&!RADIO.el.src.startsWith("data:"))radioFail()});
-function radioVol(){RADIO.el.volume=mute?0:Math.min(1,(ENV.vol.m||0)*(ENV.vol.radio===undefined?.6:ENV.vol.radio))}
+// La radio va aparte del sonido del juego: su propio volumen y no se calla al silenciar el juego
+function radioVol(){RADIO.el.volume=Math.min(1,ENV.vol.radio===undefined?.6:ENV.vol.radio)}
 function radioToggle(){RADIO.on=!RADIO.on;$("rad").classList.toggle("on",RADIO.on);if(RADIO.on){RADIO.el.src=SILENT;RADIO.el.play().catch(()=>{});radioNext(RADIO.i<0?1:0)}else{RADIO.el.pause();RADIO.el.removeAttribute("src");RADIO.el.load();radioMsg("📻 "+T("Radio apagada"))}}
 // Al cambiar país o estilo se busca otra lista la próxima vez
 function radioReset(){RADIO.key="";if(RADIO.on)radioNext(1)}
-function radioTick(){if(RADIO.lt&&performance.now()>RADIO.lt){$("radioL").hidden=true;RADIO.lt=0}}
+function radioTick(){if(RADIO.lt&&performance.now()>RADIO.lt){$("radioL").hidden=true;RADIO.lt=0}if(!$("radP").hidden){const s=$("radP").querySelector(".st"),L=RADIO.list[RADIO.i],t=RADIO.on?(L?L.n:T("Buscando emisora…")):T("Apagada");if(s&&s.textContent!==t)s.textContent=t}}
+// Panel 📻: encender o apagar, emisora anterior y siguiente, su volumen y (si hay enlace en Ajustes) el reproductor de Spotify.
+// El reproductor se crea una vez y no se quita al cerrar el panel, así la música sigue sonando
+let SPOT=null;
+function spotSet(){const u=typeof spotEmbed==="function"?spotEmbed(ENV.spot):"";if(!u){if(SPOT){SPOT.remove();SPOT=null}return}if(!SPOT){SPOT=document.createElement("iframe");SPOT.allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture";SPOT.loading="lazy"}if(SPOT.dataset.u!==u){SPOT.dataset.u=u;SPOT.src=u}if(!$("radP").hidden)radDraw()}
+function radPanel(){const P=$("radP");P.hidden=!P.hidden;if(!P.hidden)radDraw()}
+function radDraw(){const R=$("radP");let P=R.querySelector(".rc");if(!P){P=document.createElement("div");P.className="rc";R.prepend(P)}if(SPOT&&SPOT.parentNode!==R)R.appendChild(SPOT);P.innerHTML=`<h4>📻 ${T("Radio")}</h4><div class="st"></div>`;
+ const rb=document.createElement("div");rb.className="rb";const bt=(t,f,on)=>{const b=document.createElement("button");b.textContent=t;if(on)b.className="on";b.onclick=()=>{initAudio();f();radDraw()};rb.appendChild(b)};
+ bt("⏮",()=>{if(!RADIO.on)radioToggle();else radioNext(-1)});bt("⏻",radioToggle,RADIO.on);bt("⏭",()=>{if(!RADIO.on)radioToggle();else radioNext(1)});P.appendChild(rb);
+ const v=document.createElement("input");v.type="range";v.min=0;v.max=100;v.step=5;v.value=Math.round((ENV.vol.radio===undefined?.6:ENV.vol.radio)*100);v.oninput=()=>{ENV.vol.radio=v.value/100;radioVol();saveEnv()};P.appendChild(v);
+ const sm=document.createElement("small");sm.textContent=T("Volumen de la radio (aparte del sonido del juego). País y estilo en Ajustes → Sonido.");P.appendChild(sm);
+ if(SPOT){const h=document.createElement("h4");h.style.marginTop="12px";h.textContent="Spotify";P.appendChild(h);const b=document.createElement("button");b.className="b g";b.style.margin="0";b.textContent=T("Apagar la radio y usar Spotify");b.onclick=()=>{if(RADIO.on)radioToggle();radDraw()};P.appendChild(b)}
+ else{const s2=document.createElement("small");s2.textContent=T("¿Tu música? Pega un enlace de Spotify en Ajustes → Sonido.");P.appendChild(s2)}radioTick()}
+setTimeout(spotSet,0);

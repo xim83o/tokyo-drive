@@ -190,6 +190,15 @@ Pedido por el usuario (todo con permiso ya dado; descargas permitidas: partes de
 - Carreras de sala: solo el creador elige; salen todos a la vez en parrilla de dos en fondo. Quien llega mira a otro (estado "watch") y al final sale la clasificación. Abandonar = «no terminó».
 - Probado con dos pestañas en este PC; falta probarlo entre dos ordenadores de verdad.
 
+## Hecho el 2026-11-08 (interfaz nueva)
+- Estilo neón rojo y negro propio (final de style.css): paneles con esquinas cortadas, líneas rojas y detalles cian. Paneles entran con fundido y deslizamiento de 0,3 s; con un panel abierto el juego se desenfoca detrás. Al volver a conducir la cámara va a su sitio en 0,5 s (CT en ui.js/main.js).
+- Menú principal: Un jugador y Multijugador grandes; Garaje y Ajustes debajo (MENUB: al cerrar el garaje se vuelve al menú; ajustes con setPrev "menu").
+- Elige tu coche: fichas grandes con foto del coche (carThumbs en ui.js, escena aparte con pintura y calcomanías); en PC gira con el ratón encima. Sin Ajustes, Garaje ni Calcomanías ahí; botón Volver al menú.
+- Garaje con botón Calcomanías (al cerrar el editor vuelve al garaje). Ajustes más grandes.
+- Derecha: solo ⚙️ y 📻 (en móvil también 🎥). 📻 abre radP: encender, anterior, siguiente y volumen propio (la radio ya no depende del volumen general ni de silenciar). Spotify: enlace en Ajustes → Sonido (ENV.spot), reproductor oficial dentro del panel.
+- Menú de Esc («Pausa»): fila de botones grandes con Carreras, Modo foto, Multijugador, Mapa, Tráfico y Silenciar.
+- Carreras: banners horizontales con vista aérea del recorrido en neón (raceShot), tipo, km y récord.
+
 ## Pendiente de revisar por el usuario
 - Lista desde Carreras (ver el chat), rampas con teclado, tren y viento, editor de capas y plantilla con una imagen real.
 - Fluidez en PC y móvil con los gráficos nuevos (1,7 M triángulos en Alta con sombras).

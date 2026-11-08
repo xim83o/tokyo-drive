@@ -20,7 +20,7 @@ function onlMsg(t){ONL.msg=t;if(state==="onl")onlDraw()}
 // Cerrar el panel: sin sala, al menú principal; dentro de una sala, a conducir (o a elegir coche si aún no hay)
 function onlClose(){if(!ONL.ch&&!ONL.wait)mainMenu();else if(spawned)resume();else show("cars")}
 // Menú principal: la pantalla del principio («Un jugador» / «Multijugador») con la ciudad girando detrás. El coche se queda donde estaba
-function mainMenu(msg){if(state==="set")closeSettings();if(RACE.on){raceAbort();rQuitMp()}if(state==="watch")onlWatchEnd();for(const k of["ov","rcBar","raceH","rcC"])$(k).hidden=true;hudVis(false);$("touch").hidden=true;state="menu";
+function mainMenu(msg){if(state==="set"){rebind=null;$("setP").hidden=true;saveEnv()}MENUB=false;$("radP").hidden=true;if(RACE.on){raceAbort();rQuitMp()}if(state==="watch")onlWatchEnd();for(const k of["ov","rcBar","raceH","rcC"])$(k).hidden=true;hudVis(false);$("touch").hidden=true;state="menu";
  const e=$("lds");e.hidden=false;e.classList.remove("off");e.classList.add("menu");LDS.done=false;LDS.picked=true;LDS.menu=true;$("ldsGo").hidden=true;$("ldsM").hidden=false;$("ldsC").textContent=msg?T(msg):"";$("ldsS").focus()}
 function onlDraw(){const P=$("onlP");P.innerHTML="";const add=(tag,txt,cl,to)=>{const e=document.createElement(tag);if(txt)e.textContent=T(txt);if(cl)e.className=cl;(to||P).appendChild(e);return e},btn=(t,f,g,to)=>{const b=add("button",t,g?"b g":"b",to);b.onclick=f;return b},inp=(type,ph,v,to)=>{const i=add("input",null,"onlI",to);i.type=type;i.placeholder=T(ph);i.value=v||"";return i};
  add("h1","Multijugador");if(!window.supabase){add("p","No se pudo conectar con el servicio en línea desde esta página.");btn("Cerrar",onlClose,1);return}

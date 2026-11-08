@@ -104,6 +104,16 @@ function raceStart(R,gi,slot){if(!rBuild(R))return;if(RACE.prevT===undefined||RA
 function raceAbort(){RACE.on=false;if(RACE.prevT!==undefined&&RACE.prevT!==null){setNpc(RACE.prevT);RACE.prevT=null}gatesClear();RACE.off=null;if(GHC)GHC.visible=false;$("raceH").hidden=true;$("rcC").hidden=true;$("rcC").className=""}
 function raceEnd(){const R=RACE.rt,t=RACE.t,s=rStore(),e=s[R.id]||(s[R.id]={runs:[]}),old=e.runs.length?e.runs[0].t:null,sm=[];for(let i=0;i<RACE.rec.length;i+=6)sm.push(+RACE.rec[i].toFixed(1),+RACE.rec[i+1].toFixed(1),+RACE.rec[i+2].toFixed(3));
  e.runs.push({t,d:new Date().toLocaleDateString(),c:cur.n,dt:RDT*2,s:sm,split:RACE.split});e.runs.sort((a,b)=>a.t-b.t);e.runs.length=Math.min(5,e.runs.length);rSave(s);RACE.lastT=t;RACE.rec2=RACE.rec;raceAbort();vx=vz=0;if(onlMyFin(t))return;raceResults(R,t,old)}
+// Vista aérea del recorrido para el banner: la ciudad desde arriba y en diagonal, con la ruta dibujada encima en neón
+function raceShot(R){try{let x0=1e9,z0=1e9,x1=-1e9,z1=-1e9;for(const[x,z]of R.pts){x0=Math.min(x0,x);z0=Math.min(z0,z);x1=Math.max(x1,x);z1=Math.max(z1,z)}
+ const Wd=960,Hd=300,asp=Wd/Hd,cx=(x0+x1)/2,cz=(z0+z1)/2,C=new THREE.PerspectiveCamera(38,asp,1,6000),span=Math.max((x1-x0)/asp*1.15,(z1-z0)*1.05,220),d=span/2/Math.tan(19*PI/180)*1.15;
+ C.position.set(cx,d*.82,cz+d*.58);C.lookAt(cx,0,cz);C.updateMatrixWorld();const ff=sc.fog.far,fn=sc.fog.near;sc.fog.far=9000;sc.fog.near=8000;
+ const rt=new THREE.WebGLRenderTarget(Wd,Hd),px2=new Uint8Array(Wd*Hd*4);rd.setRenderTarget(rt);rd.render(sc,C);rd.readRenderTargetPixels(rt,0,0,Wd,Hd,px2);rd.setRenderTarget(null);rt.dispose();sc.fog.far=ff;sc.fog.near=fn;
+ const cv=document.createElement("canvas");cv.width=Wd;cv.height=Hd;const g=cv.getContext("2d"),im=g.createImageData(Wd,Hd);for(let y=0;y<Hd;y++)im.data.set(px2.subarray((Hd-1-y)*Wd*4,(Hd-y)*Wd*4),y*Wd*4);g.putImageData(im,0,0);
+ g.fillStyle="rgba(10,6,12,.25)";g.fillRect(0,0,Wd,Hd);const v=new THREE.Vector3(),P=R.pts.map(([x,z])=>{v.set(x,.5,z).project(C);return[(v.x+1)/2*Wd,(1-v.y)/2*Hd]});
+ const line=(w,c,b)=>{g.lineWidth=w;g.strokeStyle=c;g.shadowColor=c;g.shadowBlur=b;g.lineJoin=g.lineCap="round";g.beginPath();P.forEach((p,i)=>g[i?"lineTo":"moveTo"](p[0],p[1]));g.stroke()};line(12,"rgba(255,42,60,.35)",18);line(5,"#ff2a3c",12);line(1.6,"#ffe1e5",0);g.shadowBlur=0;
+ const dot=(p,c)=>{g.fillStyle=c;g.beginPath();g.arc(p[0],p[1],8,0,7);g.fill();g.strokeStyle="#fff";g.lineWidth=2;g.stroke()};dot(P[0],"#2ee6ff");if(!R.loop)dot(P[P.length-1],"#ffffff");
+ R.img=cv.toDataURL("image/jpeg",.82)}catch(e){console.warn(e)}}
 // Abandonar una carrera de sala cuenta como «no terminó» para los demás
 function rQuitMp(){if(ONL.mp&&!ONL.mp.fin.has(ONL.id))onlMyFin(null)}
 // --- Cada fotograma ---
@@ -126,8 +136,10 @@ function raceMenu(){state="race";$("ov").hidden=false;$("carsP").hidden=$("mapP"
  // En una sala solo el creador elige: la carrera empieza a la vez para todos
  if(ONL.ch&&ONL.ok&&!ONL.host){const p=document.createElement("p");p.textContent=T("Estás en una sala: la carrera la elige quien la creó y empezará para todos a la vez.");P.appendChild(p);const c=document.createElement("button");c.className="b g";c.textContent=T("Cerrar");c.onclick=resume;P.appendChild(c);return}
  const mp=ONL.ch&&ONL.ok&&ONL.host;if(mp){const p=document.createElement("p");p.textContent=T("Sala: al pulsar Correr salís todos a la vez.");P.appendChild(p)}
- for(const R of RTS){const e=S[R.id],runs=e&&e.runs||[],d=document.createElement("div");d.className="rcRow";const inf=document.createElement("div");inf.innerHTML=`<b>${T(R.n)}</b><small>${T(R.tipo)}${R.laps>1?` · ${R.laps} ${T("vueltas")}`:""} · ${T("Récord")}: ${runs.length?fmtT(runs[0].t):"—"}</small>`;d.appendChild(inf);
-  const sel=rGhostSel(runs);d.appendChild(sel);
+ // Cada carrera es un banner con la vista aérea de su recorrido (se dibuja la primera vez que se abre el menú)
+ for(const R of RTS){rBuild(R);const e=S[R.id],runs=e&&e.runs||[],d=document.createElement("div");d.className="rcB";if(R.img)d.style.backgroundImage=`url(${R.img})`;else setTimeout(()=>{raceShot(R);if(R.img)d.style.backgroundImage=`url(${R.img})`},60);
+  const inf=document.createElement("div");inf.className="inf";inf.innerHTML=`<span class="tag${R.loop?"":" c"}">${T(R.tipo)}</span><b>${T(R.n)}</b><small>${R.loop&&R.laps>1?`${R.laps} ${T("vueltas")} · `:""}${(R.len*R.laps/1000).toFixed(1)} km · ${T("Récord")}: ${runs.length?fmtT(runs[0].t):"—"}</small>`;d.appendChild(inf);
+  const sel=rGhostSel(runs);if(mp)sel.hidden=true;d.appendChild(sel);
   const b=document.createElement("button");b.className="b";b.textContent=T("Correr");b.onclick=()=>mp?onlRaceStart(R):raceSetup(R,+sel.value);d.appendChild(b);P.appendChild(d)}
  const n=document.createElement("p");n.textContent=T("G enciende o apaga el fantasma durante la carrera.");P.appendChild(n);
  const lb=document.createElement("label");lb.className="rcChk";lb.innerHTML=`<input type="checkbox"> ${T("Mostrar la pantalla de tráfico antes de salir")}`;const ck=lb.firstChild;ck.checked=!ENV.rcSkip;ck.onchange=()=>{ENV.rcSkip=!ck.checked;saveEnv()};P.appendChild(lb);

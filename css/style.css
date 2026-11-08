@@ -114,3 +114,57 @@ body.rcUI #topbar,body.rcUI #help,body.rcUI #radioL,body.rcUI #mz{display:none!i
 .onlL{list-style:none;padding:0;margin:6px 0}.onlL li{padding:3px 0}.onlM{color:#ffb000}.onlRes{font-size:18px;line-height:1.7;text-align:left;display:inline-block}
 #lds.menu{background:rgba(6,7,12,.42)}#lds.menu #ldsB,#lds.menu #ldsR{display:none}#lds.menu #ldsC{color:#ffb000}
 #lds.menu~#topbar,#lds.menu~#mini,#lds.menu~#hud{display:none!important}
+
+/* ===== Estilo neón rojo y negro (diseño propio): paneles oscuros con esquinas cortadas en diagonal, líneas rojas que brillan y detalles en cian ===== */
+:root{--ac:#ff2a3c;--cy:#2ee6ff;--neo:rgba(255,42,60,.55)}
+.pn{--tx:#f2f2f5;--mu:#a3a6b4;color:var(--tx);background:linear-gradient(160deg,rgba(22,10,16,.95),rgba(8,9,13,.96) 45%);border:1px solid var(--neo);border-radius:0;
+ clip-path:polygon(18px 0,100% 0,100% calc(100% - 18px),calc(100% - 18px) 100%,0 100%,0 18px);padding:22px 24px;box-shadow:inset 0 1px 0 rgba(255,42,60,.6)}
+.pn h1{font:italic 900 26px system-ui;letter-spacing:.06em;text-transform:uppercase;color:#fff;text-shadow:0 0 14px rgba(255,42,60,.7);margin-bottom:14px}
+.pn h1::after{content:"";display:block;width:70px;height:3px;margin:8px auto 0;background:var(--ac);box-shadow:0 0 10px var(--ac)}
+.pn h3{color:var(--cy)!important;text-transform:uppercase;letter-spacing:.12em;font-size:12px!important}
+button.b{border-radius:0;clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px);text-transform:uppercase;letter-spacing:.05em;font:800 14px system-ui;transition:filter .15s,transform .15s}
+button.b:hover:not(:disabled){filter:brightness(1.2);transform:translateY(-1px)}
+button.b.g{background:rgba(255,255,255,.07);color:#fff;box-shadow:inset 0 0 0 1px var(--neo)}
+.ov{background:rgba(4,4,8,.5);backdrop-filter:blur(5px) saturate(1.1);-webkit-backdrop-filter:blur(5px)}
+.ov.liv{backdrop-filter:none;-webkit-backdrop-filter:none}
+.opt button,.stabs button,.keys button,.lrow button{border-radius:0!important;clip-path:polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px)}
+.opt button.on,.stabs button.on,.keys button.on{background:var(--ac)!important;color:#fff;box-shadow:0 0 12px rgba(255,42,60,.6)}
+.onlI,#garP input[type=text]{border-radius:0!important;border:1px solid var(--neo)!important;background:rgba(255,255,255,.04)!important}
+.rcRow{border-bottom:1px solid rgba(255,42,60,.2)}
+/* Transiciones: los paneles entran con un fundido y suben un poco (0,3 s) */
+@keyframes pnIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+.pn:not([hidden]),#radP:not([hidden]){animation:pnIn .3s cubic-bezier(.2,.8,.3,1)}
+#lds{transition:opacity .3s}
+@media (prefers-reduced-motion:reduce){.pn:not([hidden]),#radP:not([hidden]){animation:none}}
+/* Menú principal */
+#ldsM{flex-direction:column;align-items:center;gap:12px}.mRow{display:flex;gap:14px;justify-content:center}
+#ldsM button{clip-path:polygon(12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%,0 12px);border-radius:0;text-transform:uppercase;letter-spacing:.06em;font:900 italic 18px system-ui;padding:16px 34px;min-width:210px;transition:filter .15s,transform .15s}
+#ldsM button:hover,#ldsM button:focus{filter:brightness(1.2);transform:translateY(-2px);outline:none;box-shadow:0 0 18px rgba(255,42,60,.8)}
+#ldsM #ldsMp{background:#141821;box-shadow:inset 0 0 0 2px var(--cy);color:var(--cy)}
+#ldsM .sm button{min-width:150px;padding:10px 22px;font-size:14px;background:rgba(255,255,255,.08);box-shadow:inset 0 0 0 1px var(--neo)}
+/* Elige tu coche: fichas grandes con la foto del coche */
+#carsP{min-width:min(940px,96vw)}#cards{gap:16px}
+.cd{width:210px;padding:10px 10px 14px;border:1px solid rgba(255,42,60,.3);border-radius:0;background:rgba(255,255,255,.04);clip-path:polygon(14px 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%,0 14px);transition:transform .15s,background .15s}
+.cd:hover{border-color:var(--ac);background:rgba(255,42,60,.12);transform:translateY(-3px)}.cd b{display:block;font:italic 900 17px system-ui;text-transform:uppercase;margin-top:4px}
+.cth{width:100%;aspect-ratio:12/7;display:block;background:radial-gradient(ellipse at 50% 85%,rgba(255,42,60,.28),transparent 65%)}
+/* Ajustes más grandes */
+#setP{min-width:min(780px,96vw);font-size:15px}#setP .opt span{min-width:150px;font-size:14px}#setP .opt button{font-size:14px;padding:8px 14px}#setP .stabs button{font-size:14px;padding:9px 16px}
+#setP .opt input[type=range]{width:260px}#envUI p{max-width:600px;font-size:13px}
+.qrow{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:0 0 14px}.qrow button{min-width:120px;padding:14px 16px;border:0;background:rgba(255,255,255,.06);box-shadow:inset 0 0 0 1px var(--neo);color:#fff;font:800 14px system-ui;cursor:pointer;clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px)}
+.qrow button:hover{background:rgba(255,42,60,.25)}.qrow button i{display:block;font-style:normal;font-size:22px;margin-bottom:4px}
+/* Botones de la derecha y panel de la radio */
+.tb{border-radius:0;clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px);background:rgba(8,9,13,.6);box-shadow:inset 0 0 0 1px rgba(255,42,60,.4)}
+#radP{position:fixed;z-index:6;right:64px;top:calc(34px + env(safe-area-inset-top,0px));width:320px;padding:14px;color:#f2f2f5;background:rgba(8,9,13,.92);border:1px solid var(--neo);clip-path:polygon(14px 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%,0 14px);font:13px system-ui}
+#radP h4{margin:0 0 8px;font:italic 900 15px system-ui;text-transform:uppercase;letter-spacing:.08em;color:#fff}#radP .st{min-height:18px;color:var(--cy);margin-bottom:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#radP .rb{display:flex;gap:6px;margin-bottom:8px}#radP .rb button{flex:1;padding:8px;border:0;background:rgba(255,255,255,.08);color:#fff;font:700 15px system-ui;cursor:pointer}#radP .rb button.on{background:var(--ac)}
+#radP input[type=range]{width:100%;accent-color:var(--ac)}#radP iframe{width:100%;height:152px;border:0;margin-top:8px;border-radius:12px}#radP small{display:block;color:#a3a6b4;margin-top:6px}
+.mobile #radP{right:auto;left:50%;transform:translateX(-50%);top:calc(56px + env(safe-area-inset-top,0px))}
+body.rcUI #radP{display:none!important}#lds.menu~#radP{display:none!important}
+/* Carreras: banners horizontales con la vista aérea del recorrido */
+#raceP{min-width:min(900px,96vw);max-width:96vw}
+.rcB{position:relative;display:flex;align-items:flex-end;gap:14px;height:170px;margin:12px 0;padding:16px 18px;text-align:left;background:#0d0e14 center/cover no-repeat;border:1px solid rgba(255,42,60,.35);clip-path:polygon(20px 0,100% 0,100% calc(100% - 20px),calc(100% - 20px) 100%,0 100%,0 20px);transition:border-color .15s,transform .15s}
+.rcB::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(6,6,10,.92) 0,rgba(6,6,10,.55) 45%,rgba(6,6,10,.1) 75%,rgba(6,6,10,.5))}
+.rcB:hover{border-color:var(--ac);transform:translateX(4px)}.rcB>*{position:relative}
+.rcB .inf{flex:1;min-width:0}.rcB .tag{display:inline-block;padding:3px 10px;background:var(--ac);color:#fff;font:800 11px system-ui;letter-spacing:.1em;text-transform:uppercase}
+.rcB .tag.c{background:var(--cy);color:#04141a}.rcB b{display:block;margin:6px 0 2px;font:italic 900 26px system-ui;text-transform:uppercase;color:#fff;text-shadow:0 0 12px rgba(255,42,60,.6)}.rcB small{color:#c9ccd6;font-size:13px}
+.rcB select{padding:7px;border:1px solid var(--neo);background:rgba(8,9,13,.85);color:#fff}.rcB .b{margin:0}

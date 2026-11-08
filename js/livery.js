@@ -234,7 +234,7 @@ function studio(){dealerTick();const dl=dealerOn();if(SHOW)SHOW.visible=dl;if(st
 let livK=0,livSel=-1,livPrev="cars",livA=.6,livTab="p",livRAF=0;
 const livDirty=()=>{saveLiv();if(!livRAF)livRAF=requestAnimationFrame(()=>{livRAF=0;applyDecals()})};
 function openLiv(){livPrev=state;state="liv";livK=carK;if(livBg==="dealer")buildShowroom();$("ov").hidden=false;$("ov").classList.add("liv");$("carsP").hidden=$("mapP").hidden=$("setP").hidden=true;$("livP").hidden=false;hudVis(false);$("touch").hidden=true;drawLiv()}
-function closeLiv(){saveLiv();$("livP").hidden=true;$("ov").classList.remove("liv");if(livPrev==="play")resume();else show("cars")}
+function closeLiv(){saveLiv();$("livP").hidden=true;$("ov").classList.remove("liv");if(livPrev==="gar")garOpen();else if(livPrev==="play")resume();else show("cars")}
 function livSet(o){Object.assign(LIV[livK],o);saveLiv();if(livK!==carK||"c" in o||"tint" in o||"gc" in o||"bc" in o)buildCar(livK);else applyDecals()}
 function drawLiv(){const P=$("livP"),L=LIV[livK];P.innerHTML=`<h1>${T("Calcomanías")}</h1>`;
  const sec=t=>{const h=document.createElement("h3");h.textContent=T(t);P.appendChild(h)},row=()=>{const r=document.createElement("div");r.className="lrow";P.appendChild(r);return r};
@@ -305,4 +305,4 @@ function livMove(H){const k=LIV[livK].stk[livSel];if(!k)return;const{p,n}=H,{bb,
  if(sd<2){k.u=lim((p.z-c.z)/(s.z*.45),-1.3,1.3);k.v=lim((p.y-bb.min.y)/s.y,.05,.95)}else if(sd===2){k.u=lim(((p.z-c.z)/s.z-.3)/.12,-2.5,2.5);k.v=lim(.5+(p.x-c.x)/s.x,.05,.95)}else if(sd===3){k.u=lim((p.z-c.z)/(s.z*.2),-2.5,2.5);k.v=lim(.5+(p.x-c.x)/s.x,.05,.95)}else{k.u=lim((p.x-c.x)/(s.x*.3),-1.3,1.3);k.v=lim((p.y-bb.min.y)/s.y,.05,.95)}livDirty()}
 // Girar la vista del coche arrastrando sobre la imagen mientras el editor está abierto
 {let dx=null;$("c").addEventListener("pointerdown",e=>{if(state!=="liv")return;if(livTab==="l"&&livSel>=0){const H=livHit(e);if(H){livDrag=true;livMove(H);return}}dx=e.clientX});addEventListener("pointermove",e=>{if(state!=="liv")return;if(livDrag){const H=livHit(e);if(H)livMove(H);return}if(dx!==null){livA-=(e.clientX-dx)*.01;dx=e.clientX}});addEventListener("pointerup",()=>{dx=null;if(livDrag){livDrag=false;if(state==="liv")drawLiv()}})}
-{const b=document.createElement("button");b.className="b g";b.dataset.i18n="🎨 Calcomanías";b.textContent=T("🎨 Calcomanías");b.onclick=()=>{if(!ready)return;if(!spawned){buildCar(carK);spawnC();spawned=true}openLiv()};$("carsP").appendChild(b)}
+// (el editor se abre desde el Garaje)

@@ -43,7 +43,7 @@ function loop(n){requestAnimationFrame(loop);const dt=Math.min(.05,(n-last)/1e3)
   else if(mode<2){const d=(mode?13:8)+sp*.04;cam.position.set(px-fx*d,(mode?5:3.2)+sp*.012+bodyY,pz-fz*d);LK.set(px+fx*6,1.2+bodyY,pz+fz*6);clipCam();cam.lookAt(LK)}
   else if(mode==2){cam.position.set(px+hx*1.5,1.1+bodyY,pz+hz*1.5);cam.lookAt(px+hx*20,1.2+bodyY,pz+hz*20)}
   else{cam.position.set(px+hx*.1-Math.cos(h)*.38,cur.ey+bodyY,pz+hz*.1+Math.sin(h)*.38);cam.lookAt(px+hx*20,cur.ey+bodyY,pz+hz*20)}
-  cam.fov=fv;cam.updateProjectionMatrix();mini()}
+  cam.fov=fv;if(CT.t<1){CT.t=Math.min(1,CT.t+dt/.5);const k=1-Math.pow(1-CT.t,3);cam.position.lerpVectors(CT.p,cam.position.clone(),k);const tq=cam.quaternion.clone();cam.quaternion.copy(CT.q).slerp(tq,k)}cam.updateProjectionMatrix();mini()}
  else{audio(true);t0+=dt*.1;if(intG&&intG.visible){intG.visible=false;for(const o of car.children)if(o!==intG)o.visible=true}sc.fog.far=FOGF;sc.fog.near=FOGF*.2;
   // En ajustes con la partida empezada, la imagen se queda quieta (pausa)
   if(state==="set"&&spawned&&setPrev==="play"){}
@@ -64,4 +64,4 @@ async function gfxWarm(){await LDS.step(88,"Preparando los gráficos");try{rd.co
  const tx=new Set();sc.traverse(o=>{const m=o.material;if(!m)return;for(const q of Array.isArray(m)?m:[m])for(const k of["map","emissiveMap","lightMap","specularMap","alphaMap"])if(q[k]&&q[k].isTexture&&!q[k].isCubeTexture)tx.add(q[k])});
  if(rd.initTexture)for(const t of tx)rd.initTexture(t);envUpdate(.016);
  for(let k=0;k<4;k++){await LDS.step(93+k*1.7,"Dibujando la ciudad");const a=k*PI/2+.5;cam.position.set(TX+Math.sin(a)*300,36,TZ+Math.cos(a)*300);cam.lookAt(TX,10,TZ);cam.updateMatrixWorld();renderFrame()}}
-Promise.all([loadWorld(),loadCars(),Promise.all(ENGB).catch(()=>{})]).then(async()=>{await LDS.step(84,"Colocando el tráfico");initTraffic();placeParked();placeDeadSigns();seasonInit();applyQuality();await gfxWarm();last=performance.now();loop(last);LDS.ready()}).catch(e=>{console.error(e);LDS.fail(T("No se pudo cargar el mapa. Ábrelo con jugar.bat (necesita el servidor local)."))});
+Promise.all([loadWorld(),loadCars(),Promise.all(ENGB).catch(()=>{})]).then(async()=>{await LDS.step(84,"Colocando el tráfico");initTraffic();placeParked();placeDeadSigns();seasonInit();applyQuality();await gfxWarm();last=performance.now();loop(last);LDS.ready();carThumbs()}).catch(e=>{console.error(e);LDS.fail(T("No se pudo cargar el mapa. Ábrelo con jugar.bat (necesita el servidor local)."))});
