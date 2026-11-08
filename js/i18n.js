@@ -110,6 +110,7 @@ ca:{"WASD / flechas · Espacio: freno de mano · V: cámara · M: mapa · C: coc
 [["Selecciona coche","Select car","車を選ぶ","Tria el cotxe"]].forEach(([s,en,ja,ca])=>{I18N.en[s]=en;I18N.ja[s]=ja;I18N.ca[s]=ca});
 [["La de ahora","Current one","今の季節","L'actual"]].forEach(([s,en,ja,ca])=>{I18N.en[s]=en;I18N.ja[s]=ja;I18N.ca[s]=ca});
 [["Reiniciar carrera","Restart race","レースをやり直す","Reinicia la cursa"]].forEach(([s,en,ja,ca])=>{I18N.en[s]=en;I18N.ja[s]=ja;I18N.ca[s]=ca});
+[["Flechas","Arrows","矢印","Fletxes"],["Mejor tiempo","Best time","ベストタイム","Millor temps"]].forEach(([s,en,ja,ca])=>{I18N.en[s]=en;I18N.ja[s]=ja;I18N.ca[s]=ca});
 const T=s=>(LANG!=="es"&&I18N[LANG]&&I18N[LANG][s])||s;
 // Textos fijos de la página (data-i18n guarda el original en español)
 function applyI18n(){document.documentElement.lang=LANG;for(const e of document.querySelectorAll("[data-i18n]"))e.textContent=T(e.dataset.i18n);const hp=document.getElementById("help");if(hp)hp.textContent+=" · "+T("B: carreras · F: modo foto · G: fantasma")}

@@ -4,7 +4,7 @@
 // Recorridos trazados a mano por avenidas: w son puntos de paso seguidos (en coordenadas del plano ×1,5) y entre dos puntos la ruta va por la calle grande que los une.
 // Para cambiar una carrera basta con mover sus puntos (ver los planos en la carpeta planos/)
 const RWP=a=>a.map(([x,z])=>[x*1.5,z*1.5]);
-const RTS=[{id:"torre3",n:"Circuito de la Torre",tipo:"Carrera",laps:2,loop:true,w:RWP([[730,712],[800,765],[893,812],[830,960],[780,1060],[700,880],[652,705]])},
+const RTS=[{id:"torre4",n:"Circuito de la Torre",tipo:"Carrera",laps:3,loop:true,w:RWP([[910,835],[1000,850],[1093,880],[1100,800],[1115,728],[1010,700],[930,712],[893,812]])},
  {id:"canal3",n:"Circuito del Canal",tipo:"Carrera",laps:1,loop:true,w:RWP([[300,975],[600,1050],[780,1065],[1000,1120],[1068,1100],[1100,850],[1115,728],[1010,705],[900,800],[815,1040],[782,1180],[780,1285],[500,1265],[285,1245],[290,1100]])},
  {id:"kuro4",n:"Concesionario → Kurogane",tipo:"Contrarreloj",laps:1,w:RWP([[810,485],[900,545],[1040,575],[1030,640],[1010,700],[930,712],[900,800],[850,930],[815,1040],[880,1095],[935,1115]])},   // (sin giros de más de 110°)
  {id:"beis3",n:"Béisbol → Zona de derrape",tipo:"Contrarreloj",laps:1,w:RWP([[745,555],[652,705],[700,880],[780,1060],[1000,1120],[1068,1100],[1095,880],[1100,840]])},
@@ -32,10 +32,13 @@ function rBuild(R){if(R.pts)return R;const C=rCand(R.w[0][0],R.w[0][1]);let a=nu
  for(let i=1;i<=R.w.length-(R.loop?0:1);i++){const bs=i<R.w.length?rCand(R.w[i][0],R.w[i][1]):new Map([[P[0],0]]),q=rPathC(P[P.length-1],bs,used);if(!q)return null;P=P.concat(q.slice(1))}
  // Sin picos de ir y volver (A→B→A)
  for(let k=0;k<3;k++)for(let i=1;i<P.length-1;i++)if(P[i-1]===P[i+1]){P.splice(i,2);i=Math.max(0,i-2)}
- R.pts=P.map(n=>[n.x,n.z]);const S=[0];for(let i=1;i<R.pts.length;i++)S.push(S[i-1]+Math.hypot(R.pts[i][0]-R.pts[i-1][0],R.pts[i][1]-R.pts[i-1][1]));const D=S[S.length-1],cps=[];
+ // (en los circuitos, también el pico que puede quedar justo en la salida, al cerrar la vuelta)
+ if(R.loop)while(P.length>4&&P[1]===P[P.length-2]){P.shift();P.pop()}
+ R.pts=P.map(n=>[n.x,n.z]);const JN=P.filter(n=>new Set(n.e.map(e=>e[0])).size>=3);const S=[0];for(let i=1;i<R.pts.length;i++)S.push(S[i-1]+Math.hypot(R.pts[i][0]-R.pts[i-1][0],R.pts[i][1]-R.pts[i-1][1]));const D=S[S.length-1],cps=[];
  const at=s=>{s=Math.max(0,Math.min(D,s));let i=1;while(i<S.length-1&&S[i]<s)i++;const f=(s-S[i-1])/((S[i]-S[i-1])||1),[a,b]=R.pts[i-1],[c,d]=R.pts[i];return{x:a+(c-a)*f,z:b+(d-b)*f,i}};
  // Los puntos de control van en un tramo recto (se busca hasta 80 m antes o después) y orientados con la calle, para que los banderines queden de frente
- for(let s=CPD;D-s>=150;s+=CPD){let u=null;for(const o of[0,20,-20,40,-40,60,-60,80,-80]){const a=at(s+o-22),b=at(s+o),c=at(s+o+22);if(Math.abs(ad(Math.atan2(b.x-a.x,b.z-a.z),Math.atan2(c.x-b.x,c.z-b.z)))<.2){u=[a,b,c];break}}if(!u)u=[at(s-22),at(s),at(s+22)];const[a,b,c]=u,l=Math.hypot(c.x-a.x,c.z-a.z)||1;cps.push({x:b.x,z:b.z,dx:(c.x-a.x)/l,dz:(c.z-a.z)/l,i:b.i})}
+ const ok=(s,lim,jd)=>{const a=at(s-lim),b=at(s),c=at(s+lim);return Math.abs(ad(Math.atan2(b.x-a.x,b.z-a.z),Math.atan2(c.x-b.x,c.z-b.z)))<.12&&!JN.some(n=>Math.hypot(n.x-b.x,n.z-b.z)<jd)?[a,b,c]:null};
+ for(let s=CPD;D-s>=150;s+=CPD){let u=null;for(const[lim,jd]of[[40,30],[30,22],[22,14]]){for(let o=0;o<=160&&!u;o+=10)u=ok(s+o,lim,jd)||(o?ok(s-o,lim,jd):null);if(u)break}if(!u)u=[at(s-22),at(s),at(s+22)];const[a,b,c]=u,l=Math.hypot(c.x-a.x,c.z-a.z)||1;cps.push({x:b.x,z:b.z,dx:(c.x-a.x)/l,dz:(c.z-a.z)/l,i:b.i})}
  R.len=D;{const a=at(D-30),b=at(D),l=Math.hypot(b.x-a.x,b.z-a.z)||1;cps.push({x:b.x,z:b.z,dx:(b.x-a.x)/l,dz:(b.z-a.z)/l,end:true,i:R.pts.length-1})}R.cps=cps;R.S=S;R.at=at;R.hw=R.pts.map((p,i)=>{if(!i)return 6.5;const q=R.pts[i-1];return rHW((p[0]+q[0])/2,(p[1]+q[1])/2)+2.5});return R}
 // --- Banderines de los puntos de control: dos a cada lado de la calle, altos y luminosos, se ven desde lejos. El siguiente punto va resaltado y con un haz de luz; la meta, a cuadros ---
 let GTS=[],GTM=null;
@@ -47,13 +50,15 @@ function gateMats(){if(GTM)return GTM;const b=(c,o)=>new THREE.MeshBasicMaterial
  const tx=canvasTex(128,352,g=>{g.fillStyle="#fff";g.fillRect(0,0,128,352);g.fillStyle="#17181f";g.fillRect(0,26,128,134);g.fillStyle="#fff";g.font="bold 54px sans-serif";g.textAlign="center";g.fillText("東",62,84);g.fillText("京",62,144);g.fillStyle="#17181f";for(const y of[182,216,250]){g.beginPath();g.moveTo(26,y);g.lineTo(64,y+24);g.lineTo(102,y);g.lineTo(102,y+14);g.lineTo(64,y+38);g.lineTo(26,y+14);g.closePath();g.fill()}for(let y=306;y<352;y+=16)g.fillRect(0,y,128,8)});
  GTM={fgR:mk(1),fgL:mk(-1),tg:new THREE.ConeGeometry(.24,.6,3).rotateX(PI),ts:new THREE.SphereGeometry(.22,10,8),tb:new THREE.CylinderGeometry(.5,.7,.2,10),next:b(0xffb000,1),far:b(0xff5a2a,.45),fin:new THREE.MeshBasicMaterial({map:chk,side:THREE.DoubleSide,fog:false}),beam,pg:new THREE.CylinderGeometry(.08,.11,7.6,6).translate(0,3.8,0),hl:new THREE.MeshBasicMaterial({color:0xffb000,transparent:true,opacity:.5,fog:false,depthWrite:false,blending:THREE.AdditiveBlending,side:THREE.DoubleSide})};GTM.next.side=GTM.far.side=THREE.DoubleSide;GTM.tn=GTM.next.clone();GTM.tf=GTM.far.clone();GTM.tn.map=GTM.tf.map=tx;return GTM}
 const rHW=(x,z)=>{let m=4;for(const k of gq(x,z).r){const o=k*6;if(segD2(x,z,RSG[o],RSG[o+1],RSG[o+2],RSG[o+3])<(RSG[o+4]+2)**2)m=Math.max(m,RSG[o+4])}return m};
-function gatesClear(){for(const q of GTS)sc.remove(q.G);GTS=[];if(GTM)GTM.beam.visible=false;if(RA)RA.visible=false}
-function gatesBuild(R){gatesClear();const M=gateMats();R.cps.forEach((c,i)=>{const hw=rHW(c.x,c.z)+1.2,G=new THREE.Group(),P=[],F=[],H=[],C=[],add=(g,x,y,z)=>{const m=new THREE.Mesh(g,M.far);m.position.set(x,y,z);G.add(m);P.push(m)};
+function gatesClear(){for(const q of GTS)sc.remove(q.G);GTS=[];for(const g of LEDS)sc.remove(g);LEDS=[];if(GTM)GTM.beam.visible=false;if(RA)RA.visible=false}
+// Dirección de la calle real en un punto (el tramo de calle más cercano), para que los banderines queden siempre de frente
+function rRoad(x,z){let b=null,bd=1e18;for(const k of gq(x,z).r){const o=k*6,d=segD2(x,z,RSG[o],RSG[o+1],RSG[o+2],RSG[o+3]);if(d<bd){bd=d;b=o}}if(b===null)return null;const dx=RSG[b+2]-RSG[b],dz=RSG[b+3]-RSG[b+1],l=Math.hypot(dx,dz)||1;return{dx:dx/l,dz:dz/l}}
+function gatesBuild(R){gatesClear();const M=gateMats();ledBuild(R);R.cps.forEach((c,i)=>{const rr=rRoad(c.x,c.z);if(rr){const s=rr.dx*c.dx+rr.dz*c.dz<0?-1:1;c.dx=rr.dx*s;c.dz=rr.dz*s}const hw=rHW(c.x,c.z)+1.2,G=new THREE.Group(),P=[],F=[],H=[],C=[],add=(g,x,y,z)=>{const m=new THREE.Mesh(g,M.far);m.position.set(x,y,z);G.add(m);P.push(m)};
   for(const s of[-1,1]){const fg=s>0?M.fgR:M.fgL;for(const z of[-3,3]){add(M.pg,s*hw,0,z);add(M.ts,s*hw,7.7,z);add(M.tb,s*hw,.1,z);const B=new THREE.Mesh(fg,c.end?M.fin:M.tf);B.position.set(s*hw,1,z);B.userData.a=0;if(!c.end)C.push(B);F.push(B);G.add(B);const A=new THREE.Mesh(fg,M.hl);A.scale.set(1.3,1.12,1);A.position.set(-.3*s,-.38,-.03);B.add(A);H.push(A)}
    for(let t=1;t<=5;t++)add(M.tg,s*hw,7.45-Math.sin(PI*t/6)*.7,t-3)}   // (guirnalda de banderitas entre los dos mástiles)
   G.position.set(c.x,0,c.z);G.rotation.y=Math.atan2(c.dx,c.dz);G.visible=false;sc.add(G);c.r=Math.max(hw+4,26);GTS.push({G,P,F,H,C})})}   // (radio amplio: en avenidas con dos calzadas también cuenta si vas por la otra)
 // Los banderines ondean un poco y el resplandor del siguiente punto late
-function gatesWave(){const t=performance.now()/1000;GTM.hl.opacity=.42+Math.sin(t*4)*.16;for(const q of GTS)if(q.G.visible)q.F.forEach((B,i)=>B.rotation.y=B.userData.a+Math.sin(t*2.4+i*1.3)*.2)}
+function gatesWave(){const t=performance.now()/1000;ledTick(t);GTM.hl.opacity=.42+Math.sin(t*4)*.16;for(const q of GTS)if(q.G.visible)q.F.forEach((B,i)=>B.rotation.y=B.userData.a+Math.sin(t*2.4+i*1.3)*.2)}
 function rPlace(){const R=RACE.rt,n=R.cps.length,k=RACE.cp%n,tot=n*R.laps;GTS.forEach((q,i)=>{const d=(i-k+n)%n;q.G.visible=d<2&&RACE.cp+d<tot;for(const m of q.P)m.material=d===0?GTM.next:GTM.far;for(const m of q.C)m.material=d===0?GTM.tn:GTM.tf;for(const m of q.H)m.visible=d===0});const c=R.cps[k];GTM.beam.position.set(c.x,0,c.z);GTM.beam.visible=true}
 // ¿Va por la ruta? Se mira el tramo entre el último punto de control y el siguiente (no vale atajar a otra parte del recorrido ni subir a la autopista)
 function rOnRoute(){return!HWL.on&&RF.d<28}
@@ -68,15 +73,37 @@ function rFind(){const R=RACE.rt,N=R.pts.length-1,S=R.S;let bd=1e18;const t=i=>{
 function rBarrier(){if(HWL.on)return;const d=RF.d,lim=RACE.rt.hw[RF.i];if(d<=lim||d>=28)return;const nx=(px-RF.x)/d,nz=(pz-RF.z)/d;px=RF.x+nx*lim;pz=RF.z+nz*lim;const vn=vx*nx+vz*nz;if(vn>0){vx-=vn*nx;vz-=vn*nz;if(vn>3&&performance.now()-crashT>250){crashT=performance.now();thump(vn)}}}
 // Flechas azules pintadas en la calzada, solo antes de cada giro: una fila de 7 que se va torciendo y apartando hacia el lado del giro y acaba antes del cruce
 // (en las rectas no hay). Los giros se buscan al construir la ruta (rTurns)
-const RAN=21;let RA=null;const RAD=new THREE.Object3D();
+const RAS=9,RAN=22;let RA=null;const RAD=new THREE.Object3D();
 function rTurns(R){const D=R.S[R.S.length-1],T=[],hd=(p,q)=>Math.atan2(q.x-p.x,q.z-p.z);let best=null;
  for(let s=8;s<D-8;s+=4){const a=R.at(s-22),b=R.at(s),c=R.at(s+22),d=ad(hd(b,c),hd(a,b));if(Math.abs(d)>.6){if(!best||Math.abs(d)>Math.abs(best.d))best={s,d}}else if(best){T.push(best);best=null}}if(best)T.push(best);R.turns=T}
 function rArrows(){const R=RACE.rt;if(!R.turns)rTurns(R);if(!RA){const s=new THREE.Shape();s.moveTo(0,1.6);s.lineTo(1.35,-1.6);s.lineTo(0,-.6);s.lineTo(-1.35,-1.6);s.closePath();RA=new THREE.InstancedMesh(new THREE.ShapeGeometry(s).rotateX(PI/2),new THREE.MeshBasicMaterial({color:0x2a8cf0,transparent:true,opacity:.92,depthWrite:false,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}),RAN);RA.frustumCulled=false;sc.add(RA)}
- const S=R.S,D=S[S.length-1],n=R.cps.length,q=R.pts[RF.i-1],L=S[RF.i-1]+Math.hypot(RF.x-q[0],RF.z-q[1]),last=!R.loop||(Math.floor(RACE.cp/n)>=R.laps-1&&RACE.cp%n>=2);let c=0;
- for(const t of R.turns){let ds=t.s-L;if(R.loop&&!last&&ds<-30)ds+=D;if(ds<-15||ds>180)continue;const sT=L+ds,ang=Math.max(-1.1,Math.min(1.1,t.d));
-  for(let k=0;k<7&&c<RAN;k++){const s=sT-58+k*8.5;if(s<L+3)continue;const ss=s>=D?s-D:s,a=R.at(ss-4),b=R.at(ss),e=R.at(ss+4),h0=Math.atan2(e.x-a.x,e.z-a.z),f=k/6,off=Math.sign(ang)*1.6*f*f;
-   RAD.position.set(b.x+Math.cos(h0)*off,.06,b.z-Math.sin(h0)*off);RAD.rotation.set(0,h0+ang*.85*f,0);RAD.updateMatrix();RA.setMatrixAt(c++,RAD.matrix)}}
+ if(ENV.rcArr===0){RA.visible=false;return}
+ const S=R.S,D=S[S.length-1],n=R.cps.length,q=R.pts[RF.i-1],L=S[RF.i-1]+Math.hypot(RF.x-q[0],RF.z-q[1]),last=!R.loop||(Math.floor(RACE.cp/n)>=R.laps-1&&RACE.cp%n>=2),s0=(Math.floor(L/RAS)+1)*RAS;let c=0;
+ for(let k=0;k<RAN;k++){let s=s0+k*RAS;if(s>=D){if(last)break;s-=D}let ang=0,f=0,skip=false;for(const t of R.turns){const ds=t.s-s;if(Math.abs(ds)<10){skip=true;break}if(ds>0&&ds<60){ang=Math.max(-1.1,Math.min(1.1,t.d));f=1-ds/60;break}}if(skip)continue;
+  const a=R.at(s-4),b=R.at(s),e=R.at(s+4),h0=Math.atan2(e.x-a.x,e.z-a.z),off=Math.sign(ang)*1.6*f*f;RAD.position.set(b.x+Math.cos(h0)*off,.06,b.z-Math.sin(h0)*off);RAD.rotation.set(0,h0+ang*.85*f,0);RAD.updateMatrix();RA.setMatrixAt(c++,RAD.matrix)}
  RA.count=c;RA.instanceMatrix.needsUpdate=true;RA.visible=c>0}
+// --- Flechas LED de los giros (solo en carrera): A, panel de chevrones ámbar sobre postes donde hay sitio, con la ola de luces que empieza en el lado
+// contrario al giro; C, flecha de neón cian pegada a la pared del edificio que queda de frente cuando no cabe el panel (calles estrechas) ---
+let LEDS=[],LEDT=null;
+function ledTex(){if(LEDT)return LEDT;const mk=(dir)=>{const cv=document.createElement("canvas");cv.width=256;cv.height=80;const t=new THREE.CanvasTexture(cv);t.dir=dir;return t};
+ const neon=(dir)=>canvasTex(256,110,g=>{g.clearRect(0,0,256,110);g.fillStyle="rgba(6,8,12,.85)";g.fillRect(4,4,248,102);g.save();if(dir<0){g.translate(256,0);g.scale(-1,1)}g.strokeStyle="#2ee6ff";g.lineJoin="round";g.shadowColor="#2ee6ff";
+  for(const[w,b]of[[16,18],[6,0]]){g.lineWidth=w;g.shadowBlur=b;g.globalAlpha=w>10?.35:1;g.beginPath();g.moveTo(30,42);g.lineTo(150,42);g.lineTo(150,20);g.lineTo(225,55);g.lineTo(150,90);g.lineTo(150,68);g.lineTo(30,68);g.closePath();g.stroke()}g.restore()});
+ LEDT={a:{"1":mk(1),"-1":mk(-1)},c:{"1":neon(1),"-1":neon(-1)},f:-1};ledDraw(0);return LEDT}
+// Panel A: 3 chevrones de puntos; se enciende uno cada vez, del lado contrario al giro hacia donde apunta
+function ledDraw(fr){for(const dir of[1,-1]){const t=LEDT.a[dir],g=t.image.getContext("2d");g.fillStyle="#0b0b0f";g.fillRect(0,0,256,80);const lit=dir>0?fr:2-fr;
+  for(let k=0;k<3;k++)for(let y=0;y<7;y++)for(let x=0;x<8;x++){const cy=Math.abs(y-3),xx=dir>0?x:7-x,on=xx-cy>=1&&xx-cy<=3;if(!on)continue;const L=k===lit;g.fillStyle=L?"#ffb000":"#3a2608";g.shadowColor="#ffb000";g.shadowBlur=L?8:0;g.beginPath();g.arc(16+k*84+x*8.4,13+y*9,3.4,0,7);g.fill()}t.needsUpdate=true}}
+function ledTick(t){if(!LEDS.length||!LEDT)return;const fr=Math.floor(t*6)%3;if(fr!==LEDT.f){LEDT.f=fr;ledDraw(fr)}for(const m of[LEDT.cm,LEDT.cm2])if(m)m.opacity=.75+Math.sin(t*5)*.25}
+function ledBuild(R){if(!R.turns)rTurns(R);const T2=ledTex(),post=new THREE.MeshLambertMaterial({color:0x2a2c30}),pg=new THREE.CylinderGeometry(.08,.1,3.2,6).translate(0,1.6,0),bk=new THREE.MeshLambertMaterial({color:0x111216});
+ if(!T2.cm)T2.cm=new THREE.MeshBasicMaterial({map:T2.c["1"],transparent:true,depthWrite:false});
+ for(const t of R.turns){if(Math.abs(t.d)<.75)continue;const a=R.at(t.s-30),b=R.at(t.s),h=Math.atan2(b.x-a.x,b.z-a.z),fx=Math.sin(h),fz=Math.cos(h),hw=rHW(b.x,b.z),dir=t.d>0?-1:1;
+  // Sitio para el panel A: en la esquina de fuera del giro, pasado el cruce, fuera de la calzada y sin edificio encima
+  const ox=t.d>0?-Math.cos(h):Math.cos(h),oz=t.d>0?Math.sin(h):-Math.sin(h),G=new THREE.Group(),free=(x,z)=>roadAt(x,z)<0&&!inBuilding(x,z)&&!inBuilding(x+fz*2.7,z-fx*2.7)&&!inBuilding(x-fz*2.7,z+fx*2.7);let A=null;
+  for(const fw of[hw+3,hw+6,hw+10,hw+14])for(const sd of[0,hw*.5+2,hw+3]){const x=b.x+fx*fw+ox*sd,z=b.z+fz*fw+oz*sd;if(!A&&free(x,z))A=[x,z]}
+  let W=null;if(!A)for(const sd of[0,hw*.6,-hw*.6]){for(let d=hw+1;d<=45;d+=1){const x=b.x+fx*d+ox*sd,z=b.z+fz*d+oz*sd;if(inBuilding(x,z)){if(!W||d<W[2])W=[x-fx*.4,z-fz*.4,d];break}}}
+  if(A){for(const s of[-2,2]){const p=new THREE.Mesh(pg,post);p.position.set(s,0,0);G.add(p)}const back=new THREE.Mesh(new THREE.BoxGeometry(5.2,1.8,.14),bk);back.position.set(0,3.6,-.09);G.add(back);
+   const pn=new THREE.Mesh(new THREE.PlaneGeometry(5,1.56),new THREE.MeshBasicMaterial({map:T2.a[dir]}));pn.position.set(0,3.6,0);G.add(pn);G.position.set(A[0],0,A[1])}
+  else if(W){const m=dir>0?T2.cm:(T2.cm2||(T2.cm2=T2.cm.clone()));m.map=T2.c[dir];const pn=new THREE.Mesh(new THREE.PlaneGeometry(4.2,1.8),m);pn.position.set(0,5,0);G.add(pn);G.position.set(W[0],0,W[1])}
+  else continue;G.rotation.y=h+PI;sc.add(G);LEDS.push(G)}}
 // Fuera de la ruta o tras saltarse un arco: al acabarse los 5 s, vuelve al último punto por el que pasó (el tiempo sigue corriendo)
 function rBack(){const R=RACE.rt,n=R.cps.length,k=RACE.cp%n,q=R.cps[k];let x=RACE.sx,z=RACE.sz,hd=RACE.sh;if(RACE.cp>0){const o=R.cps[(RACE.cp-1)%n];x=o.x;z=o.z;hd=Math.atan2(o.dx,o.dz)}RACE.pi=RACE.cp>0?R.cps[(RACE.cp-1)%n].i:0;spawnAt({x,z,h:hd});RACE.off=null;RACE.safe=1.5}
 function raceQuit(){raceAbort();if(state==="set")closeSettings();rQuitMp()}
@@ -92,12 +119,13 @@ function ghostToggle(){RACE.gOn=!RACE.gOn;if(GHC&&!RACE.gOn)GHC.visible=false;if
 function rHud(){const R=RACE.rt,n=R.cps.length,tot=n*R.laps,lap=Math.min(R.laps,Math.floor(RACE.cp/n)+1);$("rcCp").textContent=`${T("Punto")} ${Math.min(RACE.cp,tot)}/${tot}`+(R.laps>1?` · ${T("Vuelta")} ${lap}/${R.laps}`:"");$("rcGh").textContent=RACE.ghost?(RACE.gOn?"👻 ✓":"👻 ✕"):""}
 // Pantalla antes de salir: tráfico de la carrera y fantasma. Recuerda lo último elegido y se puede desactivar (ENV.rcSkip); el tráfico vuelve al de antes al acabar
 if(ENV.rcT===undefined)ENV.rcT=2;
-function raceSetup(R,gi){if(ENV.rcSkip){raceStart(R,gi);return}const P=$("raceP"),runs=(rStore()[R.id]||{runs:[]}).runs;P.innerHTML="";const h1=document.createElement("h1");h1.textContent=T(R.n);P.appendChild(h1);
+function raceSetup(R,gi){const P=$("raceP"),runs=(rStore()[R.id]||{runs:[]}).runs;P.innerHTML="";const h1=document.createElement("h1");h1.textContent=T(R.n);P.appendChild(h1);
  const r=document.createElement("div");r.className="opt";r.innerHTML=`<span>${T("Tráfico")}</span>`;NLAB.forEach((t,i)=>{const b=document.createElement("button");b.textContent=T(t);b.className=ENV.rcT===i?"on":"";b.onclick=()=>{ENV.rcT=i;saveEnv();for(const x of r.querySelectorAll("button"))x.className="";b.className="on"};r.appendChild(b)});P.appendChild(r);
  // Estación del año solo para la carrera (al acabar vuelve la de antes)
  {if(ENV.rcS===undefined)ENV.rcS="keep";const s=document.createElement("div");s.className="opt";s.style.marginTop="10px";s.innerHTML=`<span>${T("Estación")}</span>`;[["keep","La de ahora"],[0,"Primavera"],[1,"Verano"],[2,"Otoño"],[3,"Invierno"]].forEach(([v,t])=>{const b=document.createElement("button");b.textContent=T(t);b.className=String(ENV.rcS)===String(v)?"on":"";b.onclick=()=>{ENV.rcS=v;saveEnv();for(const x of s.querySelectorAll("button"))x.className="";b.className="on"};s.appendChild(b)});P.appendChild(s)}
  const q=document.createElement("div");q.className="opt";q.style.marginTop="10px";q.innerHTML=`<span>${T("Fantasma")}</span>`;const sel=rGhostSel(runs);sel.value=gi;q.appendChild(sel);P.appendChild(q);
- const lb=document.createElement("label");lb.className="rcChk";lb.innerHTML=`<input type="checkbox"> ${T("No volver a mostrar esta pantalla")}`;const ck=lb.firstChild;ck.onchange=()=>{ENV.rcSkip=ck.checked;saveEnv()};P.appendChild(lb);
+ // Flechas azules en la calzada: sí o no
+ {if(ENV.rcArr===undefined)ENV.rcArr=1;const s=document.createElement("div");s.className="opt";s.style.marginTop="10px";s.innerHTML=`<span>${T("Flechas")}</span>`;[[1,"Sí"],[0,"No"]].forEach(([v,tx])=>{const b=document.createElement("button");b.textContent=T(tx);b.className=ENV.rcArr===v?"on":"";b.onclick=()=>{ENV.rcArr=v;saveEnv();for(const x of s.querySelectorAll("button"))x.className="";b.className="on"};s.appendChild(b)});P.appendChild(s)}
  const w=document.createElement("div"),s=document.createElement("button");s.className="b";s.textContent=T("Empezar");s.onclick=()=>raceStart(R,+sel.value);const c=document.createElement("button");c.className="b g";c.textContent=T("Volver");c.onclick=raceMenu;w.append(s,c);P.appendChild(w)}
 function rGhostSel(runs){const sel=document.createElement("select");sel.title=T("Coche fantasma");const o0=document.createElement("option");o0.value=-1;o0.textContent="👻 "+T("Sin fantasma");sel.appendChild(o0);runs.forEach((r,i)=>{const o=document.createElement("option");o.value=i;o.textContent=`👻 ${fmtT(r.t)} · ${r.c}`;sel.appendChild(o)});sel.value=runs.length?0:-1;return sel}
 function raceStart(R,gi,slot){if(!rBuild(R))return;if(RACE.prevT===undefined||RACE.prevT===null)RACE.prevT=npcLvl;setNpc(ENV.rcT);if(ENV.rcS!==undefined&&ENV.rcS!=="keep"&&(RACE.prevS===undefined||RACE.prevS===null)){RACE.prevS=ENV.season===undefined?"auto":ENV.season;ENV.season=+ENV.rcS;seasonApply(+ENV.rcS)}if(state==="race")$("raceP").hidden=true;let a,b,hd;
@@ -142,11 +170,10 @@ function raceMenu(){state="race";$("ov").hidden=false;$("carsP").hidden=$("mapP"
  const mp=ONL.ch&&ONL.ok&&ONL.host;if(mp){const p=document.createElement("p");p.textContent=T("Sala: al pulsar Correr salís todos a la vez.");P.appendChild(p)}
  // Cada carrera es un banner con la vista aérea de su recorrido (se dibuja la primera vez que se abre el menú)
  for(const R of RTS){rBuild(R);const e=S[R.id],runs=e&&e.runs||[],d=document.createElement("div");d.className="rcB";if(R.img)d.style.backgroundImage=`url(${R.img})`;else setTimeout(()=>{raceShot(R);if(R.img)d.style.backgroundImage=`url(${R.img})`},60);
-  const inf=document.createElement("div");inf.className="inf";inf.innerHTML=`<span class="tag${R.loop?"":" c"}">${T(R.tipo)}</span><b>${T(R.n)}</b><small>${R.loop&&R.laps>1?`${R.laps} ${T("vueltas")} · `:""}${(R.len*R.laps/1000).toFixed(1)} km · ${T("Récord")}: ${runs.length?fmtT(runs[0].t):"—"}</small>`;d.appendChild(inf);
-  const sel=rGhostSel(runs);if(mp)sel.hidden=true;d.appendChild(sel);
-  const b=document.createElement("button");b.className="b";b.textContent=T("Correr");b.onclick=()=>mp?onlRaceStart(R):raceSetup(R,+sel.value);d.appendChild(b);P.appendChild(d)}
+  const inf=document.createElement("div");inf.className="inf";inf.innerHTML=`<span class="tag${R.loop?"":" c"}">${T(R.tipo)}</span><b>${T(R.n)}</b><small>${R.loop&&R.laps>1?`${R.laps} ${T("vueltas")} · `:""}${(R.len*R.laps/1000).toFixed(1)} km · </small>`;d.appendChild(inf);
+  const bt=document.createElement("div");bt.className="best";bt.innerHTML=`<small>${T("Mejor tiempo")}</small><b>${runs.length?fmtT(runs[0].t):"—"}</b>`;d.appendChild(bt);
+  const b=document.createElement("button");b.className="b";b.textContent=T("Correr");b.onclick=()=>mp?onlRaceStart(R):raceSetup(R,runs.length?0:-1);d.appendChild(b);P.appendChild(d)}
  const n=document.createElement("p");n.textContent=T("G enciende o apaga el fantasma durante la carrera.");P.appendChild(n);
- const lb=document.createElement("label");lb.className="rcChk";lb.innerHTML=`<input type="checkbox"> ${T("Mostrar la pantalla de tráfico antes de salir")}`;const ck=lb.firstChild;ck.checked=!ENV.rcSkip;ck.onchange=()=>{ENV.rcSkip=!ck.checked;saveEnv()};P.appendChild(lb);
  const row=document.createElement("div");if(RACE.on){const a=document.createElement("button");a.className="b g";a.textContent=T("Abandonar carrera");a.onclick=()=>{raceAbort();resume();rQuitMp()};row.appendChild(a)}const c=document.createElement("button");c.className="b g";c.textContent=T("Cerrar");c.onclick=resume;row.appendChild(c);P.appendChild(row)}
 function raceResults(R,t,old){state="race";$("ov").hidden=false;$("carsP").hidden=$("mapP").hidden=$("setP").hidden=$("livP").hidden=$("onlP").hidden=$("garP").hidden=true;hudVis(false);$("touch").hidden=true;const P=$("raceP");P.hidden=false;P.innerHTML="";const rec=old===null||t<old;
  const h1=document.createElement("h1");h1.textContent=rec?T("¡Nuevo récord!"):T("Meta");P.appendChild(h1);const p=document.createElement("p");p.innerHTML=`<b style="font-size:30px">${fmtT(t)}</b><br>${old===null?"":`${T("Récord anterior")}: ${fmtT(old)}`}`;P.appendChild(p);

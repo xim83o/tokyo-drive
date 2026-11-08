@@ -210,3 +210,9 @@ Pedido por el usuario (todo con permiso ya dado; descargas permitidas: partes de
 - Avisar si una tarea merece más esfuerzo (recomendado "alto"; plan Pro).
 - Al probar, cerrar la pestaña del navegador integrado y parar el servidor; no abrir jugar.bat sin avisar.
 - Lo que no pueda probar yo, lo prueba él y manda lista de errores.
+
+## Hecho el 2026-11-08 (carreras: flechas, banderines y LED)
+- Circuito de la Torre rehecho al este de la torre (4 esquinas de unos 90°, 3 vueltas, id torre4). Sin el pico de ida y vuelta en la salida de los circuitos (rBuild).
+- Puntos de control solo en tramo recto (40 m antes y después) y a más de 30 m de un cruce; banderines orientados con la calle real (rRoad).
+- Flechas azules por todo el recorrido, torcidas antes de cada giro; opción Flechas sí/no (ENV.rcArr). La pantalla de salida (Tráfico, Estación, Fantasma, Flechas) sale siempre; en los banners, Mejor tiempo en vez del fantasma.
+- Flechas LED en los giros, solo en carrera (ledBuild): panel A de chevrones ámbar sobre postes en la esquina de fuera (la ola empieza en el lado contrario al giro) y, si no cabe, flecha C de neón cian en la pared de enfrente. El usuario dirá dónde mover o añadir.
