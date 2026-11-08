@@ -112,6 +112,7 @@ ca:{"WASD / flechas · Espacio: freno de mano · V: cámara · M: mapa · C: coc
 [["Reiniciar carrera","Restart race","レースをやり直す","Reinicia la cursa"]].forEach(([s,en,ja,ca])=>{I18N.en[s]=en;I18N.ja[s]=ja;I18N.ca[s]=ca});
 [["Flechas","Arrows","矢印","Fletxes"],["Mejor tiempo","Best time","ベストタイム","Millor temps"]].forEach(([s,en,ja,ca])=>{I18N.en[s]=en;I18N.ja[s]=ja;I18N.ca[s]=ca});
 [["Coche","Car","車","Cotxe"]].forEach(([s,en,ja,ca])=>{I18N.en[s]=en;I18N.ja[s]=ja;I18N.ca[s]=ca});
+[["Jugadores máx.","Max players","最大人数","Jugadors màx."],["En la sala, esto lo elige quien la creó.","In a room, the creator chooses this.","ルームでは作成者が決めます。","A la sala, això ho tria qui l'ha creada."]].forEach(([s,en,ja,ca])=>{I18N.en[s]=en;I18N.ja[s]=ja;I18N.ca[s]=ca});
 const T=s=>(LANG!=="es"&&I18N[LANG]&&I18N[LANG][s])||s;
 // Textos fijos de la página (data-i18n guarda el original en español)
 function applyI18n(){document.documentElement.lang=LANG;for(const e of document.querySelectorAll("[data-i18n]"))e.textContent=T(e.dataset.i18n);const hp=document.getElementById("help");if(hp)hp.textContent+=" · "+T("B: carreras · F: modo foto · G: fantasma")}

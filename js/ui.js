@@ -55,6 +55,8 @@ function landmarks(){if(LMK||!ready)return LMK;LMK=[{x:TX,z:TZ,n:T("Torre de Tok
 function drawMap(){const S=mapS(),[ox,oz]=mapO();mx.setTransform(1,0,0,1,0,0);mx.fillStyle="#1c1f26";mx.fillRect(0,0,640,640);
  mx.setTransform(S,0,0,S,-ox*S,-oz*S);if(mapImg)mx.drawImage(mapImg,0,0);mx.setTransform(1,0,0,1,0,0);
  const P=(x,z)=>[(x-ox)*S,(z-oz)*S];mx.textAlign="center";mx.textBaseline="bottom";
+ // Compañeros de la sala
+ if(typeof ONL!=="undefined")for(const p of ONL.peers.values()){if(p.w)continue;const[x,y]=P(p.g.position.x,p.g.position.z),a=p.g.rotation.y;peerArrow(mx,x,y,Math.atan2(Math.cos(a),Math.sin(a)),p.col,p.n,10)}mx.textAlign="center";mx.textBaseline="bottom";
  // Calles sin salida: cuadradito azul con la "T" blanca de la señal (行き止まり) en el final y punto azul en la señal de la entrada
  for(const d of DEADM){const[x,y]=P(d.x,d.z);if(x<-10||y<-10||x>650||y>650)continue;mx.fillStyle=d.c;mx.strokeStyle="#fff";mx.lineWidth=1.5;
   if(d.dead===1){const r=4+Math.min(3,mapV.z);mx.fillRect(x-r,y-r,r*2,r*2);mx.strokeRect(x-r,y-r,r*2,r*2);mx.fillStyle="#fff";mx.fillRect(x-r*.6,y-r*.6,r*1.2,r*.35);mx.fillRect(x-r*.17,y-r*.6,r*.34,r*1.2)}

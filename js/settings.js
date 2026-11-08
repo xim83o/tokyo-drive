@@ -11,7 +11,7 @@ function drawSettings(){const P=$("setP");P.innerHTML=`<h1>${T(setPrev==="play"?
  // Menú de Esc conduciendo: accesos grandes a lo que antes estaba a la derecha (las teclas siguen funcionando)
  if(spawned&&setPrev==="play"&&!RACE.on){const q=document.createElement("div");q.className="qrow";const go=(ic,t,f)=>{const b=document.createElement("button");b.innerHTML=`<i>${ic}</i>${T(t)}`;b.onclick=f;q.appendChild(b);return b},cl=f=>()=>{closeSettings();f()};
   go("🏁","Carreras",cl(()=>act("race")));go("📷","Modo foto",cl(()=>act("photo")));go("🗺️","Mapa",cl(()=>act("map")));
-  const tb=go("🚗",T("Tráfico")+": "+T(NLAB[npcLvl]),()=>{setNpc(npcLvl+1);tb.innerHTML=`<i>🚗</i>${T("Tráfico")}: ${T(NLAB[npcLvl])}`});
+  const tb=go("🚗",T("Tráfico")+": "+T(NLAB[npcLvl]),()=>{if(onlLocked())return;setNpc(npcLvl+1);tb.innerHTML=`<i>🚗</i>${T("Tráfico")}: ${T(NLAB[npcLvl])}`});
   const sb=go(mute?"🔇":"🔊",mute?"Activar sonido":"Silenciar",()=>{initAudio();setMute(!mute);sb.innerHTML=`<i>${mute?"🔇":"🔊"}</i>${T(mute?"Activar sonido":"Silenciar")}`});P.appendChild(q)}
  const tabs=[["gfx","Gráficos"],["time","Hora y clima"],["snd","Sonido"],["radio","📻 Radio"],["trf","Tráfico"],["scr","Pantalla"],["lang","Idioma"]];if(!MOBILE)tabs.push(["keys","Teclas"]);if(typeof DEV!=="undefined"&&DEV)tabs.push(["dev","Desarrollador"]);
  const tb=document.createElement("div");tb.className="stabs";tabs.forEach(([k,t])=>{const b=document.createElement("button");b.textContent=T(t);b.className=k===setTab?"on":"";b.onclick=()=>{setTab=k;rebind=null;drawSettings()};tb.appendChild(b)});P.appendChild(tb);
@@ -59,6 +59,8 @@ function drawSettings(){const P=$("setP");P.innerHTML=`<h1>${T(setPrev==="play"?
      rebind=code=>{rebind=null;if(code==="Escape"&&a!=="set"){drawSettings();return}
       for(const q in ENV.keys)for(const j of[0,1])if(ENV.keys[q][j]===code)ENV.keys[q][j]="";ENV.keys[a][k]=code;if(!ENV.keys.set[0]&&!ENV.keys.set[1])ENV.keys.set[0]="Escape";saveEnv();drawSettings()}};g.appendChild(b)}}
   box.appendChild(g);const r=document.createElement("button");r.className="b g";r.textContent=T("Restablecer teclas");r.onclick=()=>{ENV.keys=JSON.parse(JSON.stringify(KEYDEF));saveEnv();drawSettings()};box.appendChild(r)}
+ // En una sala, la hora, el clima, la estación y el tráfico los pone quien la creó
+ if(onlLocked()&&(setTab==="time"||setTab==="trf")){for(const b of box.querySelectorAll("button"))b.disabled=true;note("En la sala, esto lo elige quien la creó.")}
  if(RACE.on){const q=document.createElement("button");q.className="b g";q.textContent=T("Salir de la carrera");q.onclick=raceQuit;P.appendChild(q);if(!ONL.mp){const z=document.createElement("button");z.className="b g";z.textContent=T("Reiniciar carrera");z.onclick=raceRestart;P.appendChild(z)}}
  if(spawned){const q=document.createElement("button");q.className="b g";q.textContent=T("Menú principal");q.onclick=()=>mainMenu();P.appendChild(q)}
  const ok=document.createElement("button");ok.className="b";ok.textContent=T("Volver");ok.onclick=closeSettings;P.appendChild(ok)}
