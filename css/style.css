@@ -179,3 +179,4 @@ body.rcUI #radP{display:none!important}#lds.menu~#radP{display:none!important}
 #ldsM #ldsRc span{color:#ffb000}
 .rcBtns{display:flex;gap:6px}#rcR{margin-top:4px;padding:3px 10px;border:0;border-radius:10px;background:rgba(255,255,255,.2);color:#fff;font:600 12px system-ui;cursor:pointer;pointer-events:auto}
 .rcB .best{text-align:right;margin-right:6px}.rcB .best small{display:block;color:#c9ccd6;font-size:11px;letter-spacing:.1em;text-transform:uppercase}.rcB .best b{margin:0;font:800 24px ui-monospace,Consolas,monospace;color:#ffb000;text-shadow:0 0 10px rgba(255,176,0,.6)}
+.rcCar button{display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 6px!important;font-size:11px!important}.rcCar canvas{width:96px;height:56px}
