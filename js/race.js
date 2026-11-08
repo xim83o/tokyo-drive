@@ -6,7 +6,7 @@
 const RWP=a=>a.map(([x,z])=>[x*1.5,z*1.5]);
 const RTS=[{id:"torre3",n:"Circuito de la Torre",tipo:"Carrera",laps:2,loop:true,w:RWP([[730,712],[800,765],[893,812],[830,960],[780,1060],[700,880],[652,705]])},
  {id:"canal3",n:"Circuito del Canal",tipo:"Carrera",laps:1,loop:true,w:RWP([[300,975],[600,1050],[780,1065],[1000,1120],[1068,1100],[1100,850],[1115,728],[1010,705],[900,800],[815,1040],[782,1180],[780,1285],[500,1265],[285,1245],[290,1100]])},
- {id:"kuro3",n:"Torre de Tokio → Kurogane",tipo:"Contrarreloj",laps:1,w:RWP([[655,690],[790,475],[900,545],[1040,575],[1010,700],[1115,728],[1095,880],[1068,1100],[960,1125],[930,1110]])},
+ {id:"kuro4",n:"Concesionario → Kurogane",tipo:"Contrarreloj",laps:1,w:RWP([[810,485],[900,545],[1040,575],[1030,640],[1010,700],[930,712],[900,800],[850,930],[815,1040],[880,1095],[935,1115]])},   // (sin giros de más de 110°)
  {id:"beis3",n:"Béisbol → Zona de derrape",tipo:"Contrarreloj",laps:1,w:RWP([[745,555],[652,705],[700,880],[780,1060],[1000,1120],[1068,1100],[1095,880],[1100,840]])},
  {id:"cruce3",n:"Cruce de Tokio",tipo:"Contrarreloj",laps:1,w:RWP([[60,470],[340,605],[600,730],[652,705],[730,712],[880,800],[960,840],[1090,856],[1090,905],[1300,930],[1480,960]])}];
 const RACE={on:false,rt:null,cp:0,t:0,cd:0,rec:[],split:[],ghost:null,gOn:true,recT:0};

@@ -13,7 +13,7 @@ function drawSettings(){const P=$("setP");P.innerHTML=`<h1>${T(setPrev==="play"?
   go("🏁","Carreras",cl(()=>act("race")));go("📷","Modo foto",cl(()=>act("photo")));go("🌐","Multijugador",cl(()=>act("onl")));go("🗺️","Mapa",cl(()=>act("map")));
   const tb=go("🚗",T("Tráfico")+": "+T(NLAB[npcLvl]),()=>{setNpc(npcLvl+1);tb.innerHTML=`<i>🚗</i>${T("Tráfico")}: ${T(NLAB[npcLvl])}`});
   const sb=go(mute?"🔇":"🔊",mute?"Activar sonido":"Silenciar",()=>{initAudio();setMute(!mute);sb.innerHTML=`<i>${mute?"🔇":"🔊"}</i>${T(mute?"Activar sonido":"Silenciar")}`});P.appendChild(q)}
- const tabs=[["gfx","Gráficos"],["time","Hora y clima"],["snd","Sonido"],["trf","Tráfico"],["scr","Pantalla"],["lang","Idioma"]];if(!MOBILE)tabs.push(["keys","Teclas"]);if(typeof DEV!=="undefined"&&DEV)tabs.push(["dev","Desarrollador"]);
+ const tabs=[["gfx","Gráficos"],["time","Hora y clima"],["snd","Sonido"],["radio","📻 Radio"],["trf","Tráfico"],["scr","Pantalla"],["lang","Idioma"]];if(!MOBILE)tabs.push(["keys","Teclas"]);if(typeof DEV!=="undefined"&&DEV)tabs.push(["dev","Desarrollador"]);
  const tb=document.createElement("div");tb.className="stabs";tabs.forEach(([k,t])=>{const b=document.createElement("button");b.textContent=T(t);b.className=k===setTab?"on":"";b.onclick=()=>{setTab=k;rebind=null;drawSettings()};tb.appendChild(b)});P.appendChild(tb);
  const box=document.createElement("div");box.id="envUI";P.appendChild(box);
  const note=t=>{const p=document.createElement("p");p.textContent=T(t);box.appendChild(p)};
@@ -35,8 +35,10 @@ function drawSettings(){const P=$("setP");P.innerHTML=`<h1>${T(setPrev==="play"?
   if(ENV.season===undefined)ENV.season="auto";env("Estación",[["auto","Fecha de Japón"],[0,"Primavera"],[1,"Verano"],[2,"Otoño"],[3,"Invierno"]],"season",()=>{if(ready)seasonApply(seasonNow())});
   note("En invierno, si llueve, nieva: la nieve se acumula en el suelo y los tejados y el coche agarra menos.")}
  else if(setTab==="snd"){slider("General","m");slider("Motor","e");slider("Golpes y derrapes","fx");slider("Lluvia y truenos","rain");slider("Claxon","horn");slider("Ambiente: viento, ciudad y trenes","amb");
-  row("Sonido",[[0,"Activado"],[1,"Silenciado"]],()=>mute?1:0,v=>{initAudio();setMute(!!v)});
-  slider("Radio","radio");row("País de la radio",RCOUNTRY,()=>ENV.radio.c,v=>{ENV.radio.c=v;radioReset()});row("Estilo",RTAG,()=>ENV.radio.t,v=>{ENV.radio.t=v;radioReset()});
+  row("Sonido",[[0,"Activado"],[1,"Silenciado"]],()=>mute?1:0,v=>{initAudio();setMute(!!v)})}
+ // Radio: apartado propio, separado del sonido del juego (su volumen no depende del general ni de silenciar)
+ else if(setTab==="radio"){row("Radio",[[1,"Encendida"],[0,"Apagada"]],()=>RADIO.on?1:0,v=>{initAudio();if(!!v!==RADIO.on)radioToggle()});
+  slider("Volumen de la radio","radio");row("País de la radio",RCOUNTRY,()=>ENV.radio.c,v=>{ENV.radio.c=v;radioReset()});row("Estilo",RTAG,()=>ENV.radio.t,v=>{ENV.radio.t=v;radioReset()});
   {const b=document.createElement("button");b.className="b g";b.textContent="📻 "+T("Siguiente emisora");b.onclick=()=>{initAudio();if(!RADIO.on)radioToggle();else radioNext(1)};box.appendChild(b)}
   note("La radio usa emisoras en directo de radio-browser.info: necesita internet y la música (y los anuncios) son los que pongan ellas.");
   {const h=document.createElement("h3");h.textContent="Spotify";box.appendChild(h);const r=document.createElement("div");r.className="lrow";r.style.justifyContent="center";const i=document.createElement("input");i.type="text";i.className="onlI";i.style.maxWidth="440px";i.placeholder=T("Enlace de una lista, álbum o canción de Spotify");i.value=ENV.spot||"";

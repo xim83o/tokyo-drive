@@ -35,7 +35,7 @@ function radDraw(){const R=$("radP");let P=R.querySelector(".rc");if(!P){P=docum
  const rb=document.createElement("div");rb.className="rb";const bt=(t,f,on)=>{const b=document.createElement("button");b.textContent=t;if(on)b.className="on";b.onclick=()=>{initAudio();f();radDraw()};rb.appendChild(b)};
  bt("⏮",()=>{if(!RADIO.on)radioToggle();else radioNext(-1)});bt("⏻",radioToggle,RADIO.on);bt("⏭",()=>{if(!RADIO.on)radioToggle();else radioNext(1)});P.appendChild(rb);
  const v=document.createElement("input");v.type="range";v.min=0;v.max=100;v.step=5;v.value=Math.round((ENV.vol.radio===undefined?.6:ENV.vol.radio)*100);v.oninput=()=>{ENV.vol.radio=v.value/100;radioVol();saveEnv()};P.appendChild(v);
- const sm=document.createElement("small");sm.textContent=T("Volumen de la radio (aparte del sonido del juego). País y estilo en Ajustes → Sonido.");P.appendChild(sm);
+ const sm=document.createElement("small");sm.textContent=T("Volumen de la radio (aparte del sonido del juego). País, estilo y Spotify en Ajustes → Radio.");P.appendChild(sm);
  if(SPOT){const h=document.createElement("h4");h.style.marginTop="12px";h.textContent="Spotify";P.appendChild(h);const b=document.createElement("button");b.className="b g";b.style.margin="0";b.textContent=T("Apagar la radio y usar Spotify");b.onclick=()=>{if(RADIO.on)radioToggle();radDraw()};P.appendChild(b)}
- else{const s2=document.createElement("small");s2.textContent=T("¿Tu música? Pega un enlace de Spotify en Ajustes → Sonido.");P.appendChild(s2)}radioTick()}
+ else{const s2=document.createElement("small");s2.textContent=T("¿Tu música? Pega un enlace de Spotify en Ajustes → Radio.");P.appendChild(s2)}radioTick()}
 setTimeout(spotSet,0);

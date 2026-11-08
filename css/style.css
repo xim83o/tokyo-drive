@@ -167,4 +167,6 @@ body.rcUI #radP{display:none!important}#lds.menu~#radP{display:none!important}
 .rcB:hover{border-color:var(--ac);transform:translateX(4px)}.rcB>*{position:relative}
 .rcB .inf{flex:1;min-width:0}.rcB .tag{display:inline-block;padding:3px 10px;background:var(--ac);color:#fff;font:800 11px system-ui;letter-spacing:.1em;text-transform:uppercase}
 .rcB .tag.c{background:var(--cy);color:#04141a}.rcB b{display:block;margin:6px 0 2px;font:italic 900 26px system-ui;text-transform:uppercase;color:#fff;text-shadow:0 0 12px rgba(255,42,60,.6)}.rcB small{color:#c9ccd6;font-size:13px}
-.rcB select{padding:7px;border:1px solid var(--neo);background:rgba(8,9,13,.85);color:#fff}.rcB .b{margin:0}
+.rcB select{padding:7px;border:1px solid var(--neo);background:rgba(8,9,13,.85);color:#fff}.rcB .b{margin:0}/* Fichas que crecen con el ratón encima (coches y garaje) */
+.cd:hover{transform:translateY(-3px) scale(1.07);z-index:1}.garR{transition:transform .2s,background .2s;padding:8px 10px}.garR:hover{transform:scale(1.04);background:rgba(255,42,60,.1)}
+.gth{width:120px;height:70px;flex:none;background:radial-gradient(ellipse at 50% 85%,rgba(255,42,60,.28),transparent 65%);transition:width .2s,height .2s}.garR:hover .gth{width:168px;height:98px}

@@ -17,15 +17,19 @@ function buildCards(){$("cards").innerHTML="";tb.innerHTML="";
 buildCards();applyI18n();
 {const b=document.createElement("button");b.className="b g";b.dataset.i18n="Volver";b.textContent=T("Volver");b.onclick=()=>mainMenu();$("carsP").appendChild(b)}
 // Fotos de los coches en las fichas: cada coche con su pintura y sus calcomanías, en una escena aparte. En PC gira mientras el ratón está encima
-const CTH={sc:null,cam:null,rt:null,g:[],key:[],spin:-1,a:0};
-function carThumbs(){if(!ready||!MODELS[CARS[0].f])return;if(!CTH.sc){const s=new THREE.Scene();s.add(new THREE.HemisphereLight(0xffffff,0x3a3040,1.05));const d=new THREE.DirectionalLight(0xffffff,.95);d.position.set(4,6,5);s.add(d);const r=new THREE.DirectionalLight(0xff4060,.6);r.position.set(-5,2,-4);s.add(r);
-  CTH.sc=s;CTH.cam=new THREE.PerspectiveCamera(30,12/7,.1,100);CTH.rt=new THREE.WebGLRenderTarget(720,420);CTH.px=new Uint8Array(720*420*4);CTH.cv=document.createElement("canvas");CTH.cv.width=720;CTH.cv.height=420}
- [...$("cards").children].forEach((d,i)=>{const L=LIV[i]||{},key=JSON.stringify(L);if(CTH.key[i]!==key||!CTH.g[i]){if(CTH.g[i])CTH.sc.remove(CTH.g[i].g);const c=CARS[i],p={g:new THREE.Group(),k:i,img:[],dec:[],body:null,wh:[]},m=modelInst(c.f,c.l,carPaint(i),false,{tint:L.tint||0,gc:L.gc,bc:L.bc});
-   p.g.add(m.s);p.body=m.body;p.wh=m.wh;if(typeof peerDecals==="function"&&LIV[i])peerDecals(p,c,LIV[i]);p.g.visible=false;CTH.sc.add(p.g);CTH.g[i]=p;CTH.key[i]=key}
-  thumbDraw(i,.7);const cv=d.querySelector(".cth");if(!MOBILE&&!d._h){d._h=1;d.onmouseenter=()=>{CTH.spin=i;CTH.a=.7;const f=()=>{if(CTH.spin!==i||state!=="cars")return;CTH.a+=.035;thumbDraw(i,CTH.a);requestAnimationFrame(f)};f()};d.onmouseleave=()=>{CTH.spin=-1}}})}
-function thumbDraw(i,a){const p=CTH.g[i],cv=$("cards").children[i]&&$("cards").children[i].querySelector(".cth");if(!p||!cv)return;for(const q of CTH.g)if(q)q.g.visible=q===p;const l=CARS[i].l,C=CTH.cam;C.position.set(Math.sin(a)*l*1.55,l*.5,Math.cos(a)*l*1.55);C.lookAt(0,.45,0);
+const CTH={sc:null,cam:null,rt:null,cache:new Map(),spin:null};
+function thInit(){if(CTH.sc)return;const s=new THREE.Scene();s.add(new THREE.HemisphereLight(0xffffff,0x3a3040,1.05));const d=new THREE.DirectionalLight(0xffffff,.95);d.position.set(4,6,5);s.add(d);const r=new THREE.DirectionalLight(0xff4060,.6);r.position.set(-5,2,-4);s.add(r);
+ CTH.sc=s;CTH.cam=new THREE.PerspectiveCamera(30,12/7,.1,100);CTH.rt=new THREE.WebGLRenderTarget(720,420);CTH.px=new Uint8Array(720*420*4);CTH.cv=document.createElement("canvas");CTH.cv.width=720;CTH.cv.height=420}
+// Coche k con la decoración L (pintura y calcomanías), guardado para no rehacerlo (como mucho 14 a la vez)
+function thObj(k,L){thInit();const key=k+"|"+JSON.stringify(L||{});let p=CTH.cache.get(key);if(p)return p;const c=CARS[k];L=L||{};p={g:new THREE.Group(),k,img:[],dec:[],body:null,wh:[]};
+ const m=modelInst(c.f,c.l,L.c!==undefined?L.c:c.c,false,{tint:L.tint||0,gc:L.gc,bc:L.bc});p.g.add(m.s);p.body=m.body;p.wh=m.wh;if(typeof peerDecals==="function"&&L.stk)peerDecals(p,c,Object.assign(LIVDEF(),L));p.g.visible=false;CTH.sc.add(p.g);CTH.cache.set(key,p);
+ if(CTH.cache.size>14){const[k0,q]=CTH.cache.entries().next().value;CTH.sc.remove(q.g);CTH.cache.delete(k0)}return p}
+function thDraw(cv,p,k,a){if(!cv||!p)return;for(const q of CTH.cache.values())q.g.visible=q===p;const l=CARS[k].l,C=CTH.cam;C.position.set(Math.sin(a)*l*1.55,l*.5,Math.cos(a)*l*1.55);C.lookAt(0,.45,0);
  const pc=rd.getClearColor(new THREE.Color()),pa=rd.getClearAlpha();rd.setRenderTarget(CTH.rt);rd.setClearColor(0,0);rd.clear();rd.render(CTH.sc,C);rd.readRenderTargetPixels(CTH.rt,0,0,720,420,CTH.px);rd.setRenderTarget(null);rd.setClearColor(pc,pa);
- const g2=CTH.cv.getContext("2d"),im=g2.createImageData(720,420);for(let y=0;y<420;y++)im.data.set(CTH.px.subarray((419-y)*2880,(420-y)*2880),y*2880);g2.putImageData(im,0,0);const g=cv.getContext("2d");g.clearRect(0,0,360,210);g.drawImage(CTH.cv,0,0,360,210)}
+ const g2=CTH.cv.getContext("2d"),im=g2.createImageData(720,420);for(let y=0;y<420;y++)im.data.set(CTH.px.subarray((419-y)*2880,(420-y)*2880),y*2880);g2.putImageData(im,0,0);const g=cv.getContext("2d");g.clearRect(0,0,cv.width,cv.height);g.drawImage(CTH.cv,0,0,cv.width,cv.height)}
+// Con el ratón encima (tras wait ms) el coche da vueltas sin parar; al salir vuelve a la foto. En el móvil, solo la foto
+function thHover(el,cv,p,k,wait){if(MOBILE)return;el.onmouseenter=()=>{const tok={};CTH.spin=tok;let a=.7;const f=()=>{if(CTH.spin!==tok||!el.isConnected)return;a+=.03;thDraw(cv,p,k,a);requestAnimationFrame(f)};setTimeout(f,wait||0)};el.onmouseleave=()=>{CTH.spin=null;thDraw(cv,p,k,.7)}}
+function carThumbs(){if(!ready||!MODELS[CARS[0].f])return;[...$("cards").children].forEach((d,i)=>{const cv=d.querySelector(".cth"),p=thObj(i,LIV[i]);thDraw(cv,p,i,.7);thHover(d,cv,p,i,0)})}
 function show(w){state=w;if(w==="cars")setTimeout(carThumbs,30);$("ov").hidden=false;$("carsP").hidden=w!=="cars";$("mapP").hidden=w!=="map";$("setP").hidden=true;$("livP").hidden=true;$("ov").classList.remove("liv");if(w==="map"){pend=null;$("ok").disabled=true;mapV={z:1,x:W/2,z0:W/2};drawMap()}
  hudVis(false);$("touch").hidden=true}
 // Al volver a conducir, la cámara va de donde estaba a su sitio detrás del coche en 0,5 s (main.js), en vez de saltar
