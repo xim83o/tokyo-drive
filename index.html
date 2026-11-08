@@ -3,7 +3,7 @@
 <title>Tokyo Drive</title>
 <link rel="stylesheet" href="css/style.css">
 </head><body>
-<div id="lds"><div id="ldsI"><h1>TOKYO DRIVE</h1><small>東京ドライブ</small><div id="ldsB"><u></u></div><div id="ldsR"><span id="ldsT">Cargando…</span><b id="ldsP">0 %</b></div><p id="ldsC"></p><button id="ldsGo" hidden data-i18n="Pulsa para empezar">Pulsa para empezar</button><div id="ldsM" hidden><div class="mRow"><button id="ldsS" data-i18n="Un jugador">Un jugador</button><button id="ldsMp" data-i18n="Multijugador">Multijugador</button></div><div class="mRow sm"><button id="ldsG" data-i18n="Garaje">Garaje</button><button id="ldsA" data-i18n="Ajustes">Ajustes</button></div></div></div></div>
+<div id="lds"><div id="ldsI"><h1>TOKYO DRIVE</h1><small>東京ドライブ</small><div id="ldsB"><u></u></div><div id="ldsR"><span id="ldsT">Cargando…</span><b id="ldsP">0 %</b></div><p id="ldsC"></p><button id="ldsGo" hidden data-i18n="Pulsa para empezar">Pulsa para empezar</button><div id="ldsM" hidden><div class="mRow"><button id="ldsS" data-i18n="Un jugador">Un jugador</button><button id="ldsRc" data-i18n="Carreras">Carreras</button><button id="ldsMp" data-i18n="Multijugador">Multijugador</button></div><div class="mRow sm"><button id="ldsG" data-i18n="Garaje">Garaje</button><button id="ldsA" data-i18n="Ajustes">Ajustes</button></div></div></div></div>
 <script>
 // Pantalla de carga: es lo primero que se ve. La barra avanza con los scripts, el mapa, el mundo y la preparación de los gráficos
 const LDS={p:0,n:0,done:false,go:false,tr:t=>typeof T==="function"?T(t):t,
@@ -17,14 +17,14 @@ const LDS={p:0,n:0,done:false,go:false,tr:t=>typeof T==="function"?T(t):t,
  start(mp){if(!this.go||this.done)return;this.done=true;initAudio();clearInterval(this.tt);const e=this.el("lds"),wasMenu=this.menu;this.menu=false;e.classList.add("off");setTimeout(()=>{e.hidden=true;e.classList.remove("menu")},400);
   // Desde el menú principal: «Un jugador» vuelve a conducir donde estabas (o a elegir coche si aún no hay)
   // (mp: true multijugador · "gar" garaje · "set" ajustes; al cerrar esos dos se vuelve a este menú)
-  if(mp===true)setTimeout(()=>onlOpen(),60);else if(mp==="gar"){MENUB=true;garOpen()}else if(mp==="set"){state="menu";openSettings()}else if(mp==="back")resume();else{show("cars");if(typeof carThumbs==="function")setTimeout(carThumbs,40)}},   // «Un jugador»: siempre a «Selecciona coche»
+  if(mp===true)setTimeout(()=>onlOpen(),60);else if(mp==="gar"){MENUB=true;garOpen()}else if(mp==="set"){state="menu";openSettings()}else if(mp==="back")resume();else if(mp==="race"){if(!spawned){buildCar(carK);spawnC();spawned=true}raceMenu()}else{show("cars");if(typeof carThumbs==="function")setTimeout(carThumbs,40)}},   // «Un jugador»: siempre a «Selecciona coche»
  tips:["Mantén el freno de mano en las curvas cerradas para derrapar.","Pulsa B para abrir las carreras.","Pulsa F para entrar en el modo foto.","Pulsa V para cambiar de cámara.","Pulsa M para abrir el mapa y aparecer donde quieras.","En el concesionario puedes pintar tu coche y ponerle calcomanías.","La autopista elevada tiene rampas de entrada y de salida.","En invierno el coche agarra menos.","Pulsa R para encender la radio.","En una carrera, si te sales de la ruta, tienes 5 segundos para volver."],
  tip(){this.el("ldsC").textContent=this.tr(this.tips[Math.floor(Math.random()*this.tips.length)])}};
 LDS.tt=setInterval(()=>LDS.tip(),3500);
 document.addEventListener("load",e=>{if(e.target.tagName==="SCRIPT"){LDS.n++;LDS.set(LDS.n/42*18,"Cargando el motor del juego")}},true);
 document.addEventListener("error",e=>{if(e.target.tagName==="SCRIPT"&&/three/.test(e.target.src))LDS.fail("No se pudo cargar el juego. Comprueba tu conexión a internet.")},true);
 addEventListener("keydown",e=>{if(LDS.done)return;e.stopImmediatePropagation();if(e.code==="Escape"&&LDS.menu&&typeof spawned!=="undefined"&&spawned){LDS.start("back");return}if(e.code==="Enter"||e.code==="Space"){e.preventDefault();if(LDS.picked)(document.activeElement&&document.activeElement.id==="ldsMp"?LDS.start(true):LDS.start());else LDS.pick()}},true);
-LDS.el("ldsGo").onclick=e=>{e.stopPropagation();LDS.pick()};LDS.el("lds").onclick=()=>LDS.pick();LDS.el("ldsS").onclick=e=>{e.stopPropagation();LDS.start()};LDS.el("ldsMp").onclick=e=>{e.stopPropagation();LDS.start(true)};LDS.el("ldsG").onclick=e=>{e.stopPropagation();LDS.start("gar")};LDS.el("ldsA").onclick=e=>{e.stopPropagation();LDS.start("set")};var MENUB=false;LDS.tip();
+LDS.el("ldsGo").onclick=e=>{e.stopPropagation();LDS.pick()};LDS.el("lds").onclick=()=>LDS.pick();LDS.el("ldsS").onclick=e=>{e.stopPropagation();LDS.start()};LDS.el("ldsMp").onclick=e=>{e.stopPropagation();LDS.start(true)};LDS.el("ldsRc").onclick=e=>{e.stopPropagation();LDS.start("race")};LDS.el("ldsG").onclick=e=>{e.stopPropagation();LDS.start("gar")};LDS.el("ldsA").onclick=e=>{e.stopPropagation();LDS.start("set")};var MENUB=false;LDS.tip();
 </script>
 <canvas id="c"></canvas>
 <canvas id="mini" width="190" height="190" hidden></canvas>
