@@ -28,7 +28,7 @@ function onlDraw(){const P=$("onlP");P.innerHTML="";const add=(tag,txt,cl,to)=>{
  if(!ONL.ch&&!ONL.wait&&!ONL.nameOk){add("p","Antes de entrar, ponte un nombre: es el que verán los demás.");const n=inp("text","Tu nombre",ONL.name);n.maxLength=14;const go=()=>{const v=n.value.trim();if(v.length<2){onlMsg("El nombre tiene que tener al menos 2 letras.");return}ONL.name=v;ONL.nameOk=true;try{localStorage.setItem("td-name",v)}catch(e){}ONL.msg="";onlDraw()};
   n.onkeydown=e=>{e.stopPropagation();if(e.key==="Enter")go()};btn("Continuar",go);if(ONL.msg)add("p",ONL.msg,"onlM");btn("Cerrar",onlClose,1);setTimeout(()=>n.focus(),50);return}
  if(ONL.ch){const R=ONL.room||{};const p=add("p");p.innerHTML=`<b style="font-size:22px">${esc(R.name||"")}</b>${R.pw?" 🔒":""}<br>${T(ONL.host?"Eres el creador de la sala: tú eliges las carreras.":"Las carreras las elige quien creó la sala.")}`;
-  const ul=add("ul","","onlL");const me=add("li","",null,ul);me.textContent="🚗 "+(ONL.name||"?")+" ("+T("tú")+")";for(const[id,q]of ONL.peers){const li=add("li","",null,ul);li.textContent=(id===ONL.hostId?"👑 ":"🚗 ")+(q.n||"?")}
+  const ul=add("ul","","onlL");const me=add("li","",null,ul);me.textContent="🚗 "+(ONL.name||"?")+" ("+T("tú")+")";for(const[id,q]of ONL.peers){const li=add("li","",null,ul);li.textContent=(id===ONL.hostId?"👑 ":"🚗 ")+(q.n||T("Jugador"))}
   add("p",`${T("Jugadores")}: ${ONL.peers.size+1}/${(ONL.room&&ONL.room.max)||ONL_MAX}`);btn(ONL.host?"Cerrar la sala":"Salir de la sala",()=>{onlLeave();mainMenu()},1)}
  else if(ONL.wait)add("p","Esperando permiso para entrar…");
  else{const n=inp("text","Tu nombre",ONL.name);n.maxLength=14;n.oninput=()=>{const v=n.value.trim();if(v.length>=2){ONL.name=v;try{localStorage.setItem("td-name",v)}catch(e){}}};
@@ -77,7 +77,7 @@ function peerMsg(m){if(!ONL.ch||!ONL.ok||!m||!m.id)return;let p=ONL.peers.get(m.
  if(p.k!==m.k||p.c!==m.c||p.n!==m.n){p.k=m.k;p.c=m.c;p.n=m.n;peerBuild(p)}p.x=m.x;p.y=m.y;p.z=m.z;p.h=m.h;p.vx=m.vx||0;p.vz=m.vz||0;p.w=!!m.w;p.t=performance.now()}
 // Modelo del compañero con su pintura y sus calcomanías (si ya llegaron)
 function peerBuild(p){const c=CARS[p.k]||CARS[0],L=p.liv&&p.liv.k===p.k?p.liv.L:null;for(const m of p.dec)m.geometry.dispose();p.dec=[];while(p.g.children.length)p.g.remove(p.g.children[0]);p.body=null;p.wh=[];
- if(MODELS[c.f]){const m=modelInst(c.f,c.l,L&&L.c!==undefined?L.c:p.c,false,L?{tint:L.tint||0,gc:L.gc,bc:L.bc}:undefined);p.g.add(m.s);p.body=m.body;p.wh=m.wh;if(L)peerDecals(p,c,L)}p.g.add(peerLabel(p.n||"?"))}
+ if(MODELS[c.f]){const m=modelInst(c.f,c.l,L&&L.c!==undefined?L.c:p.c,false,L?{tint:L.tint||0,gc:L.gc,bc:L.bc}:undefined);p.g.add(m.s);p.body=m.body;p.wh=m.wh;if(L)peerDecals(p,c,L)}p.g.add(peerLabel(p.n||T("Jugador")))}
 // Se reutiliza applyDecals cambiando un momento el coche "actual" por el del compañero (y sus imágenes, que no se guardan en este navegador)
 function peerDecals(p,c,L){if(!p.body||typeof applyDecals!=="function")return;const sv={car,carBody,carK,cur,DEC,LB,W:WHEELS.slice(),L:LIV[p.k]},add=p.img.filter(q=>!CUS.some(o=>o.id===q.id));
  try{car=p.g;carBody=p.body;carK=p.k;cur=c;DEC=[];WHEELS.length=0;for(const q of p.wh)WHEELS.push(q);LIV[p.k]=L;CUS.push(...add);applyDecals();p.dec=DEC}catch(e){console.warn(e)}
