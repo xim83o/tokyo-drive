@@ -59,7 +59,7 @@ function drawSettings(){const P=$("setP");P.innerHTML=`<h1>${T(setPrev==="play"?
      rebind=code=>{rebind=null;if(code==="Escape"&&a!=="set"){drawSettings();return}
       for(const q in ENV.keys)for(const j of[0,1])if(ENV.keys[q][j]===code)ENV.keys[q][j]="";ENV.keys[a][k]=code;if(!ENV.keys.set[0]&&!ENV.keys.set[1])ENV.keys.set[0]="Escape";saveEnv();drawSettings()}};g.appendChild(b)}}
   box.appendChild(g);const r=document.createElement("button");r.className="b g";r.textContent=T("Restablecer teclas");r.onclick=()=>{ENV.keys=JSON.parse(JSON.stringify(KEYDEF));saveEnv();drawSettings()};box.appendChild(r)}
- if(RACE.on){const q=document.createElement("button");q.className="b g";q.textContent=T("Salir de la carrera");q.onclick=raceQuit;P.appendChild(q)}
+ if(RACE.on){const q=document.createElement("button");q.className="b g";q.textContent=T("Salir de la carrera");q.onclick=raceQuit;P.appendChild(q);if(!ONL.mp){const z=document.createElement("button");z.className="b g";z.textContent=T("Reiniciar carrera");z.onclick=raceRestart;P.appendChild(z)}}
  if(spawned){const q=document.createElement("button");q.className="b g";q.textContent=T("Menú principal");q.onclick=()=>mainMenu();P.appendChild(q)}
  const ok=document.createElement("button");ok.className="b";ok.textContent=T("Volver");ok.onclick=closeSettings;P.appendChild(ok)}
 setNpc(npcLvl);

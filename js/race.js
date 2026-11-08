@@ -80,6 +80,8 @@ function rArrows(){const R=RACE.rt;if(!R.turns)rTurns(R);if(!RA){const s=new THR
 // Fuera de la ruta o tras saltarse un arco: al acabarse los 5 s, vuelve al último punto por el que pasó (el tiempo sigue corriendo)
 function rBack(){const R=RACE.rt,n=R.cps.length,k=RACE.cp%n,q=R.cps[k];let x=RACE.sx,z=RACE.sz,hd=RACE.sh;if(RACE.cp>0){const o=R.cps[(RACE.cp-1)%n];x=o.x;z=o.z;hd=Math.atan2(o.dx,o.dz)}RACE.pi=RACE.cp>0?R.cps[(RACE.cp-1)%n].i:0;spawnAt({x,z,h:hd});RACE.off=null;RACE.safe=1.5}
 function raceQuit(){raceAbort();if(state==="set")closeSettings();rQuitMp()}
+// Reiniciar: la misma carrera desde la salida, con el mismo fantasma (no en las carreras de sala, que van todos a la vez)
+function raceRestart(){if(!RACE.on||ONL.mp)return;const R=RACE.rt,gi=RACE.gi;raceAbort();$("setP").hidden=true;raceStart(R,gi)}
 // --- Coche fantasma: copia translúcida de tu coche ---
 let GHC=null;
 function ghostCar(){if(GHC){sc.remove(GHC)}GHC=car.clone(true);const m=new THREE.MeshBasicMaterial({color:0x66ccff,transparent:true,opacity:.35,depthWrite:false});if(intG){const i=car.children.indexOf(intG);if(i>=0)GHC.remove(GHC.children[i])}
@@ -121,7 +123,7 @@ function rQuitMp(){if(ONL.mp&&!ONL.mp.fin.has(ONL.id))onlMyFin(null)}
 // --- Cada fotograma ---
 // (con cualquier panel abierto el aviso central se oculta, y vuelve al cerrarlo)
 const RC_UI=["ov","mapP","setP","livP","raceP","garP","onlP","radioL"];
-function raceTick(dt){const on=RACE.on&&state==="play",cb=$("rcC");document.body.classList.toggle("rcUI",RACE.on);$("raceH").hidden=!on;if(!on){cb.hidden=true;return}idle=0;gatesWave();const R=RACE.rt,ui=RC_UI.some(k=>!$(k).hidden);rFind();rArrows();
+function raceTick(dt){const on=RACE.on&&state==="play",cb=$("rcC");document.body.classList.toggle("rcUI",RACE.on);$("rcR").hidden=!!ONL.mp;$("raceH").hidden=!on;if(!on){cb.hidden=true;return}idle=0;gatesWave();const R=RACE.rt,ui=RC_UI.some(k=>!$(k).hidden);rFind();rArrows();
  if(RACE.cd>0){RACE.cd-=dt;px=RACE.sx;pz=RACE.sz;h=camH=RACE.sh;vx=vz=0;const n=Math.ceil(RACE.cd);cb.hidden=ui;cb.textContent=RACE.cd>.4?String(Math.min(3,Math.ceil(RACE.cd-.4))):T("¡Ya!");$("rcT").textContent="0:00.000";ghostAt(0);return}
  rBarrier();RACE.t+=dt;RACE.recT+=dt;while(RACE.recT>=RDT){RACE.recT-=RDT;RACE.rec.push(px,pz,h)}$("rcT").textContent=fmtT(RACE.t);ghostAt(RACE.t);
  const c=R.cps[RACE.cp%R.cps.length];{const k=1+Math.sin(performance.now()/160)*.08;GTS[RACE.cp%R.cps.length].G.scale.set(k,k,k)}

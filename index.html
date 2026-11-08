@@ -59,7 +59,7 @@ LDS.el("ldsGo").onclick=e=>{e.stopPropagation();LDS.pick()};LDS.el("lds").onclic
  <div class="pn" id="garP" hidden></div>
  <div class="pn" id="onlP" hidden></div>
 </div>
-<div id="raceH" hidden><span id="rcT">0:00.000</span><span id="rcD"></span><small id="rcCp"></small><small id="rcGh" onclick="ghostToggle()"></small><button id="rcX" onclick="raceQuit()" data-i18n="Salir de la carrera">Salir de la carrera</button></div>
+<div id="raceH" hidden><span id="rcT">0:00.000</span><span id="rcD"></span><small id="rcCp"></small><small id="rcGh" onclick="ghostToggle()"></small><span class="rcBtns"><button id="rcR" onclick="raceRestart()" data-i18n="Reiniciar carrera">Reiniciar carrera</button><button id="rcX" onclick="raceQuit()" data-i18n="Salir de la carrera">Salir de la carrera</button></span></div>
 <div id="rcC" hidden></div>
 <div id="rcBar" hidden></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
